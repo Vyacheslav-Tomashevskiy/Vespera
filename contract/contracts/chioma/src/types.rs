@@ -80,4 +80,7 @@ pub enum Error {
     AlreadyInitialized = 1,
     NotInitialized = 2,
     NotAuthorized = 3,
+    AgreementNotFound = 4,
+    InvalidStatus = 9,
+    InvalidAmount = 10,
 }
