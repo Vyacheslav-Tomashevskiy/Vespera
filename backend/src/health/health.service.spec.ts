@@ -118,8 +118,8 @@ describe('HealthService', () => {
 
       expect(result.status).toBe('warning');
       expect(result.services).toMatchObject({
-        database: { status: 'ok', responseTime: 120 },
-        stellar: { status: 'error', responseTime: null },
+        database: { status: 'up', responseTime: 120 },
+        stellar: { status: 'down', responseTime: null },
       });
     });
 
