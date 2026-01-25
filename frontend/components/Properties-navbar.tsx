@@ -39,7 +39,7 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-white tracking-tight">
+          <span className="text-2xl font-bold text-blue-900 tracking-tight">
             Chioma
           </span>
         </Link>
@@ -56,8 +56,8 @@ const Navbar = () => {
                 className={`relative text-sm font-medium transition-colors
                   ${
                     active
-                      ? "text-white border-b-2 border-white pb-1"
-                      : "text-white/80 hover:text-white"
+                      ? "text-black border-b-2 border-white pb-1"
+                      : "text-black hover:text-blue-900"
                   }
                 `}
               >
@@ -71,7 +71,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-6">
           <Link
             href="/login"
-            className="text-white hover:text-white/80 text-sm font-semibold transition-colors"
+            className="text-blue-500 hover:text-white/80 text-sm font-semibold transition-colors"
           >
             Log In
           </Link>
