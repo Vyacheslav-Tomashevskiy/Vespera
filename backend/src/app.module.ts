@@ -1,12 +1,14 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module, ValidationPipe, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AgreementsModule } from './modules/agreements/agreements.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { HealthModule } from './health/health.module';
 import { AppDataSource } from './database/data-source';
+import { AuthRateLimitMiddleware } from './modules/auth/middleware/rate-limit.middleware';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { AppDataSource } from './database/data-source';
       logging: process.env.NODE_ENV === 'development',
     }),
     AgreementsModule,
+    AuthModule,
     TypeOrmModule.forRoot(AppDataSource.options),
     HealthModule,
   ],
@@ -39,4 +42,15 @@ import { AppDataSource } from './database/data-source';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthRateLimitMiddleware)
+      .forRoutes(
+        'auth/register',
+        'auth/login',
+        'auth/forgot-password',
+        'auth/reset-password',
+      );
+  }
+}
