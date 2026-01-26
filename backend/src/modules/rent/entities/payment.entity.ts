@@ -1,12 +1,12 @@
-import { 
-  Entity, 
-  PrimaryGeneratedColumn, 
-  Column, 
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
-  Generated
+  Generated,
 } from 'typeorm';
 import { RentAgreement } from './rent-contract.entity';
 
@@ -14,7 +14,7 @@ export enum PaymentStatus {
   PENDING = 'PENDING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED'
+  REFUNDED = 'REFUNDED',
 }
 
 @Entity('payments')
@@ -29,11 +29,11 @@ export class Payment {
   @Column({ name: 'agreement_id' })
   agreementId: string;
 
-  @Column({ 
-    name: 'amount', 
-    type: 'decimal', 
-    precision: 12, 
-    scale: 2 
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
   })
   amount: number;
 
@@ -46,11 +46,11 @@ export class Payment {
   @Column({ name: 'reference_number', length: 100, nullable: true })
   referenceNumber: string;
 
-  @Column({ 
-    name: 'status', 
-    type: 'varchar', 
+  @Column({
+    name: 'status',
+    type: 'varchar',
     length: 20,
-    default: PaymentStatus.PENDING
+    default: PaymentStatus.PENDING,
   })
   status: PaymentStatus;
 
@@ -59,7 +59,7 @@ export class Payment {
 
   // Relationship
   @ManyToOne(() => RentAgreement, (agreement) => agreement.payments, {
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'agreement_id' })
   agreement: RentAgreement;

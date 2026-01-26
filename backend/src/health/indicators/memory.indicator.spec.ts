@@ -84,7 +84,9 @@ describe('MemoryHealthIndicator', () => {
         arrayBuffers: 5 * 1024 * 1024,
       });
 
-      await expect(indicator.isHealthy('memory')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('memory')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
 
     it('should handle process.memoryUsage errors', async () => {
@@ -92,7 +94,9 @@ describe('MemoryHealthIndicator', () => {
         throw new Error('Memory usage error');
       });
 
-      await expect(indicator.isHealthy('memory')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('memory')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
   });
 

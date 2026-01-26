@@ -1,14 +1,14 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
   Delete,
-  Body, 
-  Param, 
+  Body,
+  Param,
   Query,
   HttpCode,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import { AgreementsService } from './agreements.service';
 import { CreateAgreementDto } from './dto/create-agreement.dto';

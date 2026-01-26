@@ -1,13 +1,13 @@
-import { 
-  IsNotEmpty, 
-  IsString, 
-  IsNumber, 
-  IsOptional, 
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
   IsDateString,
   Min,
   Max,
   Length,
-  Matches
+  Matches,
 } from 'class-validator';
 
 export class CreateAgreementDto {
@@ -31,32 +31,36 @@ export class CreateAgreementDto {
   @IsNotEmpty()
   @IsString()
   @Length(56, 56)
-  @Matches(/^G[A-Z0-9]{55}$/, { 
-    message: 'Landlord Stellar public key must be a valid Stellar address starting with G' 
+  @Matches(/^G[A-Z0-9]{55}$/, {
+    message:
+      'Landlord Stellar public key must be a valid Stellar address starting with G',
   })
   landlordStellarPubKey: string;
 
   @IsNotEmpty()
   @IsString()
   @Length(56, 56)
-  @Matches(/^G[A-Z0-9]{55}$/, { 
-    message: 'Tenant Stellar public key must be a valid Stellar address starting with G' 
+  @Matches(/^G[A-Z0-9]{55}$/, {
+    message:
+      'Tenant Stellar public key must be a valid Stellar address starting with G',
   })
   tenantStellarPubKey: string;
 
   @IsOptional()
   @IsString()
   @Length(56, 56)
-  @Matches(/^G[A-Z0-9]{55}$/, { 
-    message: 'Agent Stellar public key must be a valid Stellar address starting with G' 
+  @Matches(/^G[A-Z0-9]{55}$/, {
+    message:
+      'Agent Stellar public key must be a valid Stellar address starting with G',
   })
   agentStellarPubKey?: string;
 
   @IsOptional()
   @IsString()
   @Length(56, 56)
-  @Matches(/^G[A-Z0-9]{55}$/, { 
-    message: 'Escrow account public key must be a valid Stellar address starting with G' 
+  @Matches(/^G[A-Z0-9]{55}$/, {
+    message:
+      'Escrow account public key must be a valid Stellar address starting with G',
   })
   escrowAccountPubKey?: string;
 

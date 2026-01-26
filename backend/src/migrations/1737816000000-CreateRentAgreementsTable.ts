@@ -1,14 +1,16 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateRentAgreementsTable1737816000000 implements MigrationInterface {
-    name = 'CreateRentAgreementsTable1737816000000'
+  name = 'CreateRentAgreementsTable1737816000000';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Rename rent_contracts to rent_agreements
-        await queryRunner.query(`ALTER TABLE "rent_contracts" RENAME TO "rent_agreements"`);
-        
-        // Add new columns to rent_agreements table
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Rename rent_contracts to rent_agreements
+    await queryRunner.query(
+      `ALTER TABLE "rent_contracts" RENAME TO "rent_agreements"`,
+    );
+
+    // Add new columns to rent_agreements table
+    await queryRunner.query(`
             ALTER TABLE "rent_agreements"
             ADD COLUMN IF NOT EXISTS "agreement_number" VARCHAR(50) UNIQUE,
             ADD COLUMN IF NOT EXISTS "property_id" VARCHAR(255),
@@ -35,38 +37,74 @@ export class CreateRentAgreementsTable1737816000000 implements MigrationInterfac
             ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         `);
 
-        // Drop the old price column as we now have monthly_rent
-        await queryRunner.query(`ALTER TABLE "rent_agreements" DROP COLUMN IF EXISTS "price"`);
-        
-        // Drop the old property_address column as we now have property_id
-        await queryRunner.query(`ALTER TABLE "rent_agreements" DROP COLUMN IF EXISTS "property_address"`);
+    // Drop the old price column as we now have monthly_rent
+    await queryRunner.query(
+      `ALTER TABLE "rent_agreements" DROP COLUMN IF EXISTS "price"`,
+    );
 
-        // Create indexes for better query performance
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_landlord_id" ON "rent_agreements"("landlord_id")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_tenant_id" ON "rent_agreements"("tenant_id")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_agent_id" ON "rent_agreements"("agent_id")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_property_id" ON "rent_agreements"("property_id")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_status" ON "rent_agreements"("status")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_start_date" ON "rent_agreements"("start_date")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_rent_agreements_end_date" ON "rent_agreements"("end_date")`);
-    }
+    // Drop the old property_address column as we now have property_id
+    await queryRunner.query(
+      `ALTER TABLE "rent_agreements" DROP COLUMN IF EXISTS "property_address"`,
+    );
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // Drop indexes
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_end_date"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_start_date"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_status"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_property_id"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_agent_id"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_tenant_id"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_rent_agreements_landlord_id"`);
+    // Create indexes for better query performance
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_landlord_id" ON "rent_agreements"("landlord_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_tenant_id" ON "rent_agreements"("tenant_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_agent_id" ON "rent_agreements"("agent_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_property_id" ON "rent_agreements"("property_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_status" ON "rent_agreements"("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_start_date" ON "rent_agreements"("start_date")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_rent_agreements_end_date" ON "rent_agreements"("end_date")`,
+    );
+  }
 
-        // Add back old columns
-        await queryRunner.query(`ALTER TABLE "rent_agreements" ADD COLUMN "property_address" VARCHAR(255)`);
-        await queryRunner.query(`ALTER TABLE "rent_agreements" ADD COLUMN "price" DECIMAL(10,2)`);
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Drop indexes
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_end_date"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_start_date"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_status"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_property_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_agent_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_tenant_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_rent_agreements_landlord_id"`,
+    );
 
-        // Drop new columns
-        await queryRunner.query(`
+    // Add back old columns
+    await queryRunner.query(
+      `ALTER TABLE "rent_agreements" ADD COLUMN "property_address" VARCHAR(255)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "rent_agreements" ADD COLUMN "price" DECIMAL(10,2)`,
+    );
+
+    // Drop new columns
+    await queryRunner.query(`
             ALTER TABLE "rent_agreements"
             DROP COLUMN IF EXISTS "updated_at",
             DROP COLUMN IF EXISTS "created_at",
@@ -93,7 +131,9 @@ export class CreateRentAgreementsTable1737816000000 implements MigrationInterfac
             DROP COLUMN IF EXISTS "agreement_number"
         `);
 
-        // Rename back to rent_contracts
-        await queryRunner.query(`ALTER TABLE "rent_agreements" RENAME TO "rent_contracts"`);
-    }
+    // Rename back to rent_contracts
+    await queryRunner.query(
+      `ALTER TABLE "rent_agreements" RENAME TO "rent_contracts"`,
+    );
+  }
 }

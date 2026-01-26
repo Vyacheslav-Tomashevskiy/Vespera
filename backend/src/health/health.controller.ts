@@ -31,16 +31,16 @@ export class HealthController {
       ]);
 
       const enhancedResult = this.healthService.enhanceHealthResult(result);
-      
+
       // Determine HTTP status based on overall health
       const status = this.determineHttpStatus(enhancedResult.status);
-      
+
       return res.status(status).json(enhancedResult);
     } catch (error) {
       // Handle partial failures with graceful degradation
       const degradedResult = this.healthService.handlePartialFailure(error);
       const status = this.determineHttpStatus(degradedResult.status);
-      
+
       return res.status(status).json(degradedResult);
     }
   }
@@ -55,14 +55,20 @@ export class HealthController {
         () => this.memoryHealthIndicator.isHealthy('memory'),
       ]);
 
-      const detailedResult = this.healthService.enhanceHealthResult(result, true);
+      const detailedResult = this.healthService.enhanceHealthResult(
+        result,
+        true,
+      );
       const status = this.determineHttpStatus(detailedResult.status);
-      
+
       return res.status(status).json(detailedResult);
     } catch (error) {
-      const degradedResult = this.healthService.handlePartialFailure(error, true);
+      const degradedResult = this.healthService.handlePartialFailure(
+        error,
+        true,
+      );
       const status = this.determineHttpStatus(degradedResult.status);
-      
+
       return res.status(status).json(degradedResult);
     }
   }

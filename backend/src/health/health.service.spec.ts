@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthService } from './health.service';
-import { HealthCheckError, HealthCheckResult, HealthIndicatorStatus } from '@nestjs/terminus';
+import {
+  HealthCheckError,
+  HealthCheckResult,
+  HealthIndicatorStatus,
+} from '@nestjs/terminus';
 
 describe('HealthService', () => {
   let service: HealthService;
@@ -24,7 +28,10 @@ describe('HealthService', () => {
         info: {},
         error: {},
         details: {
-          database: { status: 'up' as HealthIndicatorStatus, responseTime: 120 },
+          database: {
+            status: 'up' as HealthIndicatorStatus,
+            responseTime: 120,
+          },
           stellar: { status: 'up' as HealthIndicatorStatus, responseTime: 450 },
         },
       };
@@ -40,7 +47,9 @@ describe('HealthService', () => {
           stellar: { status: 'up', responseTime: 450 },
         },
       });
-      expect(enhanced.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+      expect(enhanced.timestamp).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+      );
     });
 
     it('should include detailed information when requested', () => {
@@ -49,7 +58,10 @@ describe('HealthService', () => {
         info: {},
         error: {},
         details: {
-          database: { status: 'up' as HealthIndicatorStatus, responseTime: 120 },
+          database: {
+            status: 'up' as HealthIndicatorStatus,
+            responseTime: 120,
+          },
         },
       };
 
@@ -69,14 +81,26 @@ describe('HealthService', () => {
       const mockResult: HealthCheckResult = {
         status: 'error' as const,
         info: {
-          database: { status: 'up' as HealthIndicatorStatus, responseTime: 120 },
+          database: {
+            status: 'up' as HealthIndicatorStatus,
+            responseTime: 120,
+          },
         },
         error: {
-          stellar: { status: 'down' as HealthIndicatorStatus, responseTime: null },
+          stellar: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
         },
         details: {
-          database: { status: 'up' as HealthIndicatorStatus, responseTime: 120 },
-          stellar: { status: 'down' as HealthIndicatorStatus, responseTime: null },
+          database: {
+            status: 'up' as HealthIndicatorStatus,
+            responseTime: 120,
+          },
+          stellar: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
         },
       };
 
@@ -90,12 +114,24 @@ describe('HealthService', () => {
         status: 'error' as const,
         info: {},
         error: {
-          database: { status: 'down' as HealthIndicatorStatus, responseTime: null },
-          stellar: { status: 'down' as HealthIndicatorStatus, responseTime: null },
+          database: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
+          stellar: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
         },
         details: {
-          database: { status: 'down' as HealthIndicatorStatus, responseTime: null },
-          stellar: { status: 'down' as HealthIndicatorStatus, responseTime: null },
+          database: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
+          stellar: {
+            status: 'down' as HealthIndicatorStatus,
+            responseTime: null,
+          },
         },
       };
 
@@ -109,7 +145,10 @@ describe('HealthService', () => {
     it('should handle HealthCheckError with causes', () => {
       const mockCauses = {
         database: { status: 'up' as HealthIndicatorStatus, responseTime: 120 },
-        stellar: { status: 'down' as HealthIndicatorStatus, responseTime: null },
+        stellar: {
+          status: 'down' as HealthIndicatorStatus,
+          responseTime: null,
+        },
       };
 
       const mockError = new HealthCheckError('Health check failed', mockCauses);

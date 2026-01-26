@@ -19,7 +19,7 @@ describe('AuthController', () => {
       email: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      role: 'tenant' as UserRole,
+      role: UserRole.TENANT,
     },
   };
 
@@ -56,7 +56,7 @@ describe('AuthController', () => {
         password: 'SecurePass123!',
         firstName: 'New',
         lastName: 'User',
-        role: 'tenant',
+        role: UserRole.TENANT,
       };
 
       jest.spyOn(service, 'register').mockResolvedValue(mockAuthResponse);
@@ -95,9 +95,11 @@ describe('AuthController', () => {
         refreshToken: 'new-refresh-token',
       };
 
-      jest.spyOn(service, 'refreshToken').mockResolvedValue(mockRefreshResponse);
+      jest
+        .spyOn(service, 'refreshToken')
+        .mockResolvedValue(mockRefreshResponse);
 
-      const result = await controller.refresh(refreshTokenDto);
+      const result = await controller.refreshTokens(refreshTokenDto);
 
       expect(result).toEqual(mockRefreshResponse);
       expect(service.refreshToken).toHaveBeenCalledWith(refreshTokenDto);
@@ -110,7 +112,9 @@ describe('AuthController', () => {
         email: 'test@example.com',
       };
 
-      jest.spyOn(service, 'forgotPassword').mockResolvedValue(mockMessageResponse);
+      jest
+        .spyOn(service, 'forgotPassword')
+        .mockResolvedValue(mockMessageResponse);
 
       const result = await controller.forgotPassword(forgotPasswordDto);
 
@@ -126,7 +130,9 @@ describe('AuthController', () => {
         newPassword: 'NewSecurePass123!',
       };
 
-      jest.spyOn(service, 'resetPassword').mockResolvedValue(mockMessageResponse);
+      jest
+        .spyOn(service, 'resetPassword')
+        .mockResolvedValue(mockMessageResponse);
 
       const result = await controller.resetPassword(resetPasswordDto);
 
@@ -137,15 +143,13 @@ describe('AuthController', () => {
 
   describe('logout', () => {
     it('should logout user', async () => {
-      const mockRequest = {
-        user: {
-          id: 'test-user-id',
-        },
-      };
+      const mockUser = {
+        id: 'test-user-id',
+      } as any;
 
       jest.spyOn(service, 'logout').mockResolvedValue(mockMessageResponse);
 
-      const result = await controller.logout(mockRequest);
+      const result = await controller.logout(mockUser);
 
       expect(result).toEqual(mockMessageResponse);
       expect(service.logout).toHaveBeenCalledWith('test-user-id');

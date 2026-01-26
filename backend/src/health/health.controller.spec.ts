@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HealthCheckService, HealthCheckResult, HealthCheckStatus } from '@nestjs/terminus';
+import {
+  HealthCheckService,
+  HealthCheckResult,
+  HealthCheckStatus,
+} from '@nestjs/terminus';
 import { Response } from 'express';
 import { HealthController } from './health.controller';
 import { HealthService, EnhancedHealthResult } from './health.service';
@@ -86,8 +90,12 @@ describe('HealthController', () => {
         },
       };
 
-      jest.spyOn(healthCheckService, 'check').mockResolvedValue(mockHealthResult);
-      jest.spyOn(healthService, 'enhanceHealthResult').mockReturnValue(mockEnhancedResult);
+      jest
+        .spyOn(healthCheckService, 'check')
+        .mockResolvedValue(mockHealthResult);
+      jest
+        .spyOn(healthService, 'enhanceHealthResult')
+        .mockReturnValue(mockEnhancedResult);
 
       await controller.check(mockResponse as Response);
 
@@ -110,7 +118,9 @@ describe('HealthController', () => {
       };
 
       jest.spyOn(healthCheckService, 'check').mockRejectedValue(mockError);
-      jest.spyOn(healthService, 'handlePartialFailure').mockReturnValue(mockDegradedResult);
+      jest
+        .spyOn(healthService, 'handlePartialFailure')
+        .mockReturnValue(mockDegradedResult);
 
       await controller.check(mockResponse as Response);
 
@@ -133,7 +143,9 @@ describe('HealthController', () => {
       };
 
       jest.spyOn(healthCheckService, 'check').mockRejectedValue(mockError);
-      jest.spyOn(healthService, 'handlePartialFailure').mockReturnValue(mockFailureResult);
+      jest
+        .spyOn(healthService, 'handlePartialFailure')
+        .mockReturnValue(mockFailureResult);
 
       await controller.check(mockResponse as Response);
 
@@ -171,12 +183,19 @@ describe('HealthController', () => {
         },
       };
 
-      jest.spyOn(healthCheckService, 'check').mockResolvedValue(mockHealthResult);
-      jest.spyOn(healthService, 'enhanceHealthResult').mockReturnValue(mockDetailedResult);
+      jest
+        .spyOn(healthCheckService, 'check')
+        .mockResolvedValue(mockHealthResult);
+      jest
+        .spyOn(healthService, 'enhanceHealthResult')
+        .mockReturnValue(mockDetailedResult);
 
       await controller.detailedCheck(mockResponse as Response);
 
-      expect(healthService.enhanceHealthResult).toHaveBeenCalledWith(mockHealthResult, true);
+      expect(healthService.enhanceHealthResult).toHaveBeenCalledWith(
+        mockHealthResult,
+        true,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(mockDetailedResult);
     });

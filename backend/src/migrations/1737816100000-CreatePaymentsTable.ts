@@ -1,14 +1,14 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreatePaymentsTable1737816100000 implements MigrationInterface {
-    name = 'CreatePaymentsTable1737816100000'
+  name = 'CreatePaymentsTable1737816100000';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Drop the old rent_payments table as we're creating a new comprehensive payments table
-        await queryRunner.query(`DROP TABLE IF EXISTS "rent_payments" CASCADE`);
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Drop the old rent_payments table as we're creating a new comprehensive payments table
+    await queryRunner.query(`DROP TABLE IF EXISTS "rent_payments" CASCADE`);
 
-        // Create the new payments table
-        await queryRunner.query(`
+    // Create the new payments table
+    await queryRunner.query(`
             CREATE TABLE "payments" (
                 "id" SERIAL PRIMARY KEY,
                 "payment_id" VARCHAR(36) NOT NULL UNIQUE,
@@ -28,25 +28,33 @@ export class CreatePaymentsTable1737816100000 implements MigrationInterface {
             )
         `);
 
-        // Create indexes for better query performance
-        await queryRunner.query(`CREATE INDEX "idx_payments_agreement_id" ON "payments"("agreement_id")`);
-        await queryRunner.query(`CREATE INDEX "idx_payments_payment_date" ON "payments"("payment_date")`);
-        await queryRunner.query(`CREATE INDEX "idx_payments_status" ON "payments"("status")`);
-        await queryRunner.query(`CREATE INDEX "idx_payments_payment_id" ON "payments"("payment_id")`);
-    }
+    // Create indexes for better query performance
+    await queryRunner.query(
+      `CREATE INDEX "idx_payments_agreement_id" ON "payments"("agreement_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_payments_payment_date" ON "payments"("payment_date")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_payments_status" ON "payments"("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_payments_payment_id" ON "payments"("payment_id")`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // Drop indexes
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_payment_id"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_status"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_payment_date"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_agreement_id"`);
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Drop indexes
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_payment_id"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_status"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_payment_date"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_payments_agreement_id"`);
 
-        // Drop the payments table
-        await queryRunner.query(`DROP TABLE IF EXISTS "payments"`);
+    // Drop the payments table
+    await queryRunner.query(`DROP TABLE IF EXISTS "payments"`);
 
-        // Recreate the old rent_payments table
-        await queryRunner.query(`
+    // Recreate the old rent_payments table
+    await queryRunner.query(`
             CREATE TABLE "rent_payments" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "amount" numeric(10,2) NOT NULL,
@@ -57,7 +65,7 @@ export class CreatePaymentsTable1737816100000 implements MigrationInterface {
             )
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "rent_payments" 
             ADD CONSTRAINT "FK_e19b070b0b7c5324b5c248efcdd" 
             FOREIGN KEY ("contract_id") 
@@ -65,5 +73,5 @@ export class CreatePaymentsTable1737816100000 implements MigrationInterface {
             ON DELETE NO ACTION 
             ON UPDATE NO ACTION
         `);
-    }
+  }
 }

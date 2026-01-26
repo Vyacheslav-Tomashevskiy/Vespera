@@ -17,10 +17,12 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { AuthResponseDto, MessageResponseDto } from './dto/auth-response.dto';
 
+const SALT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MINUTES = 15;
-const RESET_TOKEN_EXPIRY_MINUTES = 60;
+const LOCKOUT_DURATION_MINUTES = 30;
+const RESET_TOKEN_EXPIRY_HOURS = 1;
 
 @Injectable()
 export class AuthService {
@@ -33,13 +35,9 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  /**
-   * Register a new user with secure password hashing
-   */
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, password, firstName, lastName, role } = registerDto;
 
-    // Check if user already exists
     const existingUser = await this.userRepository.findOne({
       where: { email: email.toLowerCase() },
     });
@@ -49,55 +47,40 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Hash password using bcrypt
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    // Create new user
     const user = this.userRepository.create({
       email: email.toLowerCase(),
-      passwordHash: hashedPassword,
+      password: hashedPassword,
       firstName,
       lastName,
       role,
-      status: 'pending',
       emailVerified: false,
-      phoneVerified: false,
-      kycStatus: 'not_started',
       failedLoginAttempts: 0,
-      accountLocked: false,
+      verificationToken,
+      isActive: true,
     });
 
     const savedUser = await this.userRepository.save(user);
     this.logger.log(`User registered successfully: ${savedUser.id}`);
 
-    // Generate tokens
-    const { accessToken, refreshToken } = await this.generateTokens(
+    const { accessToken, refreshToken } = this.generateTokens(
       savedUser.id,
       savedUser.email,
       savedUser.role,
     );
 
-    // Store refresh token
-    savedUser.refreshToken = await bcrypt.hash(refreshToken, 12);
-    await this.userRepository.save(savedUser);
+    await this.updateRefreshToken(savedUser.id, refreshToken);
 
     return {
+      user: this.sanitizeUser(savedUser),
       accessToken,
       refreshToken,
-      user: {
-        id: savedUser.id,
-        email: savedUser.email,
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        role: savedUser.role,
-      },
     };
   }
 
-  /**
-   * Login user with email and password
-   */
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
     const user = await this.userRepository.findOne({
@@ -109,86 +92,67 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Check if account is locked
-    if (user.accountLocked && user.lockedUntil) {
+    if (!user.isActive) {
+      this.logger.warn(`Login attempt for inactive account: ${email}`);
+      throw new UnauthorizedException('Account has been deactivated');
+    }
+
+    if (user.accountLockedUntil) {
       const now = new Date();
-      if (user.lockedUntil > now) {
+      if (user.accountLockedUntil > now) {
         const minutesRemaining = Math.ceil(
-          (user.lockedUntil.getTime() - now.getTime()) / (1000 * 60),
+          (user.accountLockedUntil.getTime() - now.getTime()) / (1000 * 60),
         );
         this.logger.warn(`Login attempt for locked account: ${email}`);
         throw new UnauthorizedException(
-          `Account is locked. Try again in ${minutesRemaining} minutes.`,
+          `Account is locked. Try again in ${minutesRemaining} minutes`,
         );
       } else {
-        // Unlock account if lockout period expired
-        user.accountLocked = false;
+        user.accountLockedUntil = null;
         user.failedLoginAttempts = 0;
-        user.lockedUntil = undefined;
       }
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      // Increment failed login attempts
-      user.failedLoginAttempts += 1;
-
-      // Lock account after max attempts
-      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
-        user.accountLocked = true;
-        user.lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000);
-        this.logger.warn(`Account locked due to failed attempts: ${email}`);
-      }
-
-      await this.userRepository.save(user);
+      await this.handleFailedLogin(user);
       this.logger.warn(`Failed login attempt for user: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Reset failed attempts on successful login
     user.failedLoginAttempts = 0;
-    user.accountLocked = false;
-    user.lockedUntil = undefined;
+    user.accountLockedUntil = null;
     user.lastLoginAt = new Date();
 
     await this.userRepository.save(user);
     this.logger.log(`User logged in successfully: ${user.id}`);
 
-    // Generate tokens
-    const { accessToken, refreshToken } = await this.generateTokens(
+    const { accessToken, refreshToken } = this.generateTokens(
       user.id,
       user.email,
       user.role,
     );
 
-    // Store refresh token
-    user.refreshToken = await bcrypt.hash(refreshToken, 12);
-    await this.userRepository.save(user);
+    await this.updateRefreshToken(user.id, refreshToken);
 
     return {
+      user: this.sanitizeUser(user),
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
     };
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
-  async refreshToken(refreshTokenDto: RefreshTokenDto) {
+  async refreshToken(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const { refreshToken } = refreshTokenDto;
 
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'your-refresh-secret-key',
+        secret:
+          this.configService.get<string>('JWT_REFRESH_SECRET') ||
+          'your-refresh-secret-key',
       });
 
       if (payload.type !== 'refresh') {
@@ -199,89 +163,82 @@ export class AuthService {
         where: { id: payload.sub },
       });
 
-      if (!user) {
-        throw new UnauthorizedException('User not found');
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('User not found or token revoked');
       }
 
-      // Verify refresh token matches stored hash
-      const isValidRefreshToken = await bcrypt.compare(refreshToken, user.refreshToken || '');
+      const isValidRefreshToken = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
 
       if (!isValidRefreshToken) {
         this.logger.warn(`Invalid refresh token for user: ${user.id}`);
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      // Generate new tokens
-      const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(
-        user.id,
-        user.email,
-        user.role,
-      );
-
-      // Update refresh token
-      user.refreshToken = await bcrypt.hash(newRefreshToken, 12);
-      await this.userRepository.save(user);
+      const tokens = this.generateTokens(user.id, user.email, user.role);
+      await this.updateRefreshToken(user.id, tokens.refreshToken);
 
       this.logger.log(`Token refreshed for user: ${user.id}`);
 
-      return {
-        accessToken,
-        refreshToken: newRefreshToken,
-      };
+      return tokens;
     } catch (error) {
       this.logger.error(`Token refresh failed: ${error.message}`);
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
-  /**
-   * Request password reset
-   */
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
     const { email } = forgotPasswordDto;
 
     const user = await this.userRepository.findOne({
       where: { email: email.toLowerCase() },
     });
 
-    // Always return success message for security (don't reveal if email exists)
     if (!user) {
-      this.logger.warn(`Password reset request for non-existent email: ${email}`);
+      this.logger.warn(
+        `Password reset request for non-existent email: ${email}`,
+      );
       return {
-        message: 'If an account exists with this email, you will receive a password reset link.',
+        message:
+          'If an account exists with this email, you will receive a password reset link',
       };
     }
 
-    // Generate secure reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
 
-    user.passwordResetToken = hashedToken;
-    user.resetTokenExpiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+    user.resetToken = hashedToken;
+    user.resetTokenExpires = new Date(
+      Date.now() + RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     await this.userRepository.save(user);
     this.logger.log(`Password reset token generated for user: ${user.id}`);
 
-    // TODO: Send email with reset link containing resetToken
-    // The resetToken (not hashed) should be sent to the user's email
-    console.log(`Reset token for ${email}: ${resetToken}`);
+    console.log(`[DEV] Reset token for ${email}: ${resetToken}`);
 
     return {
-      message: 'If an account exists with this email, you will receive a password reset link.',
+      message:
+        'If an account exists with this email, you will receive a password reset link',
     };
   }
 
-  /**
-   * Reset password using reset token
-   */
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<MessageResponseDto> {
     const { token, newPassword } = resetPasswordDto;
 
-    // Hash the provided token to compare with stored hash
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await this.userRepository.findOne({
-      where: { passwordResetToken: hashedToken },
+      where: { resetToken: hashedToken },
     });
 
     if (!user) {
@@ -289,38 +246,51 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    // Check if token has expired
-    if (!user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
+    if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
       this.logger.warn(`Expired password reset token for user: ${user.id}`);
       throw new BadRequestException('Reset token has expired');
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-    user.passwordHash = hashedPassword;
-    user.passwordResetToken = undefined;
-    user.resetTokenExpiresAt = undefined;
+    user.password = hashedPassword;
+    user.resetToken = null;
+    user.resetTokenExpires = null;
     user.failedLoginAttempts = 0;
-    user.accountLocked = false;
+    user.accountLockedUntil = null;
 
     await this.userRepository.save(user);
     this.logger.log(`Password reset successful for user: ${user.id}`);
 
     return {
-      message: 'Password has been reset successfully. Please log in with your new password.',
+      message:
+        'Password has been reset successfully. Please log in with your new password',
     };
   }
 
-  /**
-   * Logout user (invalidate refresh token)
-   */
-  async logout(userId: string) {
-    await this.userRepository.update(
-      { id: userId },
-      { refreshToken: undefined },
-    );
+  async verifyEmail(token: string): Promise<MessageResponseDto> {
+    const user = await this.userRepository.findOne({
+      where: { verificationToken: token },
+    });
 
+    if (!user) {
+      this.logger.warn('Email verification attempt with invalid token');
+      throw new BadRequestException('Invalid verification token');
+    }
+
+    user.emailVerified = true;
+    user.verificationToken = null;
+
+    await this.userRepository.save(user);
+    this.logger.log(`Email verified for user: ${user.id}`);
+
+    return {
+      message: 'Email verified successfully',
+    };
+  }
+
+  async logout(userId: string): Promise<MessageResponseDto> {
+    await this.userRepository.update({ id: userId }, { refreshToken: null });
     this.logger.log(`User logged out: ${userId}`);
 
     return {
@@ -328,10 +298,40 @@ export class AuthService {
     };
   }
 
-  /**
-   * Generate JWT access and refresh tokens
-   */
-  private async generateTokens(userId: string, email: string, role: string) {
+  async validateUserById(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account has been deactivated');
+    }
+
+    return this.sanitizeUser(user);
+  }
+
+  private async handleFailedLogin(user: User): Promise<void> {
+    user.failedLoginAttempts += 1;
+
+    if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+      user.accountLockedUntil = new Date(
+        Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000,
+      );
+      this.logger.warn(`Account locked due to failed attempts: ${user.email}`);
+    }
+
+    await this.userRepository.save(user);
+  }
+
+  private generateTokens(
+    userId: string,
+    email: string,
+    role: string,
+  ): { accessToken: string; refreshToken: string } {
     const accessToken = this.jwtService.sign(
       {
         sub: userId,
@@ -340,7 +340,8 @@ export class AuthService {
         type: 'access',
       },
       {
-        secret: this.configService.get<string>('JWT_SECRET') || 'your-secret-key',
+        secret:
+          this.configService.get<string>('JWT_SECRET') || 'your-secret-key',
         expiresIn: '15m',
       },
     );
@@ -353,7 +354,9 @@ export class AuthService {
         type: 'refresh',
       },
       {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'your-refresh-secret-key',
+        secret:
+          this.configService.get<string>('JWT_REFRESH_SECRET') ||
+          'your-refresh-secret-key',
         expiresIn: '7d',
       },
     );
@@ -361,24 +364,25 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  /**
-   * Validate user by ID (used by JWT strategy)
-   */
-  async validateUserById(userId: string) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
+  private async updateRefreshToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<void> {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, SALT_ROUNDS);
+    await this.userRepository.update(userId, {
+      refreshToken: hashedRefreshToken,
     });
+  }
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
-    };
+  private sanitizeUser(user: User) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {
+      password,
+      refreshToken,
+      resetToken,
+      verificationToken,
+      ...sanitized
+    } = user;
+    return sanitized;
   }
 }

@@ -12,12 +12,12 @@ describe('Health (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Apply the same configuration as in main.ts
     app.setGlobalPrefix('api', {
       exclude: ['health', 'health/detailed'],
     });
-    
+
     await app.init();
   });
 
@@ -36,7 +36,9 @@ describe('Health (e2e)', () => {
 
       expect(response.body).toMatchObject({
         status: expect.stringMatching(/^(ok|warning|error)$/),
-        timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/),
+        timestamp: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+        ),
         version: expect.any(String),
         uptime: expect.any(Number),
         services: expect.any(Object),
@@ -52,7 +54,7 @@ describe('Health (e2e)', () => {
         });
 
       const { services } = response.body;
-      
+
       // Check that we have the expected services
       expect(services).toHaveProperty('database');
       expect(services).toHaveProperty('stellar');
@@ -67,8 +69,7 @@ describe('Health (e2e)', () => {
     });
 
     it('should return appropriate HTTP status codes', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/health');
+      const response = await request(app.getHttpServer()).get('/health');
 
       if (response.body.status === 'ok' || response.body.status === 'warning') {
         expect(response.status).toBe(200);
@@ -89,7 +90,9 @@ describe('Health (e2e)', () => {
 
       expect(response.body).toMatchObject({
         status: expect.stringMatching(/^(ok|warning|error)$/),
-        timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/),
+        timestamp: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+        ),
         version: expect.any(String),
         uptime: expect.any(Number),
         services: expect.any(Object),
@@ -113,7 +116,7 @@ describe('Health (e2e)', () => {
         });
 
       const { details } = response.body;
-      
+
       expect(details.nodeVersion).toMatch(/^v\d+\.\d+\.\d+/);
       expect(details.platform).toBeTruthy();
       expect(details.architecture).toBeTruthy();
@@ -127,8 +130,7 @@ describe('Health (e2e)', () => {
     it('should handle partial service failures gracefully', async () => {
       // This test would require mocking service failures
       // For now, we just verify the endpoint responds
-      const response = await request(app.getHttpServer())
-        .get('/health');
+      const response = await request(app.getHttpServer()).get('/health');
 
       expect(response.status).toBeGreaterThanOrEqual(200);
       expect(response.status).toBeLessThan(600);
@@ -138,7 +140,7 @@ describe('Health (e2e)', () => {
 
     it('should complete health checks within reasonable time', async () => {
       const startTime = Date.now();
-      
+
       await request(app.getHttpServer())
         .get('/health')
         .expect((res) => {
@@ -147,7 +149,7 @@ describe('Health (e2e)', () => {
         });
 
       const duration = Date.now() - startTime;
-      
+
       // Health check should complete within 10 seconds (allowing for CI/test environment delays)
       expect(duration).toBeLessThan(10000);
     });

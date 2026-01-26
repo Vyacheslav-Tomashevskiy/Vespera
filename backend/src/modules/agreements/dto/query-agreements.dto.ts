@@ -1,10 +1,4 @@
-import { 
-  IsOptional, 
-  IsString, 
-  IsEnum,
-  IsNumber,
-  Min
-} from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AgreementStatus } from '../../rent/entities/rent-contract.entity';
 

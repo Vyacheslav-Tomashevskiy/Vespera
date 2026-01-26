@@ -1,11 +1,11 @@
-import { 
-  IsNotEmpty, 
-  IsNumber, 
+import {
+  IsNotEmpty,
+  IsNumber,
   IsDateString,
   IsOptional,
   IsString,
   Min,
-  MaxLength
+  MaxLength,
 } from 'class-validator';
 
 export class RecordPaymentDto {

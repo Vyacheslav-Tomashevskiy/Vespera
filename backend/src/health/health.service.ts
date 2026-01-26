@@ -86,21 +86,29 @@ export class HealthService {
     return result;
   }
 
-  private determineOverallStatus(result: HealthCheckResult): 'ok' | 'error' | 'warning' {
+  private determineOverallStatus(
+    result: HealthCheckResult,
+  ): 'ok' | 'error' | 'warning' {
     if (result.status === 'ok') {
       return 'ok';
     }
 
     // Check if any services are still healthy (partial failure)
     const services = Object.values(result.details || {});
-    const hasHealthyServices = services.some((service: any) => service.status === 'up');
-    
+    const hasHealthyServices = services.some(
+      (service: any) => service.status === 'up',
+    );
+
     return hasHealthyServices ? 'warning' : 'error';
   }
 
-  private determineOverallStatusFromError(causes: Record<string, any>): 'ok' | 'error' | 'warning' {
+  private determineOverallStatusFromError(
+    causes: Record<string, any>,
+  ): 'ok' | 'error' | 'warning' {
     const services = Object.values(causes || {});
-    const healthyServices = services.filter((service: any) => service.status === 'up');
+    const healthyServices = services.filter(
+      (service: any) => service.status === 'up',
+    );
     const totalServices = services.length;
 
     if (healthyServices.length === totalServices) {
@@ -112,7 +120,9 @@ export class HealthService {
     }
   }
 
-  private formatServices(details: Record<string, any> | undefined): Record<string, any> {
+  private formatServices(
+    details: Record<string, any> | undefined,
+  ): Record<string, any> {
     if (!details) {
       return {};
     }
@@ -122,7 +132,14 @@ export class HealthService {
     Object.entries(details).forEach(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
         formatted[key] = {
-          status: value.status === 'up' ? 'ok' : value.status === 'down' ? 'error' : value.status === 'warning' ? 'warning' : 'error',
+          status:
+            value.status === 'up'
+              ? 'ok'
+              : value.status === 'down'
+                ? 'error'
+                : value.status === 'warning'
+                  ? 'warning'
+                  : 'error',
           responseTime: value.responseTime || null,
           ...value,
         };

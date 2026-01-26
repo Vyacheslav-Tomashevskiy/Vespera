@@ -2,10 +2,12 @@ import {
   Controller,
   Post,
   Body,
-  UseGuards,
-  Request,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  Get,
+  Query,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,25 +15,26 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthResponseDto, MessageResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-  /**
-   * Register a new user
-   */
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
@@ -54,10 +57,8 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  /**
-   * Login user
-   */
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login user',
@@ -76,10 +77,8 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  /**
-   * Refresh access token
-   */
   @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Refresh access token',
@@ -94,59 +93,15 @@ export class AuthController {
     status: 401,
     description: 'Invalid or expired refresh token',
   })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
+  async refreshTokens(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     return this.authService.refreshToken(refreshTokenDto);
   }
 
-  /**
-   * Request password reset
-   */
-  @Post('forgot-password')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Request password reset',
-    description: 'Send password reset email to registered email address',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset email sent',
-    type: MessageResponseDto,
-  })
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<MessageResponseDto> {
-    return this.authService.forgotPassword(forgotPasswordDto);
-  }
-
-  /**
-   * Reset password with token
-   */
-  @Post('reset-password')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Reset password',
-    description: 'Reset password using reset token received via email',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset successful',
-    type: MessageResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid or expired reset token',
-  })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<MessageResponseDto> {
-    return this.authService.resetPassword(resetPasswordDto);
-  }
-
-  /**
-   * Logout user
-   */
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Logout user',
@@ -161,7 +116,68 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized',
   })
-  async logout(@Request() req: any): Promise<MessageResponseDto> {
-    return this.authService.logout(req.user.id);
+  async logout(@CurrentUser() user: User): Promise<MessageResponseDto> {
+    return this.authService.logout(user.id);
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request password reset',
+    description: 'Send password reset email to registered email address',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent',
+    type: MessageResponseDto,
+  })
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password',
+    description: 'Reset password using reset token received via email',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successful',
+    type: MessageResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired reset token',
+  })
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<MessageResponseDto> {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Get('verify-email')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Verify email with token',
+    description: 'Verify user email address using token sent via email',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified successfully',
+    type: MessageResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired verification token',
+  })
+  async verifyEmail(
+    @Query() verifyEmailDto: VerifyEmailDto,
+  ): Promise<MessageResponseDto> {
+    return this.authService.verifyEmail(verifyEmailDto.token);
   }
 }

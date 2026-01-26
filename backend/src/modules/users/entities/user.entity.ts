@@ -1,9 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { RentAgreement } from '../../rent/entities/rent-contract.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Exclude } from 'class-transformer';
 
-export type UserRole = 'landlord' | 'tenant' | 'agent' | 'admin';
-export type UserStatus = 'pending' | 'active' | 'suspended' | 'deactivated';
-export type KYCStatus = 'not_started' | 'pending' | 'approved' | 'rejected';
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+  LANDLORD = 'landlord',
+  TENANT = 'tenant',
+}
 
 @Entity('users')
 export class User {
@@ -13,75 +22,59 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
-  passwordHash: string;
+  @Exclude()
+  @Column({ nullable: true })
+  password: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ name: 'first_name', nullable: true })
+  firstName: string | null;
+
+  @Column({ name: 'last_name', nullable: true })
+  lastName: string | null;
+
+  @Column({ name: 'phone_number', nullable: true })
+  phoneNumber: string | null;
+
+  @Column({ name: 'avatar_url', nullable: true })
+  avatarUrl: string | null;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
-  @Column({ type: 'varchar', default: 'pending' })
-  status: UserStatus;
-
-  // Stellar integration
-  @Column({ nullable: true, unique: true })
-  stellarPublicKey?: string;
-
-  @Column({ default: false })
-  stellarAccountCreated: boolean;
-
-  // Profile
-  @Column()
-  firstName: string;
-
-  @Column()
-  lastName: string;
-
-  @Column({ nullable: true })
-  phoneNumber?: string;
-
-  @Column({ nullable: true })
-  profileImageUrl?: string;
-
-  // Verification
-  @Column({ default: false })
+  @Column({ name: 'email_verified', default: false })
   emailVerified: boolean;
 
-  @Column({ default: false })
-  phoneVerified: boolean;
+  @Exclude()
+  @Column({ name: 'verification_token', nullable: true })
+  verificationToken: string | null;
 
-  @Column({ type: 'varchar', default: 'not_started' })
-  kycStatus: KYCStatus;
+  @Exclude()
+  @Column({ name: 'reset_token', nullable: true })
+  resetToken: string | null;
 
-  // Authentication & Security
-  @Column({ nullable: true })
-  refreshToken?: string;
+  @Exclude()
+  @Column({ name: 'reset_token_expires', nullable: true })
+  resetTokenExpires: Date | null;
 
-  @Column({ nullable: true })
-  passwordResetToken?: string;
-
-  @Column({ nullable: true })
-  resetTokenExpiresAt?: Date;
-
-  @Column({ default: false })
-  accountLocked: boolean;
-
-  @Column({ default: 0 })
+  @Column({ name: 'failed_login_attempts', default: 0 })
   failedLoginAttempts: number;
 
-  @Column({ nullable: true })
-  lockedUntil?: Date;
+  @Column({ name: 'account_locked_until', nullable: true })
+  accountLockedUntil: Date | null;
 
-  // Metadata
-  @CreateDateColumn()
+  @Column({ name: 'last_login_at', nullable: true })
+  lastLoginAt: Date | null;
+
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
+
+  @Exclude()
+  @Column({ name: 'refresh_token', nullable: true })
+  refreshToken: string | null;
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @Column({ nullable: true })
-  lastLoginAt?: Date;
-
-  // Relations
-  @OneToMany(() => RentAgreement, (contract) => contract.tenantId)
-  contracts: RentAgreement[];
 }
