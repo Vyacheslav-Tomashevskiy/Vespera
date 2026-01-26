@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
+import { PaymentModule } from './modules/payments/payment.module';
 import { AppDataSource } from './database/data-source';
 
 @Module({
@@ -13,6 +14,7 @@ import { AppDataSource } from './database/data-source';
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
     HealthModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -44,7 +44,9 @@ describe('DatabaseHealthIndicator', () => {
 
   describe('isHealthy', () => {
     it('should return healthy status when database is accessible', async () => {
-      jest.spyOn(mockDataSource, 'query').mockResolvedValue([{ '?column?': 1 }]);
+      jest
+        .spyOn(mockDataSource, 'query')
+        .mockResolvedValue([{ '?column?': 1 }]);
 
       const result = await indicator.isHealthy('database');
 
@@ -66,9 +68,13 @@ describe('DatabaseHealthIndicator', () => {
         writable: true,
         configurable: true,
       });
-      
-      jest.spyOn(mockDataSource, 'initialize').mockResolvedValue(mockDataSource as DataSource);
-      jest.spyOn(mockDataSource, 'query').mockResolvedValue([{ '?column?': 1 }]);
+
+      jest
+        .spyOn(mockDataSource, 'initialize')
+        .mockResolvedValue(mockDataSource as DataSource);
+      jest
+        .spyOn(mockDataSource, 'query')
+        .mockResolvedValue([{ '?column?': 1 }]);
 
       const result = await indicator.isHealthy('database');
 
@@ -85,7 +91,9 @@ describe('DatabaseHealthIndicator', () => {
       const mockError = new Error('Connection failed');
       jest.spyOn(mockDataSource, 'query').mockRejectedValue(mockError);
 
-      await expect(indicator.isHealthy('database')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('database')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
 
     it('should handle initialization failure', async () => {
@@ -94,17 +102,21 @@ describe('DatabaseHealthIndicator', () => {
         writable: true,
         configurable: true,
       });
-      
+
       const mockError = new Error('Initialization failed');
       jest.spyOn(mockDataSource, 'initialize').mockRejectedValue(mockError);
 
-      await expect(indicator.isHealthy('database')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('database')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
   });
 
   describe('checkConnection', () => {
     it('should return true when connection is successful', async () => {
-      jest.spyOn(mockDataSource, 'query').mockResolvedValue([{ '?column?': 1 }]);
+      jest
+        .spyOn(mockDataSource, 'query')
+        .mockResolvedValue([{ '?column?': 1 }]);
 
       const result = await indicator.checkConnection();
 
@@ -126,9 +138,13 @@ describe('DatabaseHealthIndicator', () => {
         writable: true,
         configurable: true,
       });
-      
-      jest.spyOn(mockDataSource, 'initialize').mockResolvedValue(mockDataSource as DataSource);
-      jest.spyOn(mockDataSource, 'query').mockResolvedValue([{ '?column?': 1 }]);
+
+      jest
+        .spyOn(mockDataSource, 'initialize')
+        .mockResolvedValue(mockDataSource as DataSource);
+      jest
+        .spyOn(mockDataSource, 'query')
+        .mockResolvedValue([{ '?column?': 1 }]);
 
       const result = await indicator.checkConnection();
 

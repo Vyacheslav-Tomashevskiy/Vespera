@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
@@ -11,6 +12,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api', {
     exclude: ['health', 'health/detailed'], // Exclude health endpoints from prefix
   });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.use(express.json());
 
