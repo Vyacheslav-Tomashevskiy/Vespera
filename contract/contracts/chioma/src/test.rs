@@ -249,3 +249,338 @@ fn test_invalid_commission_rate() {
         &101, // > 100
     );
 }
+
+// ====== ESCROW TESTS ======
+// Note: Storage tests in modules are skipped as they require env.as_contract()
+// These integration-style tests demonstrate core functionality
+
+#[test]
+fn test_create_escrow_success() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    // Test that create works by checking the escrow details after creation
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter.clone(), 1000, token.clone()).unwrap();
+        
+        let escrow = escrow::EscrowContract::get_escrow(&env, &escrow_id).unwrap();
+        assert_eq!(escrow.depositor, depositor);
+        assert_eq!(escrow.beneficiary, beneficiary);
+        assert_eq!(escrow.arbiter, arbiter);
+        assert_eq!(escrow.amount, 1000);
+        assert_eq!(escrow.token, token);
+        assert_eq!(escrow.status, escrow::EscrowStatus::Pending);
+    });
+}
+
+#[test]
+fn test_create_escrow_invalid_amount() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let result = escrow::EscrowContract::create(&env, depositor, beneficiary, arbiter, 0, token);
+        assert_eq!(result, Err(escrow::EscrowError::InsufficientFunds));
+    });
+}
+
+#[test]
+fn test_create_escrow_duplicate_parties() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let addr = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let result = escrow::EscrowContract::create(&env, addr.clone(), addr.clone(), Address::generate(&env), 1000, token);
+        assert_eq!(result, Err(escrow::EscrowError::InvalidSigner));
+    });
+}
+
+#[test]
+fn test_fund_escrow() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary, arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        let result = escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor);
+        assert!(result.is_ok());
+        
+        // Verify status changed to Funded
+        let escrow = escrow::EscrowContract::get_escrow(&env, &escrow_id).unwrap();
+        assert_eq!(escrow.status, escrow::EscrowStatus::Funded);
+    });
+}
+
+#[test]
+fn test_approve_release_insufficient_signers() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // First approval (not enough)
+        let result = escrow::EscrowContract::approve_release(&env, &escrow_id, &depositor, beneficiary.clone());
+        assert!(result.is_ok());
+        
+        // Escrow should still be Funded, not Released
+        let escrow = escrow::EscrowContract::get_escrow(&env, &escrow_id).unwrap();
+        assert_eq!(escrow.status, escrow::EscrowStatus::Funded);
+    });
+}
+
+#[test]
+fn test_approve_release_duplicate_signer() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // First approval
+        escrow::EscrowContract::approve_release(&env, &escrow_id, &depositor, beneficiary.clone()).unwrap();
+        
+        // Same signer tries to approve again (should fail)
+        let result = escrow::EscrowContract::approve_release(&env, &escrow_id, &depositor, beneficiary);
+        assert_eq!(result, Err(escrow::EscrowError::AlreadySigned));
+    });
+}
+
+#[test]
+fn test_initiate_dispute() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary, arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // Depositor initiates dispute
+        let reason = String::from_str(&env, "Unauthorized deductions");
+        let result = escrow::DisputeHandler::initiate_dispute(&env, &escrow_id, &depositor, reason.clone());
+        assert!(result.is_ok());
+        
+        // Verify escrow is disputed
+        let is_disputed = escrow::DisputeHandler::is_disputed(&env, &escrow_id).unwrap();
+        assert!(is_disputed);
+        
+        let escrow = escrow::EscrowContract::get_escrow(&env, &escrow_id).unwrap();
+        assert_eq!(escrow.status, escrow::EscrowStatus::Disputed);
+        assert_eq!(escrow.dispute_reason, Some(reason));
+    });
+}
+
+#[test]
+fn test_initiate_dispute_empty_reason() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary, arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // Try to initiate dispute with empty reason
+        let reason = String::from_str(&env, "");
+        let result = escrow::DisputeHandler::initiate_dispute(&env, &escrow_id, &depositor, reason);
+        assert_eq!(result, Err(escrow::EscrowError::EmptyDisputeReason));
+    });
+}
+
+#[test]
+fn test_resolve_dispute() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter.clone(), 1000, token).unwrap();
+        
+        // Fund and dispute
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        let reason = String::from_str(&env, "Damage claim");
+        escrow::DisputeHandler::initiate_dispute(&env, &escrow_id, &depositor, reason).unwrap();
+        
+        // Arbiter resolves in favor of beneficiary
+        let result = escrow::DisputeHandler::resolve_dispute(&env, &escrow_id, &arbiter, beneficiary);
+        assert!(result.is_ok());
+        
+        // Verify dispute is cleared and funds released
+        let is_disputed = escrow::DisputeHandler::is_disputed(&env, &escrow_id).unwrap();
+        assert!(!is_disputed);
+        
+        let escrow = escrow::EscrowContract::get_escrow(&env, &escrow_id).unwrap();
+        assert_eq!(escrow.status, escrow::EscrowStatus::Released);
+        assert_eq!(escrow.dispute_reason, None);
+    });
+}
+
+#[test]
+fn test_resolve_dispute_non_arbiter() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter, 1000, token).unwrap();
+        
+        // Fund and dispute
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        let reason = String::from_str(&env, "Payment issue");
+        escrow::DisputeHandler::initiate_dispute(&env, &escrow_id, &depositor, reason).unwrap();
+        
+        // Non-arbiter tries to resolve (should fail)
+        let result = escrow::DisputeHandler::resolve_dispute(&env, &escrow_id, &depositor, beneficiary);
+        assert_eq!(result, Err(escrow::EscrowError::NotAuthorized));
+    });
+}
+
+#[test]
+fn test_get_approval_count() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // Check initial count
+        let count = escrow::EscrowContract::get_approval_count(&env, &escrow_id, &beneficiary).unwrap();
+        assert_eq!(count, 0);
+        
+        // Add approval
+        escrow::EscrowContract::approve_release(&env, &escrow_id, &depositor, beneficiary.clone()).unwrap();
+        
+        let count = escrow::EscrowContract::get_approval_count(&env, &escrow_id, &beneficiary).unwrap();
+        assert_eq!(count, 1);
+    });
+}
+
+#[test]
+fn test_get_dispute_info() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary, arbiter, 1000, token).unwrap();
+        
+        // Fund the escrow
+        escrow::EscrowContract::fund_escrow(&env, &escrow_id, &depositor).unwrap();
+        
+        // Initially no dispute
+        let info = escrow::DisputeHandler::get_dispute_info(&env, &escrow_id).unwrap();
+        assert_eq!(info, None);
+        
+        // Initiate dispute
+        let reason = String::from_str(&env, "Damage claim");
+        escrow::DisputeHandler::initiate_dispute(&env, &escrow_id, &depositor, reason.clone()).unwrap();
+        
+        // Check dispute info
+        let info = escrow::DisputeHandler::get_dispute_info(&env, &escrow_id).unwrap();
+        assert_eq!(info, Some(reason));
+    });
+}
+
+#[test]
+fn test_approve_release_on_pending_escrow() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+    
+    env.as_contract(&contract_id, || {
+        let escrow_id = escrow::EscrowContract::create(&env, depositor.clone(), beneficiary.clone(), arbiter, 1000, token).unwrap();
+        
+        // Try to approve without funding first
+        let result = escrow::EscrowContract::approve_release(&env, &escrow_id, &depositor, beneficiary);
+        assert_eq!(result, Err(escrow::EscrowError::InvalidState));
+    });
+}
+
+#[test]
+fn test_get_nonexistent_escrow() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());
+    
+    env.as_contract(&contract_id, || {
+        let fake_id = BytesN::<32>::from_array(&env, &[0u8; 32]);
+        let result = escrow::EscrowContract::get_escrow(&env, &fake_id);
+        assert_eq!(result, Err(escrow::EscrowError::EscrowNotFound));
+    });
+}
+
+
