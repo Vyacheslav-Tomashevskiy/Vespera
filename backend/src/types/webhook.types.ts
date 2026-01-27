@@ -2,7 +2,7 @@
 
 import { UUID, ISO8601DateTime } from './common.types';
 
-export type WebhookEvent = 
+export type WebhookEvent =
   | 'payment.received'
   | 'payment.failed'
   | 'deposit.received'

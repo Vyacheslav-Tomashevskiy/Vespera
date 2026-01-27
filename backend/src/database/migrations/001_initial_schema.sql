@@ -34,6 +34,14 @@ CREATE TABLE users (
     phone_verified BOOLEAN DEFAULT FALSE,
     kyc_status kyc_status DEFAULT 'not_started',
     
+    -- Authentication & Security
+    refresh_token VARCHAR(512),
+    password_reset_token VARCHAR(255),
+    reset_token_expires_at TIMESTAMP WITH TIME ZONE,
+    account_locked BOOLEAN DEFAULT FALSE,
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMP WITH TIME ZONE,
+    
     -- Metadata
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

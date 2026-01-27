@@ -5,7 +5,8 @@ import { HttpLog } from '../interfaces/http-log.interface';
 
 const SENSITIVE_HEADERS = ['authorization', 'cookie'];
 const SENSITIVE_BODY_FIELDS = ['password', 'token', 'secret'];
-const DEFAULT_SLOW_THRESHOLD = Number(process.env.LOG_SLOW_REQUEST_THRESHOLD) || 500;
+const DEFAULT_SLOW_THRESHOLD =
+  Number(process.env.LOG_SLOW_REQUEST_THRESHOLD) || 500;
 
 function sanitizeHeaders(headers: Record<string, any>) {
   const sanitized = { ...headers };
@@ -54,10 +55,8 @@ export class LoggerMiddleware implements NestMiddleware {
     const userAgent = req.headers['user-agent'];
     const requestHeaders = sanitizeHeaders(req.headers as any);
     const requestBody = sanitizeBody(
-        res.locals?.requestBody ?? (req as any).body ?? null
+      res.locals?.requestBody ?? (req as any).body ?? null,
     );
-
-
 
     res.on('finish', () => {
       const [sec, nano] = process.hrtime(start);
@@ -68,9 +67,8 @@ export class LoggerMiddleware implements NestMiddleware {
       const responseSize = Array.isArray(rawSize) ? rawSize.join(',') : rawSize;
 
       const responseHeaders = sanitizeHeaders(
-        res.getHeaders() as Record<string, any>
+        res.getHeaders() as Record<string, any>,
       );
-      
 
       let level: HttpLog['level'] = 'INFO';
 
@@ -100,7 +98,7 @@ export class LoggerMiddleware implements NestMiddleware {
         console.log(JSON.stringify(logPayload));
       } else {
         console.log(
-          `[${logPayload.timestamp}] ${level}: ${method} ${url} - ${statusCode} - ${responseTime}ms - IP: ${ip} - reqId: ${correlationId}`
+          `[${logPayload.timestamp}] ${level}: ${method} ${url} - ${statusCode} - ${responseTime}ms - IP: ${ip} - reqId: ${correlationId}`,
         );
       }
     });

@@ -1,12 +1,12 @@
-import { 
-  Entity, 
-  PrimaryGeneratedColumn, 
-  Column, 
-  ManyToOne, 
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
-  JoinColumn
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Payment } from './payment.entity';
@@ -17,7 +17,7 @@ export enum AgreementStatus {
   ACTIVE = 'active',
   EXPIRED = 'expired',
   TERMINATED = 'terminated',
-  DISPUTED = 'disputed'
+  DISPUTED = 'disputed',
 }
 
 @Entity('rent_agreements')
@@ -55,48 +55,48 @@ export class RentAgreement {
   escrowAccountPubKey: string;
 
   // Financial Terms
-  @Column({ 
-    name: 'monthly_rent', 
-    type: 'decimal', 
-    precision: 12, 
+  @Column({
+    name: 'monthly_rent',
+    type: 'decimal',
+    precision: 12,
     scale: 2,
-    default: 0
+    default: 0,
   })
   monthlyRent: number;
 
-  @Column({ 
-    name: 'security_deposit', 
-    type: 'decimal', 
-    precision: 12, 
+  @Column({
+    name: 'security_deposit',
+    type: 'decimal',
+    precision: 12,
     scale: 2,
-    default: 0
+    default: 0,
   })
   securityDeposit: number;
 
-  @Column({ 
-    name: 'agent_commission_rate', 
-    type: 'decimal', 
-    precision: 5, 
+  @Column({
+    name: 'agent_commission_rate',
+    type: 'decimal',
+    precision: 5,
     scale: 2,
-    default: 10.00
+    default: 10.0,
   })
   agentCommissionRate: number;
 
-  @Column({ 
-    name: 'escrow_balance', 
-    type: 'decimal', 
-    precision: 12, 
+  @Column({
+    name: 'escrow_balance',
+    type: 'decimal',
+    precision: 12,
     scale: 2,
-    default: 0.00
+    default: 0.0,
   })
   escrowBalance: number;
 
-  @Column({ 
-    name: 'total_paid', 
-    type: 'decimal', 
-    precision: 12, 
+  @Column({
+    name: 'total_paid',
+    type: 'decimal',
+    precision: 12,
     scale: 2,
-    default: 0.00
+    default: 0.0,
   })
   totalPaid: number;
 
@@ -115,11 +115,11 @@ export class RentAgreement {
   termsAndConditions: string;
 
   // Status Management
-  @Column({ 
-    name: 'status', 
-    type: 'varchar', 
+  @Column({
+    name: 'status',
+    type: 'varchar',
     length: 50,
-    default: AgreementStatus.DRAFT
+    default: AgreementStatus.DRAFT,
   })
   status: AgreementStatus;
 
@@ -130,10 +130,6 @@ export class RentAgreement {
   terminationReason: string;
 
   // Relationships
-  @ManyToOne(() => User, (user) => user.contracts, { nullable: true })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
-
   @OneToMany(() => Payment, (payment) => payment.agreement)
   payments: Payment[];
 

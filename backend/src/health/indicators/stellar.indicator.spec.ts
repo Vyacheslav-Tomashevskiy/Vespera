@@ -24,7 +24,9 @@ describe('StellarHealthIndicator', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('https://horizon-testnet.stellar.org'),
+            get: jest
+              .fn()
+              .mockReturnValue('https://horizon-testnet.stellar.org'),
           },
         },
       ],
@@ -70,16 +72,24 @@ describe('StellarHealthIndicator', () => {
 
     it('should throw HealthCheckError when Stellar is not accessible', async () => {
       const mockError = new Error('Network error');
-      jest.spyOn(httpService, 'get').mockReturnValue(throwError(() => mockError));
+      jest
+        .spyOn(httpService, 'get')
+        .mockReturnValue(throwError(() => mockError));
 
-      await expect(indicator.isHealthy('stellar')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('stellar')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
 
     it('should handle timeout errors', async () => {
       const mockError = new Error('Timeout');
-      jest.spyOn(httpService, 'get').mockReturnValue(throwError(() => mockError));
+      jest
+        .spyOn(httpService, 'get')
+        .mockReturnValue(throwError(() => mockError));
 
-      await expect(indicator.isHealthy('stellar')).rejects.toThrow(HealthCheckError);
+      await expect(indicator.isHealthy('stellar')).rejects.toThrow(
+        HealthCheckError,
+      );
     });
 
     it('should detect mainnet network', async () => {
@@ -102,9 +112,11 @@ describe('StellarHealthIndicator', () => {
         ],
       }).compile();
 
-      const mainnetIndicator = mainnetModule.get<StellarHealthIndicator>(StellarHealthIndicator);
+      const mainnetIndicator = mainnetModule.get<StellarHealthIndicator>(
+        StellarHealthIndicator,
+      );
       const mainnetHttpService = mainnetModule.get<HttpService>(HttpService);
-      
+
       const mockResponse: AxiosResponse = {
         data: {
           horizon_version: '2.0.0',
@@ -137,15 +149,19 @@ describe('StellarHealthIndicator', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn().mockReturnValue('https://custom-horizon.example.com'),
+              get: jest
+                .fn()
+                .mockReturnValue('https://custom-horizon.example.com'),
             },
           },
         ],
       }).compile();
 
-      const customIndicator = customModule.get<StellarHealthIndicator>(StellarHealthIndicator);
+      const customIndicator = customModule.get<StellarHealthIndicator>(
+        StellarHealthIndicator,
+      );
       const customHttpService = customModule.get<HttpService>(HttpService);
-      
+
       const mockResponse: AxiosResponse = {
         data: {
           horizon_version: '2.0.0',
@@ -219,9 +235,13 @@ describe('StellarHealthIndicator', () => {
 
     it('should throw error when ledger request fails', async () => {
       const mockError = new Error('Ledger request failed');
-      jest.spyOn(httpService, 'get').mockReturnValue(throwError(() => mockError));
+      jest
+        .spyOn(httpService, 'get')
+        .mockReturnValue(throwError(() => mockError));
 
-      await expect(indicator.checkLedger()).rejects.toThrow('Ledger request failed');
+      await expect(indicator.checkLedger()).rejects.toThrow(
+        'Ledger request failed',
+      );
     });
   });
 });

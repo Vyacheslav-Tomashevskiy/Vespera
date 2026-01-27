@@ -1,8 +1,11 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracterror, contractevent, vec, Address, BytesN, Env, String, Vec};
+#![allow(clippy::too_many_arguments)]
+use soroban_sdk::{
+    contract, contracterror, contractevent, contractimpl, vec, Address, Env, String, Vec,
+};
 
 mod types;
-use types::{AgreementStatus, DataKey, RentAgreement};
+use types::{AgreementStatus, DataKey, PaymentRecord, RentAgreement};
 
 pub mod escrow;
 use escrow::{EscrowContract, DisputeHandler, EscrowError};
@@ -15,10 +18,7 @@ pub enum Error {
     InvalidAmount = 5,
     InvalidDate = 6,
     InvalidCommissionRate = 7,
-    // Escrow errors are handled via EscrowError, mapped to contract errors
-    EscrowNotAuthorized = 8,
-    EscrowInvalidState = 9,
-    EscrowAlreadySigned = 10,
+    PaymentNotFound = 11,
 }
 
 #[contractevent]
@@ -30,6 +30,7 @@ pub struct AgreementCreatedEvent {
 #[contract]
 pub struct Contract;
 
+#[allow(clippy::too_many_arguments)]
 #[contractimpl]
 impl Contract {
     pub fn hello(env: Env, to: String) -> Vec<String> {
@@ -40,6 +41,7 @@ impl Contract {
     ///
     /// Authorization:
     /// - Tenant MUST authorize creation (prevents landlord-only spoofing)
+    #[allow(clippy::too_many_arguments)]
     pub fn create_agreement(
         env: Env,
         agreement_id: String,
@@ -65,7 +67,11 @@ impl Contract {
         )?;
 
         // Check for duplicate agreement_id
-        if env.storage().persistent().has(&DataKey::Agreement(agreement_id.clone())) {
+        if env
+            .storage()
+            .persistent()
+            .has(&DataKey::Agreement(agreement_id.clone()))
+        {
             return Err(Error::AgreementAlreadyExists);
         }
 
@@ -84,17 +90,43 @@ impl Contract {
         };
 
         // Store agreement
-        env.storage().persistent().set(&DataKey::Agreement(agreement_id.clone()), &agreement);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Agreement(agreement_id.clone()), &agreement);
 
         // Update counter
-        let mut count: u32 = env.storage().instance().get(&DataKey::AgreementCount).unwrap_or(0);
+        let mut count: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::AgreementCount)
+            .unwrap_or(0);
         count += 1;
-        env.storage().instance().set(&DataKey::AgreementCount, &count);
+        env.storage()
+            .instance()
+            .set(&DataKey::AgreementCount, &count);
 
         // Emit event
         AgreementCreatedEvent { agreement_id }.publish(&env);
 
         Ok(())
+    }
+
+    /// Retrieves a rent agreement by its unique identifier.
+   
+    pub fn get_agreement(env: Env, agreement_id: String) -> Option<RentAgreement> {
+        env.storage().persistent().get(&DataKey::Agreement(agreement_id))
+    }
+
+    /// Checks whether a rent agreement exists for the given identifier.
+    
+    pub fn has_agreement(env: Env, agreement_id: String) -> bool {
+        env.storage().persistent().has(&DataKey::Agreement(agreement_id))
+    }
+
+    /// Returns the total number of rent agreements created.
+    
+    pub fn get_agreement_count(env: Env) -> u32 {
+        env.storage().instance().get(&DataKey::AgreementCount).unwrap_or(0)
     }
 
     fn validate_agreement_params(
@@ -119,125 +151,60 @@ impl Contract {
         Ok(())
     }
 
-    // ====== ESCROW FUNCTIONS ======
-
-    /// Create a new security deposit escrow.
-    /// Returns the escrow ID on success.
-    ///
-    /// # Arguments
-    /// * `depositor` - The tenant depositing funds
-    /// * `beneficiary` - The landlord who benefits from the deposit
-    /// * `arbiter` - The admin who can resolve disputes
-    /// * `amount` - Amount of funds to hold (must be > 0)
-    /// * `token` - Token contract address (USDC, XLM, etc.)
-    ///
-    /// # Errors
-    /// Returns EscrowError if validation fails
-    pub fn create_escrow(
-        env: Env,
-        depositor: Address,
-        beneficiary: Address,
-        arbiter: Address,
-        amount: i128,
-        token: Address,
-    ) -> Result<BytesN<32>, EscrowError> {
-        EscrowContract::create(&env, depositor, beneficiary, arbiter, amount, token)
+    pub fn get_payment(env: Env, payment_id: String) -> Result<PaymentRecord, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Payment(payment_id))
+            .ok_or(Error::PaymentNotFound)
     }
 
-    /// Fund an existing escrow (transition from Pending to Funded).
-    /// Only the depositor can call this.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow to fund
-    /// * `caller` - Address of the caller (must be the depositor)
-    ///
-    /// # Errors
-    /// Returns EscrowError if escrow doesn't exist or caller is not depositor
-    pub fn fund_escrow(env: Env, escrow_id: BytesN<32>, caller: Address) -> Result<(), EscrowError> {
-        EscrowContract::fund_escrow(&env, &escrow_id, &caller)
+    pub fn get_payment_count(env: Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&DataKey::PaymentCount)
+            .unwrap_or(0)
     }
 
-    /// Approve release of escrowed funds.
-    /// Any party (depositor, beneficiary, arbiter) can approve release.
-    /// Release executes automatically when 2 of 3 parties approve the same target.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    /// * `caller` - Address of the caller (must be a party to the escrow)
-    /// * `release_to` - Address to release funds to (must be beneficiary or depositor)
-    ///
-    /// # Errors
-    /// Returns EscrowError if approval conditions aren't met
-    pub fn approve_release(env: Env, escrow_id: BytesN<32>, caller: Address, release_to: Address) -> Result<(), EscrowError> {
-        EscrowContract::approve_release(&env, &escrow_id, &caller, release_to)
+    pub fn get_total_paid(env: Env, agreement_id: String) -> Result<i128, Error> {
+        let payment_count: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::PaymentCount)
+            .unwrap_or(0);
+
+        let mut total: i128 = 0;
+
+        for i in 0..payment_count {
+            let payment_id = Self::u32_to_string(&env, i);
+            if let Some(payment) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, PaymentRecord>(&DataKey::Payment(payment_id))
+            {
+                if payment.agreement_id == agreement_id {
+                    total += payment.amount;
+                }
+            }
+        }
+
+        Ok(total)
     }
 
-    /// Get details of an escrow.
-    /// Public read-only function.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow to retrieve
-    ///
-    /// # Returns
-    /// Escrow struct with all details, or error if not found
-    pub fn get_escrow(env: Env, escrow_id: BytesN<32>) -> Result<escrow::Escrow, EscrowError> {
-        EscrowContract::get_escrow(&env, &escrow_id)
-    }
-
-    /// Get count of approvals for a specific release target.
-    /// Returns number of unique signers approving release to that address.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    /// * `release_to` - The release target to count approvals for
-    pub fn get_approval_count(env: Env, escrow_id: BytesN<32>, release_to: Address) -> Result<u32, EscrowError> {
-        EscrowContract::get_approval_count(&env, &escrow_id, &release_to)
-    }
-
-    /// Initiate a dispute on an escrow.
-    /// Only depositor or beneficiary can call this.
-    /// Freezes funds until admin resolves.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    /// * `caller` - Address of the caller (must be depositor or beneficiary)
-    /// * `reason` - Reason for the dispute (must not be empty)
-    ///
-    /// # Errors
-    /// Returns EscrowError if caller is not a party or reason is empty
-    pub fn initiate_dispute(env: Env, escrow_id: BytesN<32>, caller: Address, reason: String) -> Result<(), EscrowError> {
-        DisputeHandler::initiate_dispute(&env, &escrow_id, &caller, reason)
-    }
-
-    /// Resolve a dispute (admin only).
-    /// Arbiter can release funds to either party or refund to depositor.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    /// * `caller` - Address of the caller (must be arbiter)
-    /// * `release_to` - Address to release funds to
-    ///
-    /// # Errors
-    /// Returns EscrowError if caller is not arbiter or escrow is not disputed
-    pub fn resolve_dispute(env: Env, escrow_id: BytesN<32>, caller: Address, release_to: Address) -> Result<(), EscrowError> {
-        DisputeHandler::resolve_dispute(&env, &escrow_id, &caller, release_to)
-    }
-
-    /// Check if an escrow is currently disputed.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    pub fn is_escrow_disputed(env: Env, escrow_id: BytesN<32>) -> Result<bool, EscrowError> {
-        DisputeHandler::is_disputed(&env, &escrow_id)
-    }
-
-    /// Get dispute information for an escrow.
-    /// Returns the dispute reason if escrow is disputed, None otherwise.
-    ///
-    /// # Arguments
-    /// * `escrow_id` - ID of the escrow
-    pub fn get_dispute_info(env: Env, escrow_id: BytesN<32>) -> Result<Option<String>, EscrowError> {
-        DisputeHandler::get_dispute_info(&env, &escrow_id)
+    fn u32_to_string(env: &Env, num: u32) -> String {
+        match num {
+            0 => String::from_str(env, "0"),
+            1 => String::from_str(env, "1"),
+            2 => String::from_str(env, "2"),
+            3 => String::from_str(env, "3"),
+            4 => String::from_str(env, "4"),
+            5 => String::from_str(env, "5"),
+            6 => String::from_str(env, "6"),
+            7 => String::from_str(env, "7"),
+            8 => String::from_str(env, "8"),
+            9 => String::from_str(env, "9"),
+            10 => String::from_str(env, "10"),
+            _ => String::from_str(env, "unknown"),
+        }
     }
 }
 

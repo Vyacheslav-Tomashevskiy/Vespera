@@ -1,4 +1,7 @@
-import { LoggerMiddleware, sanitizeBody } from '../middleware/logger.middleware';
+import {
+  LoggerMiddleware,
+  sanitizeBody,
+} from '../middleware/logger.middleware';
 import { Request, Response } from 'express';
 
 describe('LoggerMiddleware', () => {
