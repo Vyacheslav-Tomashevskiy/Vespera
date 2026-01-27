@@ -14,6 +14,7 @@ import { AgreementsModule } from './modules/agreements/agreements.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { DisputesModule } from './modules/disputes/disputes.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { HealthModule } from './health/health.module';
 import { AppDataSource } from './database/data-source';
@@ -47,6 +48,7 @@ import { AuthRateLimitMiddleware } from './modules/auth/middleware/rate-limit.mi
     AuditModule,
     AuthModule,
     UsersModule,
+    DisputesModule,
     TypeOrmModule.forRoot(AppDataSource.options),
     HealthModule,
   ],

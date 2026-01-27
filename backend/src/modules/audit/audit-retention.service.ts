@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
-import { AuditLog } from './entities/audit-log.entity';
+import { AuditLog, AuditLevel } from './entities/audit-log.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
@@ -25,25 +25,25 @@ export class AuditRetentionService {
       // Delete INFO and WARN logs older than 90 days
       const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       const infoWarnDeleted = await this.auditLogRepository.delete({
-        level: 'INFO',
+        level: AuditLevel.INFO,
         performed_at: LessThan(ninetyDaysAgo),
       });
       const warnDeleted = await this.auditLogRepository.delete({
-        level: 'WARN',
+        level: AuditLevel.WARN,
         performed_at: LessThan(ninetyDaysAgo),
       });
 
       // Delete ERROR logs older than 180 days
       const sixMonthsAgo = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
       const errorDeleted = await this.auditLogRepository.delete({
-        level: 'ERROR',
+        level: AuditLevel.ERROR,
         performed_at: LessThan(sixMonthsAgo),
       });
 
       // Keep SECURITY logs for 1 year
       const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
       const securityDeleted = await this.auditLogRepository.delete({
-        level: 'SECURITY',
+        level: AuditLevel.SECURITY,
         performed_at: LessThan(oneYearAgo),
       });
 
@@ -62,7 +62,7 @@ export class AuditRetentionService {
 
       const result = await this.auditLogRepository.delete({
         performed_at: LessThan(cutoffDate),
-        level: 'INFO', // Only delete INFO logs manually
+        level: AuditLevel.INFO, // Only delete INFO logs manually
       });
 
       this.logger.log(`Manually deleted ${result.affected} audit logs older than ${daysToKeep} days`);
