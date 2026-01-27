@@ -9,6 +9,8 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,12 +27,14 @@ import { UpdateAgreementDto } from './dto/update-agreement.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
 import { TerminateAgreementDto } from './dto/terminate-agreement.dto';
 import { QueryAgreementsDto } from './dto/query-agreements.dto';
+import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Rent Agreements')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('api/agreements')
+@UseInterceptors(AuditLogInterceptor)
 export class AgreementsController {
   constructor(private readonly agreementsService: AgreementsService) {}
 
