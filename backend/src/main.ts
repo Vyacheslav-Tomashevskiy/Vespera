@@ -53,7 +53,8 @@ async function bootstrap() {
   app.use(express.json({ limit: jsonLimit }));
   app.use(express.urlencoded({ extended: true, limit: urlencodedLimit }));
 
-  app.use(new LoggerMiddleware().use);
+  const loggerMiddleware = new LoggerMiddleware();
+  app.use(loggerMiddleware.use.bind(loggerMiddleware));
 
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
@@ -69,12 +70,7 @@ async function bootstrap() {
       transform: true,
       skipMissingProperties: false,
       disableErrorMessages: isProduction,
-      exceptionFactory: (errors) => {
-        const messages = errors.map((error) => {
-          return Object.values(error.constraints || {}).join(', ');
-        });
-        return new ValidationPipe().createExceptionFactory()(errors);
-      },
+      exceptionFactory: new ValidationPipe().createExceptionFactory(),
     }),
   );
 
@@ -104,4 +100,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

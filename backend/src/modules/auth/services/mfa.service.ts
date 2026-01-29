@@ -144,11 +144,12 @@ export class MfaService {
   /**
    * Verify TOTP token by MFA token (extracts userId from token)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   verifyTotpTokenByMfaToken(
     _mfaToken: string,
     _token: string,
   ): Promise<{ userId: string; isValid: boolean }> {
+    void _mfaToken;
+    void _token;
     // This will be called from controller with decoded token
     return Promise.reject(new Error('Use verifyTotpToken with userId instead'));
   }

@@ -501,7 +501,7 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     const {
       password: _password,
       refreshToken: _refreshToken,
@@ -509,6 +509,7 @@ export class AuthService {
       verificationToken: _verificationToken,
       ...sanitized
     } = user;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     return sanitized;
   }
 }

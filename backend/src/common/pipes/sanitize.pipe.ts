@@ -11,7 +11,7 @@ import {
  */
 @Injectable()
 export class SanitizePipe implements PipeTransform {
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: unknown, metadata: ArgumentMetadata): unknown {
     if (value === null || value === undefined) {
       return value;
     }
@@ -25,13 +25,12 @@ export class SanitizePipe implements PipeTransform {
     }
 
     if (typeof value === 'object') {
-      const sanitized: any = {};
-      for (const key in value) {
-        if (Object.prototype.hasOwnProperty.call(value, key)) {
-          sanitized[key] = this.transform(value[key], metadata);
-        }
+      const input = value as Record<string, unknown>;
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(input)) {
+        sanitized[key] = this.transform(val, metadata);
       }
-      return sanitized;
+      return sanitized as unknown;
     }
 
     return value;
@@ -82,7 +81,7 @@ export class SanitizePipe implements PipeTransform {
  */
 @Injectable()
 export class SanitizeValidationPipe extends SanitizePipe {
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: unknown, metadata: ArgumentMetadata): unknown {
     const sanitized = super.transform(value, metadata);
 
     // Additional validation for common attack patterns

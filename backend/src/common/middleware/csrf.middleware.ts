@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
 interface RequestWithCookies extends Request {
-  cookies?: Record<string, string>;
+  cookies: Record<string, string> | undefined;
 }
 
 /**
@@ -44,7 +44,7 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Skip CSRF for safe methods
-    const method = req.method as string;
+    const method = req.method;
     if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       // Generate token for GET requests (for forms)
       this.generateToken(req, res);
@@ -52,7 +52,7 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Skip CSRF for health checks and public endpoints
-    const path = req.path as string;
+    const path = req.path;
     if (
       path.startsWith('/health') ||
       path.startsWith('/api/docs') ||
@@ -62,11 +62,9 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Validate CSRF token for state-changing methods
-    const headerKey = this.headerName.toLowerCase() as string;
+    const headerKey = this.headerName.toLowerCase();
     const tokenFromHeader = req.headers[headerKey] as string | undefined;
-    const tokenFromCookie = req.cookies?.[this.cookieName] as
-      | string
-      | undefined;
+    const tokenFromCookie = req.cookies?.[this.cookieName];
 
     if (!tokenFromHeader || !tokenFromCookie) {
       this.logger.warn(

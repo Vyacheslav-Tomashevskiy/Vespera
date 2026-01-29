@@ -78,7 +78,7 @@ export class PasswordPolicyService {
 
     // Check password history (if userId provided)
     if (userId) {
-      await this.checkPasswordHistory(password, userId);
+      this.checkPasswordHistory(password, userId);
     }
   }
 
@@ -139,11 +139,12 @@ export class PasswordPolicyService {
   /**
    * Check password history (prevent reuse of last 5 passwords)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async checkPasswordHistory(
+  private checkPasswordHistory(
     _newPassword: string,
     _userId: string,
-  ): Promise<void> {
+  ): void {
+    void _newPassword;
+    void _userId;
     // Note: This requires a password_history table to be implemented
     // For now, we'll skip this check but leave the method for future implementation
     // In a full implementation, you would:

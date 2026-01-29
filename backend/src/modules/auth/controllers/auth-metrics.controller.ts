@@ -251,6 +251,7 @@ export class AuthMetricsController {
     const stats24h = await this.authMetricsService.getAuthStats(1);
     const performance24h =
       await this.authMetricsService.getPerformanceMetrics(1);
+    void performance24h;
 
     const stellarAttempts = stats24h.methodBreakdown.stellar.attempts;
     const totalAttempts = stats24h.totalAttempts;

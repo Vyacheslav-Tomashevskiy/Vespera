@@ -19,7 +19,6 @@ import {
 } from '@stellar/stellar-sdk';
 import { User, AuthMethod } from '../../users/entities/user.entity';
 import {
-  StellarAuthChallengeDto,
   StellarAuthVerifyDto,
 } from '../dto/stellar-auth.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
@@ -153,7 +152,7 @@ export class StellarAuthService {
     }
 
     // Verify the signature
-    const isValidSignature = await this.verifyChallengeSignature(
+    const isValidSignature = this.verifyChallengeSignature(
       challenge,
       signature,
       walletAddress,
@@ -239,7 +238,7 @@ export class StellarAuthService {
     return Keypair.fromSecret(secretKey);
   }
 
-  private async getServerAccount() {
+  private getServerAccount() {
     const serverKeypair = this.getServerKeypair();
     const serverPublicKey = serverKeypair.publicKey();
 
@@ -259,16 +258,17 @@ export class StellarAuthService {
     return network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
   }
 
-  private async verifyChallengeSignature(
+  private verifyChallengeSignature(
     challengeXdr: string,
     signature: string,
     walletAddress: string,
-  ): Promise<boolean> {
+  ): boolean {
     try {
       const transaction = TransactionBuilder.fromXDR(
         challengeXdr,
         this.getNetworkPassphrase(),
       );
+      void signature;
 
       // Verify the signature using the correct Stellar SDK API
       const keypair = Keypair.fromPublicKey(walletAddress);
@@ -282,8 +282,9 @@ export class StellarAuthService {
           return false;
         }
       });
-    } catch (error) {
-      this.logger.error(`Signature verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Signature verification failed: ${message}`);
       return false;
     }
   }
@@ -336,13 +337,15 @@ export class StellarAuthService {
   }
 
   private sanitizeUser(user: User) {
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     const {
-      password,
-      refreshToken,
-      resetToken,
-      verificationToken,
+      password: _password,
+      refreshToken: _refreshToken,
+      resetToken: _resetToken,
+      verificationToken: _verificationToken,
       ...sanitized
     } = user;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     return sanitized;
   }
 }
