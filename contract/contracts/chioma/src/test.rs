@@ -51,6 +51,7 @@ fn test_create_agreement_success() {
         &100,  // start_date
         &200,  // end_date
         &10,   // agent_commission_rate
+        &Address::generate(&env),
     );
 
     // Check events
@@ -91,6 +92,7 @@ fn test_create_agreement_with_agent() {
         &1000,
         &2000,
         &5,
+        &Address::generate(&env),
     );
 }
 
@@ -116,6 +118,7 @@ fn test_create_agreement_without_agent() {
         &500,
         &1500,
         &0,
+        &Address::generate(&env),
     );
 }
 
@@ -142,6 +145,7 @@ fn test_negative_rent_rejected() {
         &100,
         &200,
         &0,
+        &Address::generate(&env),
     );
 }
 
@@ -168,6 +172,7 @@ fn test_invalid_dates_rejected() {
         &200, // start_date
         &100, // end_date < start_date
         &0,
+        &Address::generate(&env),
     );
 }
 
@@ -194,6 +199,7 @@ fn test_duplicate_agreement_id() {
         &100,
         &200,
         &0,
+        &Address::generate(&env),
     );
 
     // Try to create again with same ID
@@ -207,6 +213,7 @@ fn test_duplicate_agreement_id() {
         &100,
         &200,
         &0,
+        &Address::generate(&env),
     );
 }
 
@@ -233,6 +240,7 @@ fn test_invalid_commission_rate() {
         &100,
         &200,
         &101, // > 100
+        &Address::generate(&env),
     );
 }
 
@@ -368,6 +376,7 @@ fn create_pending_agreement(
         &100,
         &1000000, // far future end_date to avoid expiration
         &0,
+        &Address::generate(env),
     );
 
     // Update status to Pending manually
@@ -462,6 +471,7 @@ fn test_sign_agreement_invalid_state() {
         &100,
         &1000000,
         &0,
+        &Address::generate(&env),
     );
 
     // Try to sign agreement in Draft state
@@ -491,6 +501,7 @@ fn test_sign_agreement_expired() {
         &100,
         &200, // end_date = 200
         &0,
+        &Address::generate(&env),
     );
 
     // Update status to Pending

@@ -16,7 +16,7 @@
               "function_name": "create_agreement",
               "args": [
                 {
-                  "string": "DUPLICATE_ID"
+                  "string": "SIGN_002"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
@@ -35,13 +35,13 @@
                   "u64": "100"
                 },
                 {
-                  "u64": "200"
+                  "u64": "1000000"
                 },
                 {
                   "u32": 0
                 },
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 }
               ]
             }
@@ -50,6 +50,8 @@
         }
       ]
     ],
+    [],
+    [],
     []
   ],
   "ledger": {
@@ -72,7 +74,7 @@
                   "symbol": "Agreement"
                 },
                 {
-                  "string": "DUPLICATE_ID"
+                  "string": "SIGN_002"
                 }
               ]
             },
@@ -92,7 +94,7 @@
                       "symbol": "Agreement"
                     },
                     {
-                      "string": "DUPLICATE_ID"
+                      "string": "SIGN_002"
                     }
                   ]
                 },
@@ -118,7 +120,7 @@
                         "symbol": "agreement_id"
                       },
                       "val": {
-                        "string": "DUPLICATE_ID"
+                        "string": "SIGN_002"
                       }
                     },
                     {
@@ -126,7 +128,7 @@
                         "symbol": "end_date"
                       },
                       "val": {
-                        "u64": "200"
+                        "u64": "1000000"
                       }
                     },
                     {
@@ -174,7 +176,7 @@
                         "symbol": "payment_token"
                       },
                       "val": {
-                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                       }
                     },
                     {
@@ -206,7 +208,7 @@
                       "val": {
                         "vec": [
                           {
-                            "symbol": "Draft"
+                            "symbol": "Pending"
                           }
                         ]
                       }

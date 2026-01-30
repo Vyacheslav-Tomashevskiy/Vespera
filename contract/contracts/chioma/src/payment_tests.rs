@@ -1,7 +1,7 @@
 use crate::payment::*;
 use crate::types::*;
 use soroban_sdk::token::StellarAssetClient as TokenAdminClient;
-use soroban_sdk::{testutils::Address as _, Address, Env, String};
+use soroban_sdk::{testutils::Address as _, Address, Env, Map, String};
 
 // Helper function to create a test agreement
 fn create_test_agreement(
@@ -13,6 +13,7 @@ fn create_test_agreement(
     monthly_rent: i128,
     commission_rate: u32,
     status: AgreementStatus,
+    payment_token: Address,
 ) -> RentAgreement {
     RentAgreement {
         agreement_id: String::from_str(env, id),
@@ -28,6 +29,9 @@ fn create_test_agreement(
         start_date: 0,
         end_date: 0,
         signed_at: None,
+        payment_token,
+        next_payment_due: 0,
+        payment_history: Map::new(env),
     }
 }
 
@@ -58,6 +62,7 @@ fn test_pay_rent_without_agent() {
         1000,
         0,
         AgreementStatus::Active,
+        token.clone(),
     );
 
     let contract_id = env.register(RentalContract, ());
@@ -97,6 +102,7 @@ fn test_pay_rent_with_agent_commission() {
         1000,
         500, // 5% commission
         AgreementStatus::Active,
+        token.clone(),
     );
 
     let contract_id = env.register(RentalContract, ());
@@ -140,6 +146,7 @@ fn test_payment_record_created() {
         1000,
         0,
         AgreementStatus::Active,
+        token.clone(),
     );
 
     let contract_id = env.register(RentalContract, ());
@@ -187,6 +194,7 @@ fn test_wrong_rent_amount() {
         1000,
         0,
         AgreementStatus::Active,
+        token.clone(),
     );
 
     let contract_id = env.register(RentalContract, ());
@@ -229,7 +237,8 @@ fn test_pay_rent_before_deposit() {
         None,
         1000,
         0,
-        AgreementStatus::Pending, // Not active
+        AgreementStatus::Pending,
+        token.clone(), // Not active
     );
 
     let contract_id = env.register(RentalContract, ());
@@ -265,6 +274,7 @@ fn test_multiple_rent_payments() {
         1000,
         0,
         AgreementStatus::Active,
+        token.clone(),
     );
 
     let contract_id = env.register(RentalContract, ());

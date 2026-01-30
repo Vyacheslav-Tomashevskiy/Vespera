@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 4,
+    "address": 5,
     "nonce": 0,
     "mux_id": 0
   },
@@ -41,6 +41,9 @@
                 },
                 {
                   "u32": 10
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 }
               ]
             }
@@ -147,10 +150,34 @@
                     },
                     {
                       "key": {
+                        "symbol": "next_payment_due"
+                      },
+                      "val": {
+                        "u64": "100"
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "payment_count"
                       },
                       "val": {
                         "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "payment_history"
+                      },
+                      "val": {
+                        "map": []
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "payment_token"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                       }
                     },
                     {
@@ -160,6 +187,12 @@
                       "val": {
                         "i128": "2000"
                       }
+                    },
+                    {
+                      "key": {
+                        "symbol": "signed_at"
+                      },
+                      "val": "void"
                     },
                     {
                       "key": {

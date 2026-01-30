@@ -1,9 +1,11 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
-use soroban_sdk::{contract, contractevent, contractimpl, vec, Address, Env, String, Vec};
+use soroban_sdk::{
+    contract, contractevent, contractimpl, token, vec, Address, Env, Map, String, Vec,
+};
 
 mod types;
-use types::{AgreementStatus, DataKey, Error, PaymentRecord, RentAgreement};
+use types::{AgreementStatus, DataKey, Error, PaymentRecord, PaymentSplit, RentAgreement};
 
 pub mod escrow;
 
@@ -20,6 +22,18 @@ pub struct AgreementSigned {
     pub landlord: Address,
     pub tenant: Address,
     pub signed_at: u64,
+}
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RentPaid {
+    pub agreement_id: String,
+    pub payer: Address,
+    pub landlord: Address,
+    pub amount: i128,
+    pub platform_fee: i128,
+    pub payment_date: u64,
+    pub token: Address,
 }
 
 #[contract]
@@ -48,6 +62,7 @@ impl Contract {
         start_date: u64,
         end_date: u64,
         agent_commission_rate: u32,
+        payment_token: Address,
     ) -> Result<(), Error> {
         // Tenant MUST authorize creation
         tenant.require_auth();
@@ -85,6 +100,9 @@ impl Contract {
             total_rent_paid: 0,
             payment_count: 0,
             signed_at: None,
+            payment_token,
+            next_payment_due: start_date,
+            payment_history: Map::new(&env),
         };
 
         // Store agreement
@@ -260,6 +278,115 @@ impl Contract {
             10 => String::from_str(env, "10"),
             _ => String::from_str(env, "unknown"),
         }
+    }
+
+    /// Sets the platform fee collector address
+    pub fn set_platform_fee_collector(env: Env, collector: Address) {
+        collector.require_auth();
+        env.storage()
+            .instance()
+            .set(&DataKey::PlatformFeeCollector, &collector);
+    }
+
+    /// Process rent payment with 90/10 landlord/platform split
+    /// Follows checks-effects-interactions pattern for reentrancy safety
+    pub fn pay_rent(
+        env: Env,
+        from: Address,
+        agreement_id: String,
+        payment_amount: i128,
+    ) -> Result<(), Error> {
+        // Authorization
+        from.require_auth();
+
+        // Load agreement
+        let mut agreement: RentAgreement = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Agreement(agreement_id.clone()))
+            .ok_or(Error::AgreementNotFound)?;
+
+        // Validation
+        if agreement.status != AgreementStatus::Active {
+            return Err(Error::AgreementNotActive);
+        }
+
+        if from != agreement.tenant {
+            return Err(Error::NotTenant);
+        }
+
+        if payment_amount != agreement.monthly_rent {
+            return Err(Error::InvalidPaymentAmount);
+        }
+
+        let current_time = env.ledger().timestamp();
+        if current_time < agreement.next_payment_due {
+            return Err(Error::PaymentNotDue);
+        }
+
+        // Calculate 90/10 split
+        let landlord_amount = (payment_amount * 90) / 100;
+        let platform_amount = payment_amount - landlord_amount;
+
+        let platform_collector: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::PlatformFeeCollector)
+            .ok_or(Error::PaymentFailed)?;
+
+        // Effects: Update state BEFORE external calls
+        let payment_month = agreement.payment_history.len();
+        agreement.payment_history.set(
+            payment_month,
+            PaymentSplit {
+                landlord_amount,
+                platform_amount,
+                token: agreement.payment_token.clone(),
+                payment_date: current_time,
+            },
+        );
+        agreement.next_payment_due = current_time + 2_592_000; // 30 days
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::Agreement(agreement_id.clone()), &agreement);
+
+        // Interactions: External calls AFTER state updates
+        let token_client = token::Client::new(&env, &agreement.payment_token);
+        token_client.transfer(&from, &agreement.landlord, &landlord_amount);
+        token_client.transfer(&from, &platform_collector, &platform_amount);
+
+        // Event
+        RentPaid {
+            agreement_id,
+            payer: from,
+            landlord: agreement.landlord.clone(),
+            amount: payment_amount,
+            platform_fee: platform_amount,
+            payment_date: current_time,
+            token: agreement.payment_token.clone(),
+        }
+        .publish(&env);
+
+        Ok(())
+    }
+
+    /// Get payment details for a specific month
+    pub fn get_payment_split(
+        env: Env,
+        agreement_id: String,
+        month: u32,
+    ) -> Result<PaymentSplit, Error> {
+        let agreement: RentAgreement = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Agreement(agreement_id))
+            .ok_or(Error::AgreementNotFound)?;
+
+        agreement
+            .payment_history
+            .get(month)
+            .ok_or(Error::PaymentNotFound)
     }
 }
 mod payment;

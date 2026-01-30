@@ -1,4 +1,4 @@
-use soroban_sdk::{contracterror, contracttype, Address, String};
+use soroban_sdk::{contracterror, contracttype, Address, Map, String};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -28,6 +28,9 @@ pub struct RentAgreement {
     pub total_rent_paid: i128,
     pub payment_count: u32,
     pub signed_at: Option<u64>,
+    pub payment_token: Address,
+    pub next_payment_due: u64,
+    pub payment_history: Map<u32, PaymentSplit>,
 }
 
 #[contracterror]
@@ -45,6 +48,8 @@ pub enum Error {
     NotTenant = 14,
     InvalidState = 15,
     Expired = 16,
+    InvalidPaymentAmount = 17,
+    PaymentNotDue = 18,
 }
 
 #[contracttype]
@@ -60,10 +65,20 @@ pub struct PaymentRecord {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PaymentSplit {
+    pub landlord_amount: i128,
+    pub platform_amount: i128,
+    pub token: Address,
+    pub payment_date: u64,
+}
+
+#[contracttype]
 pub enum DataKey {
     Agreement(String),
     AgreementCount,
     Payment(String),
     PaymentRecord(String, u32),
     PaymentCount,
+    PlatformFeeCollector,
 }

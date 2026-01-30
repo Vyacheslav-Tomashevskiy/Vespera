@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 5,
+    "address": 4,
     "nonce": 0,
     "mux_id": 0
   },
@@ -16,7 +16,7 @@
               "function_name": "create_agreement",
               "args": [
                 {
-                  "string": "DUPLICATE_ID"
+                  "string": "SIGN_004"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
@@ -50,12 +50,14 @@
         }
       ]
     ],
+    [],
+    [],
     []
   ],
   "ledger": {
     "protocol_version": 23,
     "sequence_number": 0,
-    "timestamp": 0,
+    "timestamp": 300,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -72,7 +74,7 @@
                   "symbol": "Agreement"
                 },
                 {
-                  "string": "DUPLICATE_ID"
+                  "string": "SIGN_004"
                 }
               ]
             },
@@ -92,7 +94,7 @@
                       "symbol": "Agreement"
                     },
                     {
-                      "string": "DUPLICATE_ID"
+                      "string": "SIGN_004"
                     }
                   ]
                 },
@@ -118,7 +120,7 @@
                         "symbol": "agreement_id"
                       },
                       "val": {
-                        "string": "DUPLICATE_ID"
+                        "string": "SIGN_004"
                       }
                     },
                     {
@@ -206,7 +208,7 @@
                       "val": {
                         "vec": [
                           {
-                            "symbol": "Draft"
+                            "symbol": "Pending"
                           }
                         ]
                       }
