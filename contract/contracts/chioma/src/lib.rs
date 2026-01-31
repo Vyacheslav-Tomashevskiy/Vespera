@@ -31,6 +31,15 @@ impl Contract {
         vec![&env, String::from_str(&env, "Hello"), to]
     }
 
+    /// Initialize the contract with an admin and configuration.
+    /// 
+    /// # Arguments
+    /// * `admin` - The address that will have admin privileges
+    /// * `config` - Initial configuration parameters
+    /// 
+    /// # Errors
+    /// * `AlreadyInitialized` - If the contract has already been initialized
+    /// * `InvalidConfig` - If the configuration parameters are invalid
     pub fn initialize(env: Env, admin: Address, config: Config) -> Result<(), RentalError> {
         if env.storage().instance().has(&DataKey::State) {
             return Err(RentalError::AlreadyInitialized);
@@ -41,8 +50,6 @@ impl Contract {
         if config.fee_bps > 10_000 {
             return Err(RentalError::InvalidConfig);
         }
-
-        config.fee_collector.require_auth();
 
         let state = ContractState {
             admin: admin.clone(),

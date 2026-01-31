@@ -44,7 +44,7 @@ pub struct PaymentSplit {
 }
 
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Config {
     pub fee_bps: u32,
     pub fee_collector: Address,

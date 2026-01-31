@@ -1,7 +1,7 @@
 use super::*;
 use soroban_sdk::{
-    testutils::{Address as _, Events, Ledger},
-    vec, Address, Env, String,
+    testutils::{Address as _, Events, Ledger, MockAuth, MockAuthInvoke},
+    vec, Address, Env, IntoVal, String,
 };
 
 #[test]
@@ -24,8 +24,7 @@ fn test_hello() {
 #[test]
 fn test_successful_initialization() {
     let env = Env::default();
-    let contract_id = env.register(Contract, ());
-    let client = ContractClient::new(&env, &contract_id);
+    let client = create_contract(&env);
 
     let admin = Address::generate(&env);
     let fee_collector = Address::generate(&env);
@@ -47,6 +46,26 @@ fn test_successful_initialization() {
     assert_eq!(state.config.fee_collector, fee_collector);
     assert!(!state.config.paused);
     assert!(state.initialized);
+}
+
+#[test]
+#[should_panic] // Should panic without auth
+fn test_initialize_fails_without_admin_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let fee_collector = Address::generate(&env);
+
+    // mock_all_auths is NOT called here
+
+    let config = Config {
+        fee_bps: 100,
+        fee_collector: fee_collector.clone(),
+        paused: false,
+    };
+
+    client.initialize(&admin, &config);
 }
 
 #[test]
@@ -76,8 +95,7 @@ fn test_double_initialization_fails() {
 #[should_panic(expected = "Error(Contract, #3)")]
 fn test_invalid_fee_bps() {
     let env = Env::default();
-    let contract_id = env.register(Contract, ());
-    let client = ContractClient::new(&env, &contract_id);
+    let client = create_contract(&env);
 
     let admin = Address::generate(&env);
     let fee_collector = Address::generate(&env);
@@ -91,6 +109,38 @@ fn test_invalid_fee_bps() {
     };
 
     client.initialize(&admin, &config);
+}
+
+#[test]
+fn test_initialize_fee_collector_no_auth_needed() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let fee_collector = Address::generate(&env);
+
+    let config = Config {
+        fee_bps: 100,
+        fee_collector: fee_collector.clone(),
+        paused: false,
+    };
+
+    // ONLY admin authorizes here using MockAuth
+    client
+        .mock_auths(&[MockAuth {
+            address: &admin,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "initialize",
+                args: (admin.clone(), config.clone()).into_val(&env),
+                sub_invokes: &[],
+            },
+        }])
+        .initialize(&admin, &config);
+
+    // This should NOT panic because we removed require_auth() for fee_collector
+    let state = client.get_state().unwrap();
+    assert_eq!(state.admin, admin);
 }
 
 fn create_contract(env: &Env) -> ContractClient<'_> {
