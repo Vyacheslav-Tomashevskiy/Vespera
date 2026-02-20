@@ -748,3 +748,52 @@ fn test_get_agreement_count() {
 
     assert_eq!(client.get_agreement_count(), 2);
 }
+
+use proptest::prelude::*;
+
+proptest! {
+    #[test]
+    fn test_fuzz_create_agreement_parameters(
+        monthly_rent in -10000i128..10000i128,
+        security_deposit in -10000i128..10000i128,
+        start_date in 0u64..10000u64,
+        end_date in 0u64..10000u64,
+        agent_commission_rate in 0u32..200u32
+    ) {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let client = create_contract(&env);
+        let tenant = Address::generate(&env);
+        let landlord = Address::generate(&env);
+        let payment_token = Address::generate(&env);
+        let agreement_id = String::from_str(&env, "FUZZ_AGREEMENT");
+
+        // Disable panic catching since we expect some combinations to fail
+        let result = client.try_create_agreement(
+            &agreement_id,
+            &landlord,
+            &tenant,
+            &None,
+            &monthly_rent,
+            &security_deposit,
+            &start_date,
+            &end_date,
+            &agent_commission_rate,
+            &payment_token,
+        );
+
+        let is_valid_rent = monthly_rent > 0;
+        let is_valid_deposit = security_deposit >= 0;
+        let is_valid_dates = start_date < end_date;
+        let is_valid_commission = agent_commission_rate <= 100;
+
+        let should_succeed = is_valid_rent && is_valid_deposit && is_valid_dates && is_valid_commission;
+
+        if should_succeed {
+            prop_assert!(result.is_ok());
+        } else {
+            prop_assert!(result.is_err());
+        }
+    }
+}
