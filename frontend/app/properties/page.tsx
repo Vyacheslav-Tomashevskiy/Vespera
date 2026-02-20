@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Properties-navbar';
+import PropertyCardSkeleton from '@/components/PropertyCardSkeleton';
 import {
   Heart,
   MapPin,
@@ -16,11 +17,20 @@ import {
   Minus,
   Compass,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function PropertyListing() {
   const [, setSelectedFilter] = useState('Property Type');
   const [searchAsIMove, setSearchAsIMove] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const properties = [
     {
@@ -220,7 +230,16 @@ export default function PropertyListing() {
 
               {/* Property Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4 mb-8">
-                {properties.map((property) => (
+                {isLoading ? (
+                  // Show skeleton loaders while loading
+                  <>
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <PropertyCardSkeleton key={index} />
+                    ))}
+                  </>
+                ) : (
+                  // Show actual property cards when loaded
+                  properties.map((property) => (
                   <div
                     key={property.id}
                     className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow bg-white"
@@ -310,7 +329,8 @@ export default function PropertyListing() {
                       </div>
                     </div>
                   </div>
-                ))}
+                ))
+                )}
               </div>
 
               {/* Load More Button */}
