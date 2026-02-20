@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { Plus } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 
 export default function PropertiesPage() {
   return (

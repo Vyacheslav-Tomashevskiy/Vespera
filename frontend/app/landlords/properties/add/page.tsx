@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Upload,
   X,
@@ -9,8 +9,8 @@ import {
   Home,
   DollarSign,
   Image as ImageIcon,
-} from "lucide-react";
-import Image from "next/image";
+} from 'lucide-react';
+import Image from 'next/image';
 
 interface FormData {
   name: string;
@@ -29,24 +29,24 @@ interface FormData {
 }
 
 interface Notification {
-  type: "success" | "error";
+  type: 'success' | 'error';
   message: string;
 }
 
 export default function AddPropertyPage() {
   const [formData, setFormData] = useState<FormData>({
-    name: "",
-    address: "",
-    city: "",
-    state: "",
-    propertyType: "",
-    bedrooms: "",
-    bathrooms: "",
-    squareFeet: "",
-    rentAmount: "",
-    currency: "₦",
-    paymentPeriod: "monthly",
-    description: "",
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    propertyType: '',
+    bedrooms: '',
+    bathrooms: '',
+    squareFeet: '',
+    rentAmount: '',
+    currency: '₦',
+    paymentPeriod: 'monthly',
+    description: '',
     amenities: [],
   });
 
@@ -59,29 +59,29 @@ export default function AddPropertyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const propertyTypes = [
-    "Apartment",
-    "House",
-    "Duplex",
-    "Penthouse",
-    "Commercial",
-    "Office Space",
-    "Land",
+    'Apartment',
+    'House',
+    'Duplex',
+    'Penthouse',
+    'Commercial',
+    'Office Space',
+    'Land',
   ];
 
   const availableAmenities = [
-    "Parking",
-    "Swimming Pool",
-    "Gym",
-    "24/7 Security",
-    "Generator",
-    "Air Conditioning",
-    "Balcony",
-    "Garden",
-    "Elevator",
-    "WiFi",
+    'Parking',
+    'Swimming Pool',
+    'Gym',
+    '24/7 Security',
+    'Generator',
+    'Air Conditioning',
+    'Balcony',
+    'Garden',
+    'Elevator',
+    'WiFi',
   ];
 
-  const currencies = ["₦", "$", "€", "£"];
+  const currencies = ['₦', '$', '€', '£'];
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -92,7 +92,7 @@ export default function AddPropertyPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error for this field
     if (errors[name as keyof FormData]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -108,15 +108,15 @@ export default function AddPropertyPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const validFiles = files.filter((file) => {
-      const isValid = file.type.startsWith("image/");
+      const isValid = file.type.startsWith('image/');
       const isUnder5MB = file.size <= 5 * 1024 * 1024;
       return isValid && isUnder5MB;
     });
 
     if (validFiles.length !== files.length) {
       showNotification(
-        "error",
-        "Some files were skipped. Only images under 5MB are allowed.",
+        'error',
+        'Some files were skipped. Only images under 5MB are allowed.',
       );
     }
 
@@ -140,26 +140,26 @@ export default function AddPropertyPage() {
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    if (!formData.name.trim()) newErrors.name = "Property name is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.state.trim()) newErrors.state = "State is required";
+    if (!formData.name.trim()) newErrors.name = 'Property name is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
     if (!formData.propertyType)
-      newErrors.propertyType = "Property type is required";
+      newErrors.propertyType = 'Property type is required';
     if (!formData.bedrooms || parseInt(formData.bedrooms) < 0)
-      newErrors.bedrooms = "Valid number of bedrooms is required";
+      newErrors.bedrooms = 'Valid number of bedrooms is required';
     if (!formData.bathrooms || parseInt(formData.bathrooms) < 0)
-      newErrors.bathrooms = "Valid number of bathrooms is required";
+      newErrors.bathrooms = 'Valid number of bathrooms is required';
     if (!formData.squareFeet || parseInt(formData.squareFeet) <= 0)
-      newErrors.squareFeet = "Valid square footage is required";
+      newErrors.squareFeet = 'Valid square footage is required';
     if (!formData.rentAmount || parseFloat(formData.rentAmount) <= 0)
-      newErrors.rentAmount = "Valid rent amount is required";
+      newErrors.rentAmount = 'Valid rent amount is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const showNotification = (type: "success" | "error", message: string) => {
+  const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
   };
@@ -168,12 +168,12 @@ export default function AddPropertyPage() {
     e.preventDefault();
 
     if (!validateForm()) {
-      showNotification("error", "Please fix the errors in the form");
+      showNotification('error', 'Please fix the errors in the form');
       return;
     }
 
     if (images.length === 0) {
-      showNotification("error", "Please upload at least one property image");
+      showNotification('error', 'Please upload at least one property image');
       return;
     }
 
@@ -181,25 +181,25 @@ export default function AddPropertyPage() {
 
     // Simulate API call
     setTimeout(() => {
-      console.log("Form Data:", formData);
-      console.log("Images:", images);
-      showNotification("success", "Property added successfully!");
+      console.log('Form Data:', formData);
+      console.log('Images:', images);
+      showNotification('success', 'Property added successfully!');
       setIsSubmitting(false);
 
       // Reset form
       setFormData({
-        name: "",
-        address: "",
-        city: "",
-        state: "",
-        propertyType: "",
-        bedrooms: "",
-        bathrooms: "",
-        squareFeet: "",
-        rentAmount: "",
-        currency: "₦",
-        paymentPeriod: "monthly",
-        description: "",
+        name: '',
+        address: '',
+        city: '',
+        state: '',
+        propertyType: '',
+        bedrooms: '',
+        bathrooms: '',
+        squareFeet: '',
+        rentAmount: '',
+        currency: '₦',
+        paymentPeriod: 'monthly',
+        description: '',
         amenities: [],
       });
       setImages([]);
@@ -213,12 +213,12 @@ export default function AddPropertyPage() {
       {notification && (
         <div
           className={`fixed top-6 right-6 z-50 flex items-center space-x-3 px-6 py-4 rounded-xl shadow-lg border animate-slide-in ${
-            notification.type === "success"
-              ? "bg-green-50 border-brand-green text-brand-green"
-              : "bg-red-50 border-red-500 text-red-600"
+            notification.type === 'success'
+              ? 'bg-green-50 border-brand-green text-brand-green'
+              : 'bg-red-50 border-red-500 text-red-600'
           }`}
         >
-          {notification.type === "success" ? (
+          {notification.type === 'success' ? (
             <Check className="w-5 h-5" />
           ) : (
             <AlertCircle className="w-5 h-5" />
@@ -262,7 +262,7 @@ export default function AddPropertyPage() {
                 onChange={handleInputChange}
                 placeholder="e.g., Luxury Apartment at Victoria Island"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.name ? "border-red-500" : "border-neutral-200"
+                  errors.name ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.name && (
@@ -282,7 +282,7 @@ export default function AddPropertyPage() {
                 onChange={handleInputChange}
                 placeholder="e.g., 101 Adeola Odeku Street"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.address ? "border-red-500" : "border-neutral-200"
+                  errors.address ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.address && (
@@ -302,7 +302,7 @@ export default function AddPropertyPage() {
                 onChange={handleInputChange}
                 placeholder="e.g., Lagos"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.city ? "border-red-500" : "border-neutral-200"
+                  errors.city ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.city && (
@@ -322,7 +322,7 @@ export default function AddPropertyPage() {
                 onChange={handleInputChange}
                 placeholder="e.g., Lagos State"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.state ? "border-red-500" : "border-neutral-200"
+                  errors.state ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.state && (
@@ -340,7 +340,7 @@ export default function AddPropertyPage() {
                 value={formData.propertyType}
                 onChange={handleInputChange}
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.propertyType ? "border-red-500" : "border-neutral-200"
+                  errors.propertyType ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               >
                 <option value="">Select type</option>
@@ -370,7 +370,7 @@ export default function AddPropertyPage() {
                 placeholder="e.g., 1200"
                 min="0"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.squareFeet ? "border-red-500" : "border-neutral-200"
+                  errors.squareFeet ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.squareFeet && (
@@ -391,7 +391,7 @@ export default function AddPropertyPage() {
                 placeholder="e.g., 3"
                 min="0"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.bedrooms ? "border-red-500" : "border-neutral-200"
+                  errors.bedrooms ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.bedrooms && (
@@ -412,7 +412,7 @@ export default function AddPropertyPage() {
                 placeholder="e.g., 2"
                 min="0"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.bathrooms ? "border-red-500" : "border-neutral-200"
+                  errors.bathrooms ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.bathrooms && (
@@ -463,7 +463,7 @@ export default function AddPropertyPage() {
                 min="0"
                 step="0.01"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.rentAmount ? "border-red-500" : "border-neutral-200"
+                  errors.rentAmount ? 'border-red-500' : 'border-neutral-200'
                 } focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all`}
               />
               {errors.rentAmount && (
@@ -519,8 +519,8 @@ export default function AddPropertyPage() {
                 onClick={() => handleAmenityToggle(amenity)}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all ${
                   formData.amenities.includes(amenity)
-                    ? "border-brand-blue bg-blue-50 text-brand-blue"
-                    : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+                    ? 'border-brand-blue bg-blue-50 text-brand-blue'
+                    : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 {amenity}

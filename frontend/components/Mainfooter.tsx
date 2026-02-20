@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { Twitter, Linkedin, Instagram } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { Twitter, Linkedin, Instagram } from 'lucide-react';
 
 /**
  * Footer Component
@@ -62,8 +62,8 @@ const Mainfooter = () => {
                 <Link
                   href="#"
                   className="text-slate-400 hover:text-white transition-colors text-sm"
-                >Mainfooter
-                  Pricing
+                >
+                  Mainfooter Pricing
                 </Link>
               </li>
             </ul>

@@ -148,6 +148,108 @@ fn create_contract(env: &Env) -> ContractClient<'_> {
     ContractClient::new(env, &contract_id)
 }
 
+fn initialize_contract_state(env: &Env, client: &ContractClient<'_>, admin: &Address) {
+    let config = Config {
+        fee_bps: 100,
+        fee_collector: Address::generate(env),
+        paused: false,
+    };
+    client
+        .mock_auths(&[MockAuth {
+            address: admin,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "initialize",
+                args: (admin.clone(), config.clone()).into_val(env),
+                sub_invokes: &[],
+            },
+        }])
+        .initialize(admin, &config);
+}
+
+#[test]
+fn test_update_config_success() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let initial_config = Config {
+        fee_bps: 100,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+    client.initialize(&admin, &initial_config);
+
+    let new_config = Config {
+        fee_bps: 250,
+        fee_collector: Address::generate(&env),
+        paused: true,
+    };
+
+    client.update_config(&new_config);
+
+    let updated_state = client.get_state().unwrap();
+    assert_eq!(updated_state.config, new_config);
+}
+
+#[test]
+#[should_panic]
+fn test_update_config_unauthorized() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    initialize_contract_state(&env, &client, &admin);
+
+    let attacker = Address::generate(&env);
+    let new_config = Config {
+        fee_bps: 300,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+
+    client
+        .mock_auths(&[MockAuth {
+            address: &attacker,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "update_config",
+                args: (new_config.clone(),).into_val(&env),
+                sub_invokes: &[],
+            },
+        }])
+        .update_config(&new_config);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #3)")]
+fn test_update_config_invalid_fee_bps() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    initialize_contract_state(&env, &client, &admin);
+
+    let bad_config = Config {
+        fee_bps: 10_001,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+
+    client
+        .mock_auths(&[MockAuth {
+            address: &admin,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "update_config",
+                args: (bad_config.clone(),).into_val(&env),
+                sub_invokes: &[],
+            },
+        }])
+        .update_config(&bad_config);
+}
+
 #[test]
 fn test_create_agreement_success() {
     let env = Env::default();

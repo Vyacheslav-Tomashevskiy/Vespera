@@ -17,7 +17,7 @@ pub use agreement::{
     sign_agreement, validate_agreement_params,
 };
 pub use errors::RentalError;
-pub use events::{AgreementCreatedEvent, AgreementSigned};
+pub use events::{AgreementCreatedEvent, AgreementSigned, ConfigUpdated};
 pub use storage::DataKey;
 pub use types::{AgreementStatus, Config, ContractState, PaymentSplit, RentAgreement};
 
@@ -63,6 +63,31 @@ impl Contract {
 
     pub fn get_state(env: Env) -> Option<ContractState> {
         env.storage().instance().get(&DataKey::State)
+    }
+
+    /// Update contract configuration.
+    ///
+    /// # Errors
+    /// * `InvalidState` - If contract state is missing
+    /// * `InvalidConfig` - If configuration values are invalid
+    pub fn update_config(env: Env, new_config: Config) -> Result<(), RentalError> {
+        let mut state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+
+        state.admin.require_auth();
+
+        if new_config.fee_bps > 10_000 {
+            return Err(RentalError::InvalidConfig);
+        }
+
+        let old_config = state.config.clone();
+        state.config = new_config.clone();
+
+        env.storage().instance().set(&DataKey::State, &state);
+        env.storage().instance().extend_ttl(500000, 500000);
+
+        events::config_updated(&env, old_config, new_config);
+
+        Ok(())
     }
 
     #[allow(clippy::too_many_arguments)]
