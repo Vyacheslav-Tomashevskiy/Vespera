@@ -12,11 +12,12 @@ import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PropertyType, ListingStatus } from '../entities/property.entity';
 
-/** Trims a string and removes any control characters. */
+/** Trims a string and strips ASCII / unicode control characters. */
 function sanitizeString(value: unknown): unknown {
   if (typeof value !== 'string') return value;
-  // Trim whitespace and strip ASCII control characters (0x00‑0x1F, 0x7F)
-  return value.trim().replace(/[\x00-\x1F\x7F]/g, '');
+  // \p{Cc} = Unicode "Control" category (covers NUL, BEL, DEL, etc.)
+  // The 'u' flag is required for Unicode property escapes.
+  return value.trim().replace(/\p{Cc}/gu, '');
 }
 
 export class QueryPropertyDto {
