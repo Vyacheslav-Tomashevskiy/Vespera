@@ -51,7 +51,7 @@ export class AuthController {
     private readonly mfaService: MfaService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -162,7 +162,7 @@ export class AuthController {
       ) {
         return {
           mfaRequired: true,
-          mfaToken: result.mfaToken as string,
+          mfaToken: result.mfaToken,
           user: result.user,
         };
       }
