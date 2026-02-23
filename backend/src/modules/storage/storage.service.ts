@@ -1,6 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileMetadata } from './file-metadata.entity';
 import { FileMetadataRepository } from './file-metadata.repository';
@@ -26,7 +30,6 @@ export class StorageService {
     });
   }
 
-
   async getUploadUrl(
     key: string,
     contentType: string,
@@ -37,8 +40,11 @@ export class StorageService {
   ): Promise<string> {
     // Validate file type and size (example: block executables, limit size)
     const allowedTypes = [
-      'image/jpeg', 'image/png', 'application/pdf',
-      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (!allowedTypes.includes(contentType)) {
@@ -66,9 +72,15 @@ export class StorageService {
     return getSignedUrl(this.s3, command, { expiresIn });
   }
 
-  async getDownloadUrl(key: string, ownerId: string, expiresIn = 120): Promise<string> {
+  async getDownloadUrl(
+    key: string,
+    ownerId: string,
+    expiresIn = 120,
+  ): Promise<string> {
     // Check ownership
-    const file = await this.fileMetadataRepo.findOne({ where: { s3Key: key, ownerId } });
+    const file = await this.fileMetadataRepo.findOne({
+      where: { s3Key: key, ownerId },
+    });
     if (!file) {
       throw new BadRequestException('File not found or access denied');
     }

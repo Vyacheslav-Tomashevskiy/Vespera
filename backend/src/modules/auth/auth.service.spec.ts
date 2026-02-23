@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserRole } from '../users/entities/user.entity';
-import { MfaDevice } from './entities/mfa-device.entity';
+import { MfaDevice, MfaDeviceType, MfaDeviceStatus } from './entities/mfa-device.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -18,6 +18,12 @@ import {
 } from '@nestjs/common';
 import { PasswordPolicyService } from './services/password-policy.service';
 import { EmailService } from '../notifications/email.service';
+import { AuthSuccessResponseDto, MfaRequiredResponseDto } from './dto/auth-response.dto';
+// Add mock for MfaDeviceRepository
+const mockMfaDeviceRepository = {
+  findOne: jest.fn(),
+  save: jest.fn(),
+};
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -82,7 +88,7 @@ describe('AuthService', () => {
         },
         {
           provide: getRepositoryToken(MfaDevice),
-          useValue: { findOne: jest.fn(), save: jest.fn() },
+          useValue: mockMfaDeviceRepository,
         },
         {
           provide: JwtService,
@@ -226,7 +232,7 @@ describe('AuthService', () => {
       );
     });
 
-<<<<<<< HEAD
+// --- Conflict marker removed ---
     it('should return generic error for inactive account (prevent user enumeration)', async () => {
       const loginDto: LoginDto = {
         email: 'test@example.com',
@@ -315,8 +321,8 @@ describe('AuthService', () => {
       );
     });
 
-=======
->>>>>>> upstream/main
+// --- Conflict marker removed ---
+// --- Conflict marker removed ---
     it('should throw UnauthorizedException for inactive account', async () => {
       const loginDto: LoginDto = {
         email: 'test@example.com',
@@ -325,7 +331,7 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue({
         ...mockUser,
-        status: 'inactive',
+        isActive: false,
       });
 
       await expect(service.login(loginDto)).rejects.toThrow(
@@ -339,12 +345,11 @@ describe('AuthService', () => {
         password: 'wrongpassword',
       };
 
+
       const lockedUser = {
         ...mockUser,
-        accountLocked: true,
-        lockedUntil: new Date(Date.now() + 30 * 60 * 1000),
+        accountLockedUntil: new Date(Date.now() + 30 * 60 * 1000),
       };
-
       mockUserRepository.findOne.mockResolvedValue(lockedUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
