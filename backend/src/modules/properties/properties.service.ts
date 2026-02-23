@@ -21,6 +21,9 @@ import { User, UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class PropertiesService {
+  findById(propertyId: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
