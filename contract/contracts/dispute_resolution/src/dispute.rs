@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, Map, String, contracttype, symbol_short};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Map, String};
 
 use crate::errors::DisputeError;
 use crate::events;
