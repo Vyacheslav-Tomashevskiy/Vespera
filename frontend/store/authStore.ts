@@ -152,6 +152,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     email: string,
     password: string,
   ): Promise<{ success: boolean; error?: string }> => {
+    // --- REAL AUTHENTICATION LOGIC (Commented out for development) ---
+    /*
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -176,6 +178,17 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         error: 'Network error. Please check your connection.',
       };
     }
+    */
+
+    // DEV BYPASS: instantly log in as landlord
+    get().setTokens('mock-access-token', 'mock-refresh-token', {
+      id: 'dev-123',
+      email: email || 'dev@chioma.local',
+      firstName: 'Dev',
+      lastName: 'Landlord',
+      role: 'landlord',
+    });
+    return { success: true };
   },
 
   /**
