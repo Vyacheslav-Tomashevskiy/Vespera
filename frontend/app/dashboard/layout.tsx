@@ -30,9 +30,11 @@ export default function TenantDashboardLayout({
               >
                 <Menu size={24} />
               </button>
-              
+
               <div className="hidden sm:block">
-                <h1 className="text-xl font-semibold tracking-tight">Tenant Portal</h1>
+                <h1 className="text-xl font-semibold tracking-tight">
+                  Tenant Portal
+                </h1>
               </div>
             </div>
 
@@ -68,7 +70,7 @@ export default function TenantDashboardLayout({
 
               {/* User Profile Avatar */}
               <button className="flex items-center justify-center w-10 h-10 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue rounded-full hover:ring-2 hover:ring-brand-blue/50 transition-all">
-                 <User size={18} />
+                <User size={18} />
               </button>
             </div>
           </div>

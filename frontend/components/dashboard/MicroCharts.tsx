@@ -23,23 +23,23 @@ export function MicroCharts() {
     <div className="h-24 w-full mt-2">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-          <Tooltip 
+          <Tooltip
             cursor={{ fill: 'transparent' }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
-                 return (
-                    <div className="bg-neutral-900 text-white text-xs px-2 py-1 rounded shadow-lg">
-                       {payload[0].payload.name}: ${payload[0].value}
-                    </div>
-                 )
+                return (
+                  <div className="bg-neutral-900 text-white text-xs px-2 py-1 rounded shadow-lg">
+                    {payload[0].payload.name}: ${payload[0].value}
+                  </div>
+                );
               }
               return null;
             }}
           />
           <Bar dataKey="value" radius={[4, 4, 4, 4]} barSize={16}>
             {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={entry.value > 0 ? '#3b82f6' : '#e5e7eb'} // brand-blue or neutral-200
                 className={`${entry.value > 0 ? 'dark:fill-blue-500' : 'dark:fill-neutral-700'}`}
               />

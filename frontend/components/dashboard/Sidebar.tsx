@@ -3,7 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, Wallet, Settings, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FileText,
+  Wallet,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -82,7 +88,10 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon size={20} className={active ? 'text-white' : 'text-neutral-400'} />
+                  <Icon
+                    size={20}
+                    className={active ? 'text-white' : 'text-neutral-400'}
+                  />
                   <span>{item.name}</span>
                 </div>
               </Link>
