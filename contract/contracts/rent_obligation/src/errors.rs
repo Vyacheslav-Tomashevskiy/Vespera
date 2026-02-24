@@ -10,5 +10,4 @@ pub enum ObligationError {
     ObligationNotFound = 4,
     Unauthorized = 5,
     InvalidOwner = 6,
-    InvalidLandlord = 7,
 }

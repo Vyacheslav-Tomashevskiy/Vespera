@@ -28,17 +28,6 @@ pub struct AgreementCreated {
     pub agent: Option<Address>,
 }
 
-/// Event emitted when an agreement is submitted for signing
-/// Topics: ["agr_submitted", landlord: Address, tenant: Address]
-#[contractevent(topics = ["agr_submitted"])]
-pub struct AgreementSubmitted {
-    #[topic]
-    pub landlord: Address,
-    #[topic]
-    pub tenant: Address,
-    pub agreement_id: String,
-}
-
 /// Event emitted when an agreement is signed
 /// Topics: ["agr_signed", tenant: Address, landlord: Address]
 #[contractevent(topics = ["agr_signed"])]
@@ -98,21 +87,6 @@ pub(crate) fn agreement_created(
         start_date,
         end_date,
         agent,
-    }
-    .publish(env);
-}
-
-/// Helper function to emit agreement submitted event
-pub(crate) fn agreement_submitted(
-    env: &Env,
-    agreement_id: String,
-    landlord: Address,
-    tenant: Address,
-) {
-    AgreementSubmitted {
-        landlord,
-        tenant,
-        agreement_id,
     }
     .publish(env);
 }
