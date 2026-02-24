@@ -1,12 +1,36 @@
 use super::*;
 use soroban_sdk::{
+    contract, contractimpl,
     testutils::{Address as _, Events, MockAuth, MockAuthInvoke},
     Address, Env, IntoVal, String,
 };
 
+#[contract]
+pub struct MockChiomaContract;
+
+#[contractimpl]
+impl ChiomaContract for MockChiomaContract {
+    fn get_agreement(env: Env, agreement_id: String) -> Option<ChiomaAgreement> {
+        env.storage().persistent().get(&agreement_id)
+    }
+}
+
 fn create_contract(env: &Env) -> TokenizedRentObligationContractClient<'_> {
     let contract_id = env.register(TokenizedRentObligationContract, ());
     TokenizedRentObligationContractClient::new(env, &contract_id)
+}
+
+fn create_mock_chioma(env: &Env) -> Address {
+    env.register(MockChiomaContract, ())
+}
+
+fn setup_agreement(env: &Env, chioma_addr: &Address, agreement_id: &String, landlord: &Address) {
+    env.as_contract(chioma_addr, || {
+        let agreement = ChiomaAgreement {
+            landlord: landlord.clone(),
+        };
+        env.storage().persistent().set(agreement_id, &agreement);
+    });
 }
 
 #[test]
@@ -41,8 +65,11 @@ fn test_mint_obligation() {
 
     let landlord = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    let result = client.try_mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+
+    let result = client.try_mint_obligation(&agreement_id, &landlord, &chioma_addr);
     assert!(result.is_ok());
 
     let owner = client.get_obligation_owner(&agreement_id);
@@ -72,8 +99,11 @@ fn test_mint_obligation_requires_auth() {
 
     let landlord = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
 }
 
 #[test]
@@ -87,9 +117,12 @@ fn test_mint_duplicate_obligation_fails() {
 
     let landlord = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
 }
 
 #[test]
@@ -99,11 +132,32 @@ fn test_mint_without_initialization_fails() {
     env.mock_all_auths();
 
     let client = create_contract(&env);
-
     let landlord = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #7)")]
+fn test_mint_with_wrong_landlord_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let real_landlord = Address::generate(&env);
+    let fake_landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
+
+    setup_agreement(&env, &chioma_addr, &agreement_id, &real_landlord);
+
+    client.mint_obligation(&agreement_id, &fake_landlord, &chioma_addr);
 }
 
 #[test]
@@ -117,8 +171,10 @@ fn test_transfer_obligation() {
     let landlord = Address::generate(&env);
     let new_owner = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
 
     let result = client.try_transfer_obligation(&landlord, &new_owner, &agreement_id);
     assert!(result.is_ok());
@@ -143,6 +199,9 @@ fn test_transfer_obligation_requires_auth() {
     let landlord = Address::generate(&env);
     let new_owner = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
+
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
 
     client
         .mock_auths(&[MockAuth {
@@ -150,11 +209,11 @@ fn test_transfer_obligation_requires_auth() {
             invoke: &MockAuthInvoke {
                 contract: &client.address,
                 fn_name: "mint_obligation",
-                args: (&agreement_id, &landlord).into_val(&env),
+                args: (&agreement_id, &landlord, &chioma_addr).into_val(&env),
                 sub_invokes: &[],
             },
         }])
-        .mint_obligation(&agreement_id, &landlord);
+        .mint_obligation(&agreement_id, &landlord, &chioma_addr);
 
     client.transfer_obligation(&landlord, &new_owner, &agreement_id);
 }
@@ -188,8 +247,10 @@ fn test_transfer_from_non_owner_fails() {
     let fake_owner = Address::generate(&env);
     let new_owner = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
 
     client.transfer_obligation(&fake_owner, &new_owner, &agreement_id);
 }
@@ -202,6 +263,7 @@ fn test_multiple_obligations() {
     let client = create_contract(&env);
     client.initialize();
 
+    let chioma_addr = create_mock_chioma(&env);
     let landlord1 = Address::generate(&env);
     let landlord2 = Address::generate(&env);
     let landlord3 = Address::generate(&env);
@@ -210,9 +272,13 @@ fn test_multiple_obligations() {
     let agreement_id2 = String::from_str(&env, "agreement_002");
     let agreement_id3 = String::from_str(&env, "agreement_003");
 
-    client.mint_obligation(&agreement_id1, &landlord1);
-    client.mint_obligation(&agreement_id2, &landlord2);
-    client.mint_obligation(&agreement_id3, &landlord3);
+    setup_agreement(&env, &chioma_addr, &agreement_id1, &landlord1);
+    setup_agreement(&env, &chioma_addr, &agreement_id2, &landlord2);
+    setup_agreement(&env, &chioma_addr, &agreement_id3, &landlord3);
+
+    client.mint_obligation(&agreement_id1, &landlord1, &chioma_addr);
+    client.mint_obligation(&agreement_id2, &landlord2, &chioma_addr);
+    client.mint_obligation(&agreement_id3, &landlord3, &chioma_addr);
 
     assert_eq!(client.get_obligation_count(), 3);
 
@@ -252,8 +318,10 @@ fn test_transfer_chain() {
     let buyer2 = Address::generate(&env);
     let buyer3 = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
     assert_eq!(
         client.get_obligation_owner(&agreement_id),
         Some(landlord.clone())
@@ -291,8 +359,10 @@ fn test_events_emitted() {
     let landlord = Address::generate(&env);
     let new_owner = Address::generate(&env);
     let agreement_id = String::from_str(&env, "agreement_001");
+    let chioma_addr = create_mock_chioma(&env);
 
-    client.mint_obligation(&agreement_id, &landlord);
+    setup_agreement(&env, &chioma_addr, &agreement_id, &landlord);
+    client.mint_obligation(&agreement_id, &landlord, &chioma_addr);
     client.transfer_obligation(&landlord, &new_owner, &agreement_id);
 
     let all_events = env.events().all();

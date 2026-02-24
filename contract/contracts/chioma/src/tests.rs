@@ -904,3 +904,146 @@ fn test_contract_paused_operations() {
     let res_sign_success = client.try_sign_agreement(&tenant, &agreement_id);
     assert!(res_sign_success.is_ok());
 }
+
+#[test]
+fn test_submit_agreement_success() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    let agreement_id = String::from_str(&env, "SUBMIT_001");
+
+    client.create_agreement(
+        &agreement_id,
+        &landlord,
+        &tenant,
+        &None,
+        &1000,
+        &2000,
+        &100,
+        &1000000,
+        &0,
+        &Address::generate(&env),
+    );
+
+    let agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(agreement.status, AgreementStatus::Draft);
+
+    client.submit_agreement(&landlord, &agreement_id);
+
+    let updated_agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(updated_agreement.status, AgreementStatus::Pending);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #13)")]
+fn test_submit_agreement_not_found() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    let landlord = Address::generate(&env);
+
+    client.submit_agreement(&landlord, &String::from_str(&env, "NONEXISTENT"));
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #18)")]
+fn test_submit_agreement_not_landlord() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let impostor = Address::generate(&env);
+
+    let agreement_id = String::from_str(&env, "SUBMIT_002");
+
+    client.create_agreement(
+        &agreement_id,
+        &landlord,
+        &tenant,
+        &None,
+        &1000,
+        &2000,
+        &100,
+        &1000000,
+        &0,
+        &Address::generate(&env),
+    );
+
+    client.submit_agreement(&impostor, &agreement_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #15)")]
+fn test_submit_agreement_invalid_state() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    let agreement_id = String::from_str(&env, "SUBMIT_003");
+
+    client.create_agreement(
+        &agreement_id,
+        &landlord,
+        &tenant,
+        &None,
+        &1000,
+        &2000,
+        &100,
+        &1000000,
+        &0,
+        &Address::generate(&env),
+    );
+
+    client.submit_agreement(&landlord, &agreement_id);
+
+    client.submit_agreement(&landlord, &agreement_id);
+}
+
+#[test]
+fn test_full_agreement_flow() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    let agreement_id = String::from_str(&env, "FLOW_001");
+
+    client.create_agreement(
+        &agreement_id,
+        &landlord,
+        &tenant,
+        &None,
+        &1000,
+        &2000,
+        &100,
+        &1000000,
+        &0,
+        &Address::generate(&env),
+    );
+
+    let agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(agreement.status, AgreementStatus::Draft);
+
+    client.submit_agreement(&landlord, &agreement_id);
+
+    let pending_agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(pending_agreement.status, AgreementStatus::Pending);
+
+    client.sign_agreement(&tenant, &agreement_id);
+
+    let active_agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(active_agreement.status, AgreementStatus::Active);
+    assert!(active_agreement.signed_at.is_some());
+}

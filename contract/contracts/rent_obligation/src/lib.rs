@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, Address, Env, String};
+use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env, String};
 
 mod errors;
 mod events;
@@ -13,6 +13,17 @@ mod tests;
 pub use errors::ObligationError;
 pub use storage::DataKey;
 pub use types::RentObligation;
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ChiomaAgreement {
+    pub landlord: Address,
+}
+
+#[contractclient(name = "ChiomaContractClient")]
+pub trait ChiomaContract {
+    fn get_agreement(env: Env, agreement_id: String) -> Option<ChiomaAgreement>;
+}
 
 #[contract]
 pub struct TokenizedRentObligationContract;
@@ -48,20 +59,32 @@ impl TokenizedRentObligationContract {
     /// # Arguments
     /// * `agreement_id` - Unique identifier for the rent agreement
     /// * `landlord` - Address of the landlord who will receive the NFT
+    /// * `chioma_contract` - Address of the chioma contract to verify landlord
     ///
     /// # Errors
     /// * `NotInitialized` - If contract hasn't been initialized
     /// * `ObligationAlreadyExists` - If an obligation for this agreement already exists
+    /// * `InvalidLandlord` - If the caller is not the registered landlord
     pub fn mint_obligation(
         env: Env,
         agreement_id: String,
         landlord: Address,
+        chioma_contract: Address,
     ) -> Result<(), ObligationError> {
         if !env.storage().persistent().has(&DataKey::Initialized) {
             return Err(ObligationError::NotInitialized);
         }
 
         landlord.require_auth();
+
+        let client = ChiomaContractClient::new(&env, &chioma_contract);
+        let agreement = client
+            .get_agreement(&agreement_id)
+            .ok_or(ObligationError::InvalidLandlord)?;
+
+        if agreement.landlord != landlord {
+            return Err(ObligationError::InvalidLandlord);
+        }
 
         let obligation_key = DataKey::Obligation(agreement_id.clone());
         let owner_key = DataKey::Owner(agreement_id.clone());

@@ -129,6 +129,44 @@ pub fn create_agreement(
     Ok(())
 }
 
+/// Submit an agreement for tenant signature (Draft → Pending)
+pub fn submit_agreement(
+    env: &Env,
+    landlord: Address,
+    agreement_id: String,
+) -> Result<(), RentalError> {
+    landlord.require_auth();
+
+    let mut agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(agreement_id.clone()))
+        .ok_or(RentalError::AgreementNotFound)?;
+
+    if agreement.landlord != landlord {
+        return Err(RentalError::Unauthorized);
+    }
+
+    if agreement.status != AgreementStatus::Draft {
+        return Err(RentalError::InvalidState);
+    }
+
+    agreement.status = AgreementStatus::Pending;
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::Agreement(agreement_id.clone()), &agreement);
+    env.storage().persistent().extend_ttl(
+        &DataKey::Agreement(agreement_id.clone()),
+        TTL_THRESHOLD,
+        TTL_BUMP,
+    );
+
+    events::agreement_submitted(env, agreement_id, landlord, agreement.tenant.clone());
+
+    Ok(())
+}
+
 /// Sign an agreement as the tenant
 pub fn sign_agreement(env: &Env, tenant: Address, agreement_id: String) -> Result<(), RentalError> {
     // Tenant MUST authorize signing
