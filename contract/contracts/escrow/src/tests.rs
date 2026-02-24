@@ -1,6 +1,6 @@
 //! Tests for the Escrow contract.
 
-use soroban_sdk::testutils::Address as _;
+use soroban_sdk::testutils::{Address as _, Ledger};
 use soroban_sdk::token::Client as TokenClient;
 use soroban_sdk::token::StellarAssetClient as TokenAdminClient;
 use soroban_sdk::{Address, Env};
@@ -119,4 +119,68 @@ fn test_unauthorized_funding() {
     // We expect an error, but AccessControl check happens before require_auth
     let result = client.try_fund_escrow(&escrow_id, &beneficiary);
     assert!(result.is_err());
+}
+
+#[test]
+fn test_unique_escrow_ids() {
+    use crate::escrow_impl::EscrowContract;
+    use soroban_sdk::contract;
+
+    #[contract]
+    struct TestContract;
+
+    let env = Env::default();
+    let contract_id = env.register(TestContract, ());
+
+    let depositor = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let token = Address::generate(&env);
+
+    let escrow_id1 = env
+        .as_contract(&contract_id, || {
+            EscrowContract::create(
+                env.clone(),
+                depositor.clone(),
+                beneficiary.clone(),
+                arbiter.clone(),
+                1000,
+                token.clone(),
+            )
+        })
+        .unwrap();
+
+    env.ledger().with_mut(|li| li.timestamp += 1);
+
+    let escrow_id2 = env
+        .as_contract(&contract_id, || {
+            EscrowContract::create(
+                env.clone(),
+                depositor.clone(),
+                beneficiary.clone(),
+                arbiter.clone(),
+                1000,
+                token.clone(),
+            )
+        })
+        .unwrap();
+
+    assert_ne!(escrow_id1, escrow_id2, "Escrow IDs should be unique");
+
+    let escrow1 = env
+        .as_contract(&contract_id, || {
+            EscrowContract::get_escrow(env.clone(), escrow_id1.clone())
+        })
+        .unwrap();
+
+    let escrow2 = env
+        .as_contract(&contract_id, || {
+            EscrowContract::get_escrow(env.clone(), escrow_id2.clone())
+        })
+        .unwrap();
+
+    assert_eq!(escrow1.id, escrow_id1);
+    assert_eq!(escrow2.id, escrow_id2);
+    assert_eq!(escrow1.amount, 1000);
+    assert_eq!(escrow2.amount, 1000);
 }

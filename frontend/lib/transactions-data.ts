@@ -167,7 +167,8 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
 
 /** Active security deposits (not yet refunded). */
 export const MOCK_ACTIVE_DEPOSITS = MOCK_TRANSACTIONS.filter(
-  (t) => t.isSecurityDeposit && t.type === 'Deposit' && t.status === 'Completed'
+  (t) =>
+    t.isSecurityDeposit && t.type === 'Deposit' && t.status === 'Completed',
 ).map((t) => ({
   ...t,
   tenantName: 'Tenant', // would come from API

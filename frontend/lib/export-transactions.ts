@@ -28,7 +28,9 @@ export function exportTransactionsToCsv(transactions: Transaction[]): void {
   ]);
   const csvContent = [
     headers.join(','),
-    ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')),
+    ...rows.map((r) =>
+      r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','),
+    ),
   ].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -41,7 +43,7 @@ export function exportTransactionsToCsv(transactions: Transaction[]): void {
 
 export function exportTransactionsToPdf(
   transactions: Transaction[],
-  title: string
+  title: string,
 ): void {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -57,7 +59,7 @@ export function exportTransactionsToPdf(
           <td>${t.propertyName}</td>
           <td>${t.currency} ${t.amount.toFixed(2)}${t.amountUsd != null && t.currency !== 'USD' ? ` (≈ $${t.amountUsd.toFixed(2)})` : ''}</td>
           <td>${t.status}</td>
-        </tr>`
+        </tr>`,
     )
     .join('');
   printWindow.document.write(`

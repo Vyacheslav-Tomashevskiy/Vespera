@@ -10,20 +10,18 @@ interface SecurityDepositsSectionProps {
 }
 
 /** Derives active deposits: type Deposit, isSecurityDeposit, not yet refunded. */
-export function getActiveDeposits(
-  transactions: Transaction[]
-): Transaction[] {
+export function getActiveDeposits(transactions: Transaction[]): Transaction[] {
   const refundedIds = new Set(
     transactions
       .filter((t) => t.type === 'Refund' && t.securityDepositId)
-      .map((t) => t.securityDepositId!)
+      .map((t) => t.securityDepositId!),
   );
   return transactions.filter(
     (t) =>
       t.type === 'Deposit' &&
       t.isSecurityDeposit &&
       t.status === 'Completed' &&
-      !refundedIds.has(t.securityDepositId ?? '')
+      !refundedIds.has(t.securityDepositId ?? ''),
   );
 }
 
@@ -67,7 +65,9 @@ export default function SecurityDepositsSection({
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-semibold text-neutral-900">{amountDisplay}</p>
+                <p className="font-semibold text-neutral-900">
+                  {amountDisplay}
+                </p>
                 <p className="text-xs text-neutral-500">Held in escrow</p>
               </div>
             </div>

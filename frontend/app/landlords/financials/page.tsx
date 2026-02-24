@@ -12,7 +12,10 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/lib/transactions-data';
-import { exportTransactionsToCsv, exportTransactionsToPdf } from '@/lib/export-transactions';
+import {
+  exportTransactionsToCsv,
+  exportTransactionsToPdf,
+} from '@/lib/export-transactions';
 import { format, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 
 const TRANSACTION_TYPES: TransactionType[] = [
@@ -23,14 +26,16 @@ const TRANSACTION_TYPES: TransactionType[] = [
 ];
 
 const PROPERTIES = Array.from(
-  new Set(MOCK_TRANSACTIONS.map((t) => t.propertyName))
+  new Set(MOCK_TRANSACTIONS.map((t) => t.propertyName)),
 ).sort();
 
 export default function FinancialsPage() {
   const [dateFrom, setDateFrom] = useState<string>(
-    format(subMonths(new Date(), 3), 'yyyy-MM-dd')
+    format(subMonths(new Date(), 3), 'yyyy-MM-dd'),
   );
-  const [dateTo, setDateTo] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [dateTo, setDateTo] = useState<string>(
+    format(new Date(), 'yyyy-MM-dd'),
+  );
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(true);
@@ -47,13 +52,15 @@ export default function FinancialsPage() {
         return false;
       return true;
     });
-    list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    list.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
     return list;
   }, [dateFrom, dateTo, typeFilter, propertyFilter]);
 
   const activeDeposits = useMemo(
     () => getActiveDeposits(MOCK_TRANSACTIONS),
-    []
+    [],
   );
 
   const handleExportCsv = () => {
@@ -63,7 +70,7 @@ export default function FinancialsPage() {
   const handleExportPdf = () => {
     exportTransactionsToPdf(
       filteredTransactions,
-      'Chioma – Transaction & Payment History'
+      'Chioma – Transaction & Payment History',
     );
   };
 
