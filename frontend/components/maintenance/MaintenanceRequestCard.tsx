@@ -15,7 +15,10 @@ import { MaintenanceRequest, RequestStatus } from './types';
 interface MaintenanceRequestCardProps {
   request: MaintenanceRequest;
   showManagementControls: boolean;
-  onUpdateRequest: (id: string, patch: Partial<MaintenanceRequest>) => Promise<void>;
+  onUpdateRequest: (
+    id: string,
+    patch: Partial<MaintenanceRequest>,
+  ) => Promise<void>;
 }
 
 export default function MaintenanceRequestCard({
@@ -24,7 +27,9 @@ export default function MaintenanceRequestCard({
   onUpdateRequest,
 }: MaintenanceRequestCardProps) {
   const [status, setStatus] = useState<RequestStatus>(request.status);
-  const [contractorName, setContractorName] = useState(request.contractorName ?? '');
+  const [contractorName, setContractorName] = useState(
+    request.contractorName ?? '',
+  );
   const [scheduledVisit, setScheduledVisit] = useState(
     request.scheduledVisit ? request.scheduledVisit.slice(0, 16) : '',
   );
@@ -64,7 +69,9 @@ export default function MaintenanceRequestCard({
       </div>
 
       <div>
-        <h3 className="text-base font-semibold text-neutral-900">{request.propertyName}</h3>
+        <h3 className="text-base font-semibold text-neutral-900">
+          {request.propertyName}
+        </h3>
         <p className="text-sm text-gray-600 mt-1">
           <span className="font-medium">{request.category}: </span>
           {request.description}
@@ -100,7 +107,11 @@ export default function MaintenanceRequestCard({
                 className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
               >
                 {item.type.startsWith('video') ? (
-                  <video controls src={item.url} className="w-full h-44 object-cover" />
+                  <video
+                    controls
+                    src={item.url}
+                    className="w-full h-44 object-cover"
+                  />
                 ) : (
                   <Image
                     src={item.url}
@@ -111,7 +122,9 @@ export default function MaintenanceRequestCard({
                     className="w-full h-44 object-cover"
                   />
                 )}
-                <p className="text-xs text-gray-600 px-3 py-2 truncate">{item.name}</p>
+                <p className="text-xs text-gray-600 px-3 py-2 truncate">
+                  {item.name}
+                </p>
               </div>
             ))}
           </div>
@@ -128,7 +141,9 @@ export default function MaintenanceRequestCard({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
               value={status}
-              onChange={(event) => setStatus(event.target.value as RequestStatus)}
+              onChange={(event) =>
+                setStatus(event.target.value as RequestStatus)
+              }
               className="border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-sm"
             >
               {STATUS_OPTIONS.map((option) => (

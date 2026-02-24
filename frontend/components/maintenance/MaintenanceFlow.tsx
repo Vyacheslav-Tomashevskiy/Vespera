@@ -81,16 +81,24 @@ const resolveStatus = (value: string | undefined): RequestStatus => {
     : 'open';
 };
 
-const mapIncomingRequest = (item: MaintenanceApiRequest): MaintenanceRequest => ({
+const mapIncomingRequest = (
+  item: MaintenanceApiRequest,
+): MaintenanceRequest => ({
   id: String(item.id),
   propertyId: String(item.propertyId ?? item.property_id ?? 'unknown-property'),
-  propertyName: String(item.propertyName ?? item.property_name ?? 'Unknown Property'),
+  propertyName: String(
+    item.propertyName ?? item.property_name ?? 'Unknown Property',
+  ),
   category: resolveCategory(item.category),
   description: String(item.description ?? ''),
   priority: resolvePriority(item.priority),
   status: resolveStatus(item.status),
-  createdAt: new Date(item.createdAt ?? item.created_at ?? Date.now()).toISOString(),
-  updatedAt: new Date(item.updatedAt ?? item.updated_at ?? Date.now()).toISOString(),
+  createdAt: new Date(
+    item.createdAt ?? item.created_at ?? Date.now(),
+  ).toISOString(),
+  updatedAt: new Date(
+    item.updatedAt ?? item.updated_at ?? Date.now(),
+  ).toISOString(),
   tenantName: item.tenantName ?? item.tenant_name ?? undefined,
   contractorName: item.contractorName ?? item.contractor_name ?? undefined,
   scheduledVisit: item.scheduledVisit ?? item.scheduled_visit ?? undefined,
@@ -104,7 +112,9 @@ const mapIncomingRequest = (item: MaintenanceApiRequest): MaintenanceRequest => 
     : [],
 });
 
-export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceFlowProps) {
+export default function MaintenanceFlow({
+  defaultRole = 'tenant',
+}: MaintenanceFlowProps) {
   const user = useAuthStore((state) => state.user);
   const effectiveRole: MaintenanceRole = user?.role ?? defaultRole;
   const isTenant = effectiveRole === 'tenant';
@@ -115,48 +125,55 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [propertyFilter, setPropertyFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>(
+    'all',
+  );
   const [newCount, setNewCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const seenIdsRef = useRef<Set<string>>(new Set());
 
-  const loadRequests = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      try {
-        const response = await fetch('/api/maintenance', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Failed to load maintenance requests.');
+  const loadRequests = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const response = await fetch('/api/maintenance', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Failed to load maintenance requests.');
 
-        const payload = await response.json();
-        const rawItems = Array.isArray(payload) ? payload : payload.data ?? [];
-        const mapped = (rawItems as MaintenanceApiRequest[]).map(mapIncomingRequest);
-        const sorted = mapped.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
+      const payload = await response.json();
+      const rawItems = Array.isArray(payload) ? payload : (payload.data ?? []);
+      const mapped = (rawItems as MaintenanceApiRequest[]).map(
+        mapIncomingRequest,
+      );
+      const sorted = mapped.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
 
-        if (seenIdsRef.current.size === 0) {
-          seenIdsRef.current = new Set(sorted.map((item) => item.id));
-        } else if (silent) {
-          const incomingNew = sorted.filter((item) => !seenIdsRef.current.has(item.id)).length;
-          if (incomingNew > 0) {
-            setNewCount((count) => count + incomingNew);
-            seenIdsRef.current = new Set([...seenIdsRef.current, ...sorted.map((item) => item.id)]);
-          }
+      if (seenIdsRef.current.size === 0) {
+        seenIdsRef.current = new Set(sorted.map((item) => item.id));
+      } else if (silent) {
+        const incomingNew = sorted.filter(
+          (item) => !seenIdsRef.current.has(item.id),
+        ).length;
+        if (incomingNew > 0) {
+          setNewCount((count) => count + incomingNew);
+          seenIdsRef.current = new Set([
+            ...seenIdsRef.current,
+            ...sorted.map((item) => item.id),
+          ]);
         }
-
-        setRequests(sorted);
-        setError(null);
-      } catch {
-        setRequests([]);
-        if (!silent) {
-          setError('Unable to load maintenance requests right now.');
-        }
-      } finally {
-        if (!silent) setLoading(false);
       }
-    },
-    [],
-  );
+
+      setRequests(sorted);
+      setError(null);
+    } catch {
+      setRequests([]);
+      if (!silent) {
+        setError('Unable to load maintenance requests right now.');
+      }
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadRequests();
@@ -185,7 +202,8 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Failed to submit maintenance request.');
+      if (!response.ok)
+        throw new Error('Failed to submit maintenance request.');
       const created = mapIncomingRequest(await response.json());
       setRequests((current) => [created, ...current]);
       setError(null);
@@ -206,7 +224,8 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       });
-      if (!response.ok) throw new Error('Failed to update maintenance request.');
+      if (!response.ok)
+        throw new Error('Failed to update maintenance request.');
 
       const updated = mapIncomingRequest(await response.json());
       setRequests((current) =>
@@ -220,7 +239,8 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
 
   const filtered = useMemo(() => {
     return requests.filter((item) => {
-      if (propertyFilter !== 'all' && item.propertyId !== propertyFilter) return false;
+      if (propertyFilter !== 'all' && item.propertyId !== propertyFilter)
+        return false;
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       return true;
     });
@@ -264,7 +284,9 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
       <section className="bg-white border border-gray-200 rounded-xl p-4 md:p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-neutral-900">Maintenance Requests</h2>
+            <h2 className="text-lg font-bold text-neutral-900">
+              Maintenance Requests
+            </h2>
             <p className="text-sm text-gray-600">
               {isManager
                 ? 'Review incoming issues, assign contractors and track progress.'
@@ -301,7 +323,8 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
         {isManager && newCount > 0 && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 flex items-center gap-2">
             <BellRing size={16} />
-            {newCount} new maintenance request{newCount > 1 ? 's' : ''} received.
+            {newCount} new maintenance request{newCount > 1 ? 's' : ''}{' '}
+            received.
           </div>
         )}
 
@@ -369,7 +392,10 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {STATUS_OPTIONS.map((status) => (
-              <div key={status} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <div
+                key={status}
+                className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+              >
                 <h3 className="font-semibold text-sm text-gray-800 mb-2">
                   {STATUS_LABELS[status]} ({grouped[status].length})
                 </h3>
@@ -383,7 +409,9 @@ export default function MaintenanceFlow({ defaultRole = 'tenant' }: MaintenanceF
                     />
                   ))}
                   {grouped[status].length === 0 && (
-                    <p className="text-xs text-gray-500">No requests in this column.</p>
+                    <p className="text-xs text-gray-500">
+                      No requests in this column.
+                    </p>
                   )}
                 </div>
               </div>

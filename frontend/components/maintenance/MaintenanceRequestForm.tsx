@@ -27,7 +27,8 @@ export default function MaintenanceRequestForm({
   const [files, setFiles] = useState<File[]>([]);
 
   const filePreview = useMemo(
-    () => files.map((file) => `${file.name} (${Math.round(file.size / 1024)}KB)`),
+    () =>
+      files.map((file) => `${file.name} (${Math.round(file.size / 1024)}KB)`),
     [files],
   );
 
@@ -81,7 +82,9 @@ export default function MaintenanceRequestForm({
             <select
               required
               value={category}
-              onChange={(event) => setCategory(event.target.value as typeof category)}
+              onChange={(event) =>
+                setCategory(event.target.value as typeof category)
+              }
               className="border border-gray-300 rounded-lg px-3 py-2.5 bg-white"
             >
               {ISSUE_CATEGORIES.map((option) => (
@@ -98,7 +101,9 @@ export default function MaintenanceRequestForm({
           <select
             required
             value={priority}
-            onChange={(event) => setPriority(event.target.value as typeof priority)}
+            onChange={(event) =>
+              setPriority(event.target.value as typeof priority)
+            }
             className="border border-gray-300 rounded-lg px-3 py-2.5 bg-white"
           >
             {PRIORITY_LEVELS.map((option) => (
@@ -134,7 +139,9 @@ export default function MaintenanceRequestForm({
 
         {filePreview.length > 0 && (
           <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 mb-2">Files selected</p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">
+              Files selected
+            </p>
             <ul className="space-y-1 text-xs text-gray-700">
               {filePreview.map((file) => (
                 <li key={file}>{file}</li>
