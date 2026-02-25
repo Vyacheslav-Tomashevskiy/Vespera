@@ -1,9 +1,24 @@
 'use client';
 
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Properties-navbar';
 import PropertyCardSkeleton from '@/components/PropertyCardSkeleton';
+
+// Dynamically import the map component to avoid SSR issues
+// Leaflet requires browser APIs
+const PropertyMapView = dynamic(
+  () => import('@/components/properties/PropertyMapView'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-500">Loading map...</div>
+      </div>
+    ),
+  },
+);
 import {
   Heart,
   MapPin,
@@ -16,13 +31,18 @@ import {
   Plus,
   Minus,
   Compass,
+  List,
+  Map,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+
+type ViewMode = 'split' | 'list' | 'map';
 
 export default function PropertyListing() {
   const [, setSelectedFilter] = useState('Property Type');
   const [searchAsIMove, setSearchAsIMove] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('split');
 
   // Simulate loading data
   useEffect(() => {
@@ -32,7 +52,7 @@ export default function PropertyListing() {
     return () => clearTimeout(timer);
   }, []);
 
-  const properties = [
+  const [properties, setProperties] = useState([
     {
       id: 1,
       price: '₦2,500,000',
@@ -45,6 +65,8 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=400&fit=crop',
       verified: true,
+      latitude: 6.4281,
+      longitude: 3.4219,
     },
     {
       id: 2,
@@ -58,6 +80,8 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=400&fit=crop',
       verified: true,
+      latitude: 6.4654,
+      longitude: 3.4738,
     },
     {
       id: 3,
@@ -71,6 +95,8 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=500&h=400&fit=crop',
       verified: false,
+      latitude: 6.4484,
+      longitude: 3.4356,
     },
     {
       id: 4,
@@ -84,6 +110,8 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=400&fit=crop',
       verified: true,
+      latitude: 6.4444,
+      longitude: 3.4333,
     },
     {
       id: 5,
@@ -97,6 +125,8 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=400&fit=crop',
       verified: false,
+      latitude: 6.4993,
+      longitude: 3.3779,
     },
     {
       id: 6,
@@ -110,17 +140,37 @@ export default function PropertyListing() {
       image:
         'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&h=400&fit=crop',
       verified: true,
+      latitude: 6.4167,
+      longitude: 3.4167,
     },
-  ];
+  ]);
 
-  const priceMarkers = [
-    { price: '₦1,500,000', top: '20%', left: '60%' },
-    { price: '₦2,500,000', top: '30%', left: '70%' },
-    { price: '₦8,500,000', top: '40%', left: '75%' },
-    { price: '₦3,800,000', top: '50%', left: '65%' },
-    { price: '₦15,000,000', top: '65%', left: '55%' },
-    { price: '₦800,000', top: '80%', left: '50%' },
-  ];
+  // Handle map bounds change to filter properties
+  const handleBoundsChange = (bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }) => {
+    if (!searchAsIMove) return;
+
+    // Filter properties within bounds
+    // In a real app, this would trigger an API call with bounding box parameters
+    const filtered = properties.filter((p) => {
+      if (!p.latitude || !p.longitude) return false;
+      return (
+        p.latitude >= bounds.south &&
+        p.latitude <= bounds.north &&
+        p.longitude >= bounds.west &&
+        p.longitude <= bounds.east
+      );
+    });
+
+    // For now, we'll just log - in production, this would update the properties list
+    // setProperties(filtered);
+    console.log('Properties in bounds:', filtered.length);
+  };
+
 
   return (
     <>
@@ -158,6 +208,45 @@ export default function PropertyListing() {
                   Amenities
                 </button>
                 <div className="flex items-center gap-2 ml-auto">
+                  {/* View Toggle */}
+                  <div className="flex items-center gap-1 border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-2 text-sm transition ${
+                        viewMode === 'list'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      title="List View"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('split')}
+                      className={`px-3 py-2 text-sm transition ${
+                        viewMode === 'split'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      title="Split View"
+                    >
+                      <div className="flex gap-0.5">
+                        <div className="w-1.5 h-3 bg-current rounded-l" />
+                        <div className="w-1.5 h-3 bg-current rounded-r" />
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('map')}
+                      className={`px-3 py-2 text-sm transition ${
+                        viewMode === 'map'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      title="Map View"
+                    >
+                      <Map className="w-4 h-4" />
+                    </button>
+                  </div>
                   <button className="flex items-center gap-1 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                     <Filter className="w-4 h-4" />
                     <span className="hidden sm:inline">Filters</span>
@@ -173,9 +262,24 @@ export default function PropertyListing() {
         </header>
 
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-0">
+        <div
+          className={`flex gap-0 ${
+            viewMode === 'split'
+              ? 'flex-col lg:flex-row'
+              : viewMode === 'list'
+                ? 'flex-col'
+                : 'flex-col'
+          }`}
+        >
           {/* Left Sidebar - Listings */}
-          <div className="w-full lg:w-2/5 xl:w-1/2 overflow-y-auto max-h-[calc(100vh-100px)]">
+          {(viewMode === 'list' || viewMode === 'split') && (
+            <div
+              className={`overflow-y-auto max-h-[calc(100vh-100px)] ${
+                viewMode === 'split'
+                  ? 'w-full lg:w-2/5 xl:w-1/2'
+                  : 'w-full'
+              }`}
+            >
             <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               {/* Heading */}
               <div className="mb-6">
@@ -341,59 +445,29 @@ export default function PropertyListing() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* Right Sidebar - Map */}
-          <div className="w-full lg:w-3/5 xl:w-1/2 h-96 lg:h-[calc(100vh-100px)] bg-blue-200 relative top-20 lg:top-24 lg:sticky">
-            {/* Map Background */}
-            <div className="absolute inset-0 bg-linear-to-br from-blue-100 to-blue-200">
-              <div className="absolute inset-0 opacity-50 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22white%22 width=%22100%22 height=%22100%22/><path d=%22M0 50 Q25 25 50 50 T100 50%22 stroke=%22%23e5e7eb%22 fill=%22none%22/></svg>')]" />
-            </div>
-
-            {/* Price Markers */}
-            {priceMarkers.map((marker, index) => (
-              <div
-                key={index}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                style={{ top: marker.top, left: marker.left }}
-              >
-                {marker.price === '₦3,800,000' ? (
-                  <div className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold text-xs sm:text-sm shadow-lg">
-                    {marker.price}
-                  </div>
-                ) : (
-                  <div className="bg-white text-blue-600 px-3 py-1 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-200">
-                    {marker.price}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Search as I Move Checkbox */}
-            <div className="absolute top-4 right-4 bg-white rounded-full px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 shadow-lg z-10">
-              <input
-                type="checkbox"
-                checked={searchAsIMove}
-                onChange={(e) => setSearchAsIMove(e.target.checked)}
-                className="w-4 h-4 rounded cursor-pointer accent-blue-600"
+          {/* Map View */}
+          {(viewMode === 'map' || viewMode === 'split') && (
+            <div
+              className={`h-96 lg:h-[calc(100vh-100px)] relative ${
+                viewMode === 'split'
+                  ? 'w-full lg:w-3/5 xl:w-1/2 lg:sticky lg:top-24'
+                  : 'w-full'
+              }`}
+            >
+              <PropertyMapView
+                properties={properties}
+                onBoundsChange={handleBoundsChange}
+                searchAsIMove={searchAsIMove}
+                initialViewState={{
+                  longitude: 3.3792,
+                  latitude: 6.5244,
+                  zoom: 11,
+                }}
               />
-              <label className="text-gray-700 text-xs sm:text-sm font-medium cursor-pointer select-none">
-                Search as I move the map
-              </label>
             </div>
-
-            {/* Map Controls */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-              <button className="bg-white rounded-lg p-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg">
-                <Plus className="w-5 h-5 text-gray-700" />
-              </button>
-              <button className="bg-white rounded-lg p-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg">
-                <Minus className="w-5 h-5 text-gray-700" />
-              </button>
-              <button className="bg-white rounded-lg p-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg">
-                <Compass className="w-5 h-5 text-gray-700" />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
