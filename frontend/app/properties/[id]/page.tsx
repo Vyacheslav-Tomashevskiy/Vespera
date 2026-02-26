@@ -5,6 +5,10 @@ import AmenitiesList, { Amenity } from '@/components/properties/AmenitiesList';
 import { MapPin, User, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Properties-navbar';
 import Footer from '@/components/Footer';
+import { ReviewList } from '@/components/reviews/ReviewList';
+import type { Review } from '@/components/reviews/ReviewCard';
+import type { RatingStats } from '@/components/reviews/RatingSummary';
+import { ReviewFormData } from '@/components/reviews/ReviewForm';
 
 interface PropertyData {
   id: string;
@@ -24,6 +28,8 @@ interface PropertyData {
     total: number;
     available: number;
   };
+  reviews: Review[];
+  ratingStats: RatingStats;
 }
 
 // Mock function for API call
@@ -64,6 +70,49 @@ async function getProperty(id: string): Promise<PropertyData | null> {
         total: 10,
         available: 2,
       },
+      reviews: [
+        {
+          id: '1',
+          rating: 5,
+          comment:
+            'Absolutely stunning property! The location is perfect, and the amenities are top-notch. The landlord was very responsive and made the move-in process seamless. Highly recommend!',
+          createdAt: new Date(
+            Date.now() - 1000 * 60 * 60 * 24 * 3,
+          ).toISOString(), // 3 days ago
+          author: {
+            id: 'u1',
+            name: 'Michael T.',
+            isVerified: true,
+            role: 'TENANT',
+          },
+        },
+        {
+          id: '2',
+          rating: 4,
+          comment:
+            'Great apartment with beautiful views. Slightly pricey, but the 24/7 power and security make it worth it.',
+          createdAt: new Date(
+            Date.now() - 1000 * 60 * 60 * 24 * 15,
+          ).toISOString(), // 15 days ago
+          author: {
+            id: 'u2',
+            name: 'Jane Doe',
+            isVerified: false,
+            role: 'TENANT',
+          },
+        },
+      ],
+      ratingStats: {
+        average: 4.5,
+        total: 2,
+        distribution: {
+          5: 1,
+          4: 1,
+          3: 0,
+          2: 0,
+          1: 0,
+        },
+      },
     };
   } else if (id === '2') {
     return {
@@ -91,6 +140,12 @@ async function getProperty(id: string): Promise<PropertyData | null> {
         total: 4,
         available: 0,
       },
+      reviews: [],
+      ratingStats: {
+        average: 0,
+        total: 0,
+        distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      },
     };
   }
 
@@ -109,6 +164,14 @@ export default async function PropertyDetailsPage({
   }
 
   const isRented = property.status === 'RENTED';
+
+  const handleReviewSubmit = async (data: ReviewFormData) => {
+    'use server';
+    // This is a placeholder since it simulates server action for the form.
+    // Real implementation would call API.
+    console.log('Submitted review:', data);
+    await new Promise((res) => setTimeout(res, 1000));
+  };
 
   return (
     <>
@@ -257,6 +320,23 @@ export default async function PropertyDetailsPage({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Reviews Section at the bottom */}
+          <div className="mt-20 pt-10 border-t border-gray-100">
+            <ReviewList
+              reviews={property.reviews}
+              stats={property.ratingStats}
+              title="Tenant Reviews"
+              subtitle="See what past and current tenants say about this property"
+              onSubmitReview={async (data) => {
+                // In a real client component, this would call an API route.
+                // Since this is a server component handling client clicks via server actions is tricky inline.
+                // We will just simulate a delay for UI purposes here.
+                'use server';
+                await new Promise((res) => setTimeout(res, 800));
+              }}
+            />
           </div>
         </div>
       </main>
