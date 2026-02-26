@@ -66,7 +66,7 @@ export class Payment {
   @Column({ nullable: true, type: 'varchar' })
   referenceNumber: string;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   processedAt: Date;
 
   @Column({ length: 100, nullable: true, type: 'varchar' })

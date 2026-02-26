@@ -55,7 +55,7 @@ export class PaymentSchedule {
   @Column({ type: 'varchar', length: 20 })
   interval: PaymentInterval;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'timestamp' })
   nextRunAt: Date;
 
   @Column({
