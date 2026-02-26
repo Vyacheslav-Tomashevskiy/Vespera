@@ -49,10 +49,12 @@ export default function NotificationCenter() {
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
+      setNotifications((prev: Notification[]) =>
+        prev.map((n: Notification) =>
+          n.id === notificationId ? { ...n, isRead: true } : n
+        )
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      setUnreadCount((prev: number) => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -61,7 +63,9 @@ export default function NotificationCenter() {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setNotifications((prev: Notification[]) =>
+        prev.map((n: Notification) => ({ ...n, isRead: true }))
+      );
       setUnreadCount(0);
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -71,7 +75,9 @@ export default function NotificationCenter() {
   const handleDelete = async (notificationId: string) => {
     try {
       await notificationService.deleteNotification(notificationId);
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      setNotifications((prev: Notification[]) =>
+        prev.filter((n: Notification) => n.id !== notificationId)
+      );
     } catch (error) {
       console.error('Failed to delete notification:', error);
     }

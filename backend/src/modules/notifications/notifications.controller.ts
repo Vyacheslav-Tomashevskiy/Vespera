@@ -11,6 +11,12 @@ import {
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+  };
+}
+
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
@@ -18,12 +24,12 @@ export class NotificationsController {
 
   @Get()
   async getNotifications(
-    @Request() req,
+    @Request() req: RequestWithUser,
     @Query('isRead') isRead?: string,
     @Query('type') type?: string,
   ) {
     const userId = req.user.id;
-    const filters: any = {};
+    const filters: { isRead?: boolean; type?: string } = {};
 
     if (isRead !== undefined) {
       filters.isRead = isRead === 'true';
@@ -36,32 +42,35 @@ export class NotificationsController {
   }
 
   @Get('unread/count')
-  async getUnreadCount(@Request() req) {
+  async getUnreadCount(@Request() req: RequestWithUser) {
     const userId = req.user.id;
     const count = await this.notificationsService.getUnreadCount(userId);
     return { count };
   }
 
   @Patch(':id/read')
-  async markAsRead(@Param('id') id: string, @Request() req) {
+  async markAsRead(@Param('id') id: string, @Request() req: RequestWithUser) {
     const userId = req.user.id;
     return this.notificationsService.markAsRead(id, userId);
   }
 
   @Patch('read-all')
-  async markAllAsRead(@Request() req) {
+  async markAllAsRead(@Request() req: RequestWithUser) {
     const userId = req.user.id;
     return this.notificationsService.markAllAsRead(userId);
   }
 
   @Delete(':id')
-  async deleteNotification(@Param('id') id: string, @Request() req) {
+  async deleteNotification(
+    @Param('id') id: string,
+    @Request() req: RequestWithUser,
+  ) {
     const userId = req.user.id;
     return this.notificationsService.deleteNotification(id, userId);
   }
 
   @Delete('clear-all')
-  async clearAll(@Request() req) {
+  async clearAll(@Request() req: RequestWithUser) {
     const userId = req.user.id;
     return this.notificationsService.clearAll(userId);
   }

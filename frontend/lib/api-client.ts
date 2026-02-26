@@ -22,7 +22,9 @@ class ApiClient {
   private defaultHeaders: Record<string, string>;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    this.baseURL =
+      (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) ||
+      'http://localhost:3001';
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
