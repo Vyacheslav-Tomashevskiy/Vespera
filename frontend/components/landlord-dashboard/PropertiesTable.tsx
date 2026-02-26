@@ -43,7 +43,8 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-      <table className="w-full border-collapse">
+      <div className="overflow-x-auto -mx-px">
+      <table className="w-full border-collapse min-w-[640px]">
         <thead>
           <tr className="bg-neutral-50/50 border-b border-neutral-100 text-left">
             <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
@@ -102,6 +103,7 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
