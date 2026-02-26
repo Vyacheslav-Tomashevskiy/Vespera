@@ -68,6 +68,21 @@
     }
   }
 
+  .animate-dropdown {
+    animation: dropDown 0.2s ease-out;
+  }
+
+  @keyframes dropDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .animate-auth-enter {
     animation: authSlideIn 0.7s ease-out both;
   }
@@ -89,6 +104,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   @apply antialiased;
+  overflow-x: hidden;
 }
 
 /* Leaflet Popup Styling */
