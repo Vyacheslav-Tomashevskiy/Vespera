@@ -52,7 +52,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/schedule": "^4.1.1",
+    "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.5",
     "@nestjs/terminus": "^11.1.1",
     "@nestjs/throttler": "^6.5.0",
@@ -123,7 +123,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^29.7.0",
-    "minimatch": "9.0.6",
+    "minimatch": "^9.0.8",
     "minimist": "^1.2.8",
     "nopt": "^5.0.0",
     "prettier": "^3.4.2",
@@ -162,6 +162,11 @@
       "<rootDir>/../test/setup-env.ts"
     ]
   },
+  "overrides": {
+    "tar": "7.5.8",
+    "minimatch": "^9.0.8",
+    "serialize-javascript": "^7.0.3"
+  },
   "packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -182,7 +187,8 @@
       "axios": "1.13.5",
       "tar": "7.5.8",
       "@isaacs/brace-expansion": "5.0.1",
-      "minimatch": "9.0.6"
+      "minimatch": "^9.0.8",
+      "serialize-javascript": "^7.0.3"
     }
   }
 }

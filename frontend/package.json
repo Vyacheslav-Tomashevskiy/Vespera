@@ -42,12 +42,12 @@
     "typescript": "^5"
   },
   "overrides": {
-    "minimatch": "9.0.6",
+    "minimatch": "^9.0.8",
     "next": "16.1.5"
   },
   "pnpm": {
     "overrides": {
-      "minimatch": "9.0.6",
+      "minimatch": "^9.0.8",
       "ajv": "6.14.0",
       "next": "16.1.5"
     }
