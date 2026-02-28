@@ -38,7 +38,7 @@ const Navbar = () => {
           : 'bg-white py-4 sm:py-6 border-b border-gray-100'
       }`}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
           <span className="text-2xl font-black text-brand-blue tracking-tight">
@@ -89,19 +89,19 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - visible on light nav (text-blue-900), min touch target */}
         <button
-          className="md:hidden text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="md:hidden text-blue-900 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-1 rounded-lg active:bg-blue-900/10"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
-          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-100 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300 z-50">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-col p-6 space-y-4">
             {navLinks.map((link) => {
               const active = isActive(link.href);

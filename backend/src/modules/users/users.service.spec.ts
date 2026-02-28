@@ -9,10 +9,11 @@ import {
 import * as bcrypt from 'bcrypt';
 import { UsersService } from './users.service';
 import { User, UserRole, AuthMethod } from './entities/user.entity';
+import { KycStatus } from '../kyc/kyc.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let userRepository: Repository<User>;
+  let _userRepository: Repository<User>;
 
   const mockUser: User = {
     id: '1',
@@ -36,6 +37,7 @@ describe('UsersService', () => {
     refreshToken: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    kycStatus: KycStatus.PENDING,
   };
 
   const mockUserRepository = {
@@ -57,7 +59,7 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    _userRepository = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   afterEach(() => {
