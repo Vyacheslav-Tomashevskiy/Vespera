@@ -29,7 +29,7 @@ const Hero = () => {
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-xl">
+            <p className="text-lg md:text-xl text-blue-50 leading-relaxed max-w-xl">
               Connect with landlords and tenants on the Stellar network.
               Experience instant payouts and transparent contract tracking
               without the paperwork.
@@ -53,10 +53,10 @@ const Hero = () => {
             </div>
 
             {/* Trust Indicator */}
-            <div className="flex items-center space-x-1.5 text-white/70 text-sm font-medium pt-2">
+            <div className="flex items-center space-x-1.5 text-blue-100 text-sm font-medium pt-2">
               <CheckCircle2
                 size={18}
-                className="text-white-700 bg-blue-700 rounded-lg"
+                className="text-blue-200 bg-blue-700 rounded-lg"
               />
               <span>Powered by Stellar Blockchain</span>
             </div>

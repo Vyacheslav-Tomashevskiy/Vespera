@@ -56,11 +56,11 @@ export default function AudienceCards() {
                 {audience.icon}
               </div>
 
-              <h3 className="text-xl font-bold text-zinc-900 mb-4">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">
                 {audience.title}
               </h3>
 
-              <p className="text-zinc-500 mb-8 leading-relaxed">
+              <p className="text-slate-600 mb-8 leading-relaxed">
                 {audience.description}
               </p>
 

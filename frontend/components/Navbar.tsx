@@ -43,15 +43,25 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
   return (
     <nav
       className={`top-0 left-0 right-0 z-50 transition-all duration-300 sticky ${
-        isScrolled ? 'glass py-3' : 'bg-transparent py-6'
+        isScrolled
+          ? isLight
+            ? 'glass py-3'
+            : 'glass-dark py-3'
+          : 'bg-transparent py-6'
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
           <span
-            className={`text-2xl font-bold tracking-tight ${
-              isLight ? 'text-blue-900' : 'text-white'
+            className={`text-2xl font-bold tracking-tight transition-colors ${
+              isScrolled
+                ? isLight
+                  ? 'text-slate-900'
+                  : 'text-white'
+                : isLight
+                  ? 'text-blue-900'
+                  : 'text-white'
             }`}
           >
             Chioma
@@ -70,8 +80,20 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
                 className={`relative text-sm font-medium transition-colors
                   ${
                     active
-                      ? `${isLight ? 'text-black border-b-2 border-black' : 'text-white border-b-2 border-white'} pb-1`
-                      : `${isLight ? 'text-black hover:text-blue-900' : 'text-white/80 hover:text-white'}`
+                      ? isScrolled
+                        ? isLight
+                          ? 'text-slate-900 border-b-2 border-blue-600 pb-1'
+                          : 'text-white border-b-2 border-blue-400 pb-1'
+                        : isLight
+                          ? 'text-slate-900 border-b-2 border-slate-900 pb-1'
+                          : 'text-white border-b-2 border-white pb-1'
+                      : isScrolled
+                        ? isLight
+                          ? 'text-slate-700 hover:text-slate-900'
+                          : 'text-slate-200 hover:text-white'
+                        : isLight
+                          ? 'text-slate-800 hover:text-blue-900'
+                          : 'text-white/90 hover:text-white'
                   }
                 `}
               >
@@ -85,17 +107,21 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
         <div className="hidden md:flex items-center space-x-6">
           <Link
             href="/login"
-            className={`${
-              isLight
-                ? 'text-blue-600 hover:text-blue-800'
-                : 'text-white hover:text-white/80'
-            } text-sm font-semibold transition-colors`}
+            className={`text-sm font-semibold transition-colors ${
+              isScrolled
+                ? isLight
+                  ? 'text-blue-600 hover:text-blue-800'
+                  : 'text-blue-400 hover:text-blue-300'
+                : isLight
+                  ? 'text-blue-600 hover:text-blue-800'
+                  : 'text-white hover:text-white/80'
+            }`}
           >
             Log In
           </Link>
           <Link
             href="/signup"
-            className="bg-blue-800 hover:bg-brand-blue text-white px-7 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-brand-blue/20"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl"
           >
             Sign Up
           </Link>
@@ -103,8 +129,14 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
 
         {/* Mobile Menu Button - min 44px touch target */}
         <button
-          className={`md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-1 rounded-lg active:bg-white/10 ${
-            isLight ? 'text-blue-900' : 'text-white'
+          className={`md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-1 rounded-lg active:bg-white/10 transition-colors ${
+            isScrolled
+              ? isLight
+                ? 'text-slate-900'
+                : 'text-white'
+              : isLight
+                ? 'text-blue-900'
+                : 'text-white'
           }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
@@ -116,8 +148,10 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
       {/* Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
         <div
-          className={`md:hidden absolute top-full left-0 right-0 border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-300 ${
-            isLight ? 'bg-white/95 backdrop-blur-md' : 'glass-dark'
+          className={`md:hidden absolute top-full left-0 right-0 border-t animate-in fade-in slide-in-from-top-4 duration-300 ${
+            isLight
+              ? 'bg-white/98 backdrop-blur-md border-slate-200 shadow-lg'
+              : 'glass-dark border-white/10'
           }`}
         >
           <div className="flex flex-col p-6 space-y-4">
@@ -129,11 +163,15 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-lg font-medium w-fit
+                  className={`text-lg font-medium w-fit transition-colors
                     ${
                       active
-                        ? `${isLight ? 'text-blue-900 border-b-2 border-blue-900' : 'text-white border-b-2 border-white'} pb-1`
-                        : `${isLight ? 'text-blue-900' : 'text-white'}`
+                        ? isLight
+                          ? 'text-slate-900 border-b-2 border-blue-600 pb-1'
+                          : 'text-white border-b-2 border-blue-400 pb-1'
+                        : isLight
+                          ? 'text-slate-700 hover:text-slate-900'
+                          : 'text-slate-200 hover:text-white'
                     }
                   `}
                 >
@@ -142,17 +180,23 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
               );
             })}
 
-            <div className="pt-4 flex flex-col space-y-4 border-t border-white/10">
+            <div
+              className={`pt-4 flex flex-col space-y-4 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}
+            >
               <Link
                 href="/login"
-                className={`text-lg font-medium ${isLight ? 'text-blue-900' : 'text-white'}`}
+                className={`text-lg font-medium transition-colors ${
+                  isLight
+                    ? 'text-blue-600 hover:text-blue-800'
+                    : 'text-blue-400 hover:text-blue-300'
+                }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="bg-brand-blue text-white px-6 py-3 rounded-lg text-center font-semibold shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-center font-semibold shadow-lg transition-all"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Sign Up

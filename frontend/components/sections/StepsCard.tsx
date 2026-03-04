@@ -33,7 +33,7 @@ export default function StepsCard() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-gray-50 to-white">
       <div className="max-w-6xl mx-auto">
         {/* Section Title */}
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-blue-600 mb-16">
+        <h2 className="text-4xl md:text-5xl font-bold text-center text-slate-900 mb-16">
           Rent in 3 Simple Steps
         </h2>
 
@@ -62,12 +62,12 @@ export default function StepsCard() {
               </div>
 
               {/* Step Title */}
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">
                 {step.title}
               </h3>
 
               {/* Step Description */}
-              <p className="text-gray-600 leading-relaxed max-w-xs">
+              <p className="text-slate-700 leading-relaxed max-w-xs">
                 {step.description}
               </p>
             </div>
