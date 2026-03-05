@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/tenants/Sidebar';
+import TopNav from '@/components/tenants/TopNav';
 import { useState } from 'react';
 
 export default function TenantLayout({
@@ -22,6 +23,7 @@ export default function TenantLayout({
       </aside>
 
       <main className="w-full flex-1  bg-[#f2f5fc] h-full overflow-y-auto  ">
+        <TopNav/>
         {children}
       </main>
     </section>
