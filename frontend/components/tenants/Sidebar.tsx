@@ -51,7 +51,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapseNav, setCollapseNav }: SidebarProps) {
   return (
-    <div className="w-full bg-brand-blue h-full overflow-y-auto py-10 px-[6%] flex flex-col items-start justify-between gap-20 mb-10 font-sans  ">
+    <div className="w-full bg-brand-blue h-full overflow-y-auto pb-10 pt-4 px-[6%] flex flex-col items-start justify-between gap-20 mb-10 font-sans  ">
       <button
         className="bg-white p-2 rounded-sm flex items-center justify-center cursor-pointer ml-auto border-none outline-none  "
         onClick={() => setCollapseNav((prev) => !prev)}

@@ -23,7 +23,7 @@ export default function TenantLayout({
       </aside>
 
       <main className="w-full flex-1  bg-[#f2f5fc] h-full overflow-y-auto  ">
-        <TopNav/>
+        <TopNav />
         {children}
       </main>
     </section>
