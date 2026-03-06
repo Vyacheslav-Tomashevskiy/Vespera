@@ -1,0 +1,42 @@
+import { navItems } from '@/types/sidebar-items';
+import {
+  Construction,
+  Contact,
+  Home,
+  HousePlus,
+  Settings,
+  Wallet,
+} from 'lucide-react';
+
+export const tenantNavItems: navItems[] = [
+  {
+    name: 'Overview',
+    href: '/tenant',
+    icon: Home,
+  },
+  {
+    name: 'My Rentals',
+    href: '/#',
+    icon: HousePlus,
+  },
+  {
+    name: ' My Contacts',
+    href: '/#',
+    icon: Contact,
+  },
+  {
+    name: 'Updates & Maintenance',
+    href: '/#',
+    icon: Construction,
+  },
+  {
+    name: 'Wallet',
+    href: '/#',
+    icon: Wallet,
+  },
+  {
+    name: 'Settings',
+    href: '/#',
+    icon: Settings,
+  },
+];

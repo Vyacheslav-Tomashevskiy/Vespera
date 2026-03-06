@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Menu, Wallet, Search, User } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications';
 import { Sidebar } from '@/components/dashboard/Sidebar';
-import { dashboardNavItems } from '@/data/dashboard-nav-items';
+import { tenantNavItems } from '@/data/tenants-nav-items';
 
 export default function TenantDashboardLayout({
   children,
@@ -19,7 +19,7 @@ export default function TenantDashboardLayout({
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        navItems={dashboardNavItems}
+        navItems={tenantNavItems}
       />
 
       {/* Main Content Area */}
