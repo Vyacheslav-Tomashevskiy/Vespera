@@ -1,20 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  FileText,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  Search,
-} from 'lucide-react';
+import { FileText, CheckCircle2, Clock, XCircle, Search } from 'lucide-react';
 import type { Contract, ContractFilterTab } from '@/types/contracts';
 import { mockContracts } from '@/data/mock-contracts';
 import { ContractCard } from './ContractCard';
 import { ContractDetailsModal } from './ContractDetailsModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 
-const FILTER_TABS: { key: ContractFilterTab; label: string; icon: typeof FileText }[] = [
+const FILTER_TABS: {
+  key: ContractFilterTab;
+  label: string;
+  icon: typeof FileText;
+}[] = [
   { key: 'ALL', label: 'All Contracts', icon: FileText },
   { key: 'ACTIVE', label: 'Active', icon: CheckCircle2 },
   { key: 'PENDING', label: 'Pending', icon: Clock },

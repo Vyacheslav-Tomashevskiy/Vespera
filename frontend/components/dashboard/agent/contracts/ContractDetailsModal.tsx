@@ -477,7 +477,8 @@ export function ContractDetailsModal({
         {/* Footer */}
         <div className="p-4 border-t border-neutral-100 bg-neutral-50 flex items-center justify-between shrink-0 rounded-b-2xl">
           <span className="text-xs text-neutral-400">
-            Created {new Date(contract.createdAt).toLocaleDateString('en-NG', {
+            Created{' '}
+            {new Date(contract.createdAt).toLocaleDateString('en-NG', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',

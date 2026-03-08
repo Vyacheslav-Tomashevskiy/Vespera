@@ -23,20 +23,17 @@ const STATUS_CONFIG: Record<
   ACTIVE: {
     label: 'Active',
     icon: CheckCircle2,
-    className:
-      'bg-green-50 text-green-700 border-green-100',
+    className: 'bg-green-50 text-green-700 border-green-100',
   },
   PENDING: {
     label: 'Pending',
     icon: Clock,
-    className:
-      'bg-amber-50 text-amber-700 border-amber-100',
+    className: 'bg-amber-50 text-amber-700 border-amber-100',
   },
   EXPIRED: {
     label: 'Expired',
     icon: XCircle,
-    className:
-      'bg-neutral-100 text-neutral-500 border-neutral-200',
+    className: 'bg-neutral-100 text-neutral-500 border-neutral-200',
   },
 };
 
