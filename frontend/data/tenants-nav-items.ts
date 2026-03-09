@@ -16,7 +16,7 @@ export const tenantNavItems: navItems[] = [
   },
   {
     name: 'My Rentals',
-    href: '/#',
+    href: '/tenant/my-rentals',
     icon: HousePlus,
   },
   {
