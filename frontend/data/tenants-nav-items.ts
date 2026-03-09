@@ -21,7 +21,7 @@ export const tenantNavItems: navItems[] = [
   },
   {
     name: ' My Contacts',
-    href: '/#',
+    href: '/tenant/my-contacts',
     icon: Contact,
   },
   {
