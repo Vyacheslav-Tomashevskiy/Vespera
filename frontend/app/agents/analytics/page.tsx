@@ -14,9 +14,6 @@ import {
   BarChart,
   Bar,
   Legend,
-  FunnelChart,
-  Funnel,
-  LabelList,
 } from 'recharts';
 import {
   TrendingUp,
