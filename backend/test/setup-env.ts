@@ -9,8 +9,6 @@ if (typeof globalThis.crypto === 'undefined') {
     nodeCrypto.webcrypto ?? nodeCrypto;
 }
 
-console.log('setup-env.ts: DB_TYPE set to', process.env.DB_TYPE);
-
 // Rate limiting configuration
 process.env.RATE_LIMIT_TTL = '60000';
 process.env.RATE_LIMIT_MAX = '100';

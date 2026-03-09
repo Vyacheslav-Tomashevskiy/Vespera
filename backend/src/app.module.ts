@@ -90,20 +90,9 @@ import { RateLimitHeadersMiddleware } from './modules/rate-limiting/middleware/r
       useFactory: () => {
         const isTest = process.env.NODE_ENV === 'test';
         const openapiGenerate = process.env.OPENAPI_GENERATE === 'true';
-        const dbType = process.env.DB_TYPE;
-
-        console.log('[TypeORM Config] Called with:', {
-          NODE_ENV: process.env.NODE_ENV,
-          isTest,
-          DB_TYPE: dbType,
-          OPENAPI_GENERATE: openapiGenerate,
-        });
 
         // For OpenAPI generation, return a minimal config that doesn't connect to DB
         if (openapiGenerate) {
-          console.log(
-            '[TypeORM Config] Returning SQLite for OpenAPI generation',
-          );
           return {
             type: 'sqlite',
             database: ':memory:',
@@ -114,10 +103,7 @@ import { RateLimitHeadersMiddleware } from './modules/rate-limiting/middleware/r
           };
         }
 
-        if (isTest && dbType === 'sqlite') {
-          console.log(
-            '[TypeORM Config] Returning SQLite for tests (DB_TYPE=sqlite)',
-          );
+        if (isTest && process.env.DB_TYPE === 'sqlite') {
           return {
             type: 'sqlite',
             database: ':memory:',
@@ -127,8 +113,7 @@ import { RateLimitHeadersMiddleware } from './modules/rate-limiting/middleware/r
             logging: false,
           };
         }
-        console.log('[TypeORM Config] Returning PostgreSQL');
-        const config = {
+        return {
           type: 'postgres' as const,
           host: process.env.DB_HOST,
           port: parseInt(process.env.DB_PORT || '5432'),
