@@ -38,17 +38,21 @@ export function useMessaging(): UseMessagingReturn {
   useEffect(() => {
     if (!user) return;
 
-    setIsLoadingRooms(true);
-    apiClient
-      .get<ChatRoom[]>('/messaging/rooms')
-      .then(({ data }) => {
+    const fetchRooms = async () => {
+      setIsLoadingRooms(true);
+
+      try {
+        const { data } = await apiClient.get<ChatRoom[]>('/messaging/rooms');
         setRooms(data ?? []);
-      })
-      .catch(() => {
+      } catch {
         // Silently fail — show empty state
         setRooms([]);
-      })
-      .finally(() => setIsLoadingRooms(false));
+      } finally {
+        setIsLoadingRooms(false);
+      }
+    };
+
+    fetchRooms();
   }, [user]);
 
   // ── Socket.io connection ────────────────────────────────────────────────
@@ -70,12 +74,10 @@ export function useMessaging(): UseMessagingReturn {
     // New message from server
     socket.on('message', (message: Message) => {
       setMessages((prev) => {
-        // Deduplicate by id
         if (prev.some((m) => m.id === message.id)) return prev;
         return [...prev, message];
       });
 
-      // Update room's last message preview
       setRooms((prev) =>
         prev.map((r) =>
           r.id === message.roomId ? { ...r, lastMessage: message } : r,
@@ -86,6 +88,7 @@ export function useMessaging(): UseMessagingReturn {
     // Typing indicator
     socket.on('typing', ({ userId, isTyping }: TypingPayload) => {
       if (userId === user.id) return;
+
       setTypingUsers((prev) => {
         const next = new Set(prev);
         if (isTyping) next.add(userId);
@@ -109,24 +112,28 @@ export function useMessaging(): UseMessagingReturn {
       setTypingUsers(new Set());
       setIsLoadingMessages(true);
 
-      // Leave previous room on socket
       if (socketRef.current && activeRoom) {
         socketRef.current.emit('leaveRoom', { roomId: activeRoom.id });
       }
 
-      // Join new room on socket
       if (socketRef.current) {
         socketRef.current.emit('joinRoom', { roomId: room.id });
       }
 
-      // Fetch message history
-      apiClient
-        .get<Message[]>(`/messaging/rooms/${room.id}/messages`)
-        .then(({ data }) => {
+      const fetchMessages = async () => {
+        try {
+          const { data } = await apiClient.get<Message[]>(
+            `/messaging/rooms/${room.id}/messages`,
+          );
           setMessages(data ?? []);
-        })
-        .catch(() => setMessages([]))
-        .finally(() => setIsLoadingMessages(false));
+        } catch {
+          setMessages([]);
+        } finally {
+          setIsLoadingMessages(false);
+        }
+      };
+
+      fetchMessages();
     },
     [activeRoom],
   );
