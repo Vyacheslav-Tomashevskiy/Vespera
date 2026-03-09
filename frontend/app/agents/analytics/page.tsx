@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/dashboard/agent/DashboardLayout';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
   LineChart,
   Line,
@@ -278,10 +276,9 @@ export default function AgentAnalyticsPage() {
   ).toFixed(1);
 
   return (
-    <ProtectedRoute>
-      <DashboardLayout>
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* ── Page Header ── */}
+    <>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* ── Page Header ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-neutral-900">Analytics</h1>
@@ -566,7 +563,6 @@ export default function AgentAnalyticsPage() {
             onExport={handleExport}
           />
         )}
-      </DashboardLayout>
-    </ProtectedRoute>
+    </>
   );
 }

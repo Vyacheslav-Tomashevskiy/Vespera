@@ -209,6 +209,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               />
             </div>
 
+            {/* Home Link */}
+            <Link
+              href="/"
+              className="text-neutral-400 hover:text-brand-blue transition-colors"
+              title="Go to Home Page"
+            >
+              <House size={20} />
+            </Link>
+
             {/* Notification */}
             <NotificationBell
               viewAllHref="/agents/notifications"

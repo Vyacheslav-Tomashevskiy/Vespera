@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/dashboard/agent/DashboardLayout';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
   Building2,
   MapPin,
@@ -253,8 +251,6 @@ const AgentPropertiesPage = () => {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <DashboardLayout>
           <div className="max-w-7xl mx-auto space-y-6 pt-4 sm:pt-6">
             <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8">
               <div className="animate-pulse space-y-4">
@@ -268,14 +264,10 @@ const AgentPropertiesPage = () => {
               </div>
             </div>
           </div>
-        </DashboardLayout>
-      </ProtectedRoute>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <DashboardLayout>
         <div className="max-w-7xl mx-auto space-y-6 pt-4 sm:pt-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -606,8 +598,6 @@ const AgentPropertiesPage = () => {
             )}
           </div>
         </div>
-      </DashboardLayout>
-    </ProtectedRoute>
   );
 };
 
