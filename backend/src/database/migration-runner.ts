@@ -33,9 +33,13 @@ async function getPendingMigrations(): Promise<string[]> {
     `SELECT name FROM migrations ORDER BY id`,
   ).catch(() => []);
   const executedNames = new Set(
-    (executed as { name: string }[]).map((r) => r.name),
+    (executed as { name?: string }[])
+      .map((r) => r.name)
+      .filter((n): n is string => n != null),
   );
-  const all = AppDataSource.migrations.map((m) => m.name);
+  const all = AppDataSource.migrations
+    .map((m) => m.name)
+    .filter((n): n is string => n != null);
   return all.filter((name) => !executedNames.has(name));
 }
 
