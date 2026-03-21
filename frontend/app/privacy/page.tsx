@@ -5,23 +5,23 @@ import Footer from '@/components/Footer';
 export default function PrivacyPage() {
   return (
     <>
-      <div className="min-h-screen bg-brand-gradient selection:bg-white/30 selection:text-white pb-40">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 selection:bg-blue-200 selection:text-slate-900 pb-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="text-center mb-8 sm:mb-12 border-b-4 border-white pt-12 sm:pt-20">
-            <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4">
+          <div className="text-center mb-8 sm:mb-12  pt-12 sm:pt-20">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent mb-4">
               Privacy Policy
             </h1>
           </div>
 
           {/* Content Card */}
-          <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 lg:p-12">
-            <p className="text-neutral-600 text-sm sm:text-base mb-4">
+          <div className="backdrop-blur-xl bg-white/80 border border-slate-200/50 rounded-2xl shadow-xl p-6 sm:p-8 lg:p-12">
+            <p className="text-slate-600 text-sm sm:text-base mb-4">
               Last updated: February 23, 2026
             </p>
-            <div className="prose prose-sm sm:prose max-w-none text-neutral-700">
+            <div className="prose prose-sm sm:prose max-w-none text-slate-700">
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   1. Introduction
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   2. Collection of Personal Information
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   3. Use of Your Information
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   4. Disclosure of Your Information
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
                   follows:
                 </p>
 
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   4.1 By Law or to Protect Rights
                 </h3>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -131,7 +131,7 @@ export default function PrivacyPage() {
                   rule, or regulation.
                 </p>
 
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   4.2 Third-Party Service Providers
                 </h3>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
                   confidentiality of your information.
                 </p>
 
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   4.3 Property Landlords and Agents
                 </h3>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -153,7 +153,7 @@ export default function PrivacyPage() {
                   lease negotiations, and related communications.
                 </p>
 
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   4.4 Business Transfers
                 </h3>
                 <p className="text-sm sm:text-base leading-relaxed">
@@ -167,7 +167,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   5. Tracking Technologies and Cookies
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   6. Data Security
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -227,7 +227,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   7. Your Rights and Choices
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -270,7 +270,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   8. Data Retention
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -296,7 +296,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   9. Third-Party Websites
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -322,7 +322,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   10. Children&apos;s Privacy
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -341,7 +341,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   11. International Data Transfers
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -370,7 +370,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   12. Changes to This Policy
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -389,7 +389,7 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   13. Contact Us
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
