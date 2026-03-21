@@ -8,23 +8,26 @@ export default function TermsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-brand-gradient selection:bg-white/30 selection:text-white pb-40">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 selection:bg-blue-200 selection:text-slate-900 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="text-center mb-8 sm:mb-12 border-b-4 border-white pt-12 sm:pt-20">
-            <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4">
+          <div className="text-center mb-8 sm:mb-12 pt-12 sm:pt-20">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent mb-4">
               Terms and Conditions
             </h1>
+            <p className="text-slate-600 text-sm sm:text-base">
+              Last updated: February 23, 2026
+            </p>
           </div>
 
           {/* Content Card */}
-          <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 lg:p-12">
-            <p className="text-neutral-600 text-sm sm:text-base mb-3">
+          <div className="backdrop-blur-xl bg-white/80 border border-slate-200/50 rounded-2xl shadow-xl p-6 sm:p-8 lg:p-12">
+            <p className="text-slate-600 text-sm sm:text-base mb-3">
               Last updated: February 23, 2026
             </p>
-            <div className="prose prose-sm sm:prose max-w-none text-neutral-700">
+            <div className="prose prose-sm sm:prose max-w-none text-slate-700">
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   1. Acceptance of Terms
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -47,7 +50,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   2. Description of Service
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -72,7 +75,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   3. Registration Obligations
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -97,7 +100,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   4. Privacy Policy
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -123,7 +126,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   5. User Conduct
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -157,7 +160,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   6. Special Admonitions for International Use
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -177,7 +180,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   7. Content Made Available for Reposting
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -201,7 +204,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   8. Modifications to Service
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -224,7 +227,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   9. Termination
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -249,7 +252,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   10. Limitation of Liability
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -273,7 +276,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   11. Governing Law and Dispute Resolution
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
@@ -293,7 +296,7 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
                   12. Contact Information
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed">
@@ -305,8 +308,8 @@ export default function TermsPage() {
             </div>
 
             {/* Acceptance Section */}
-            <div className="mt-12 pt-8 border-t border-neutral-200">
-              <div className="bg-neutral-50 rounded-xl p-6">
+            <div className="mt-12 pt-8 border-t border-slate-200">
+              <div className="backdrop-blur-sm bg-slate-50/50 rounded-xl p-6 border border-slate-200/50">
                 <div className="flex items-start gap-3">
                   <input
                     type="radio"
@@ -318,7 +321,7 @@ export default function TermsPage() {
                   />
                   <label
                     htmlFor="accept-terms"
-                    className="text-sm sm:text-base text-neutral-700 cursor-pointer select-none"
+                    className="text-sm sm:text-base text-slate-700 cursor-pointer select-none"
                   >
                     I have read and understood the Terms and Conditions and I
                     agree to be bound by all of its provisions. I understand
@@ -333,7 +336,7 @@ export default function TermsPage() {
                     className={`w-full sm:w-auto px-8 py-3 rounded-lg font-semibold transition ${
                       accepted
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                        : 'bg-neutral-300 text-slate-500 cursor-not-allowed'
                     }`}
                   >
                     Continue
