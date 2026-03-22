@@ -65,6 +65,7 @@
     "@nestjs/websockets": "^11.1.14",
     "@sentry/nestjs": "^10.39.0",
     "@stellar/stellar-sdk": "^12.2.0",
+    "@upstash/redis": "^1.37.0",
     "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "bull": "^4.16.5",
