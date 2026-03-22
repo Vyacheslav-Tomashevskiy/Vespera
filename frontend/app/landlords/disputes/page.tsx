@@ -15,11 +15,11 @@ import {
 } from '@/lib/dashboard-data';
 
 const statusStyles: Record<DashboardDispute['status'], string> = {
-  OPEN: 'bg-amber-100 text-amber-700',
-  UNDER_REVIEW: 'bg-blue-100 text-blue-700',
-  RESOLVED: 'bg-emerald-100 text-emerald-700',
-  REJECTED: 'bg-rose-100 text-rose-700',
-  WITHDRAWN: 'bg-slate-100 text-slate-600',
+  OPEN: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  UNDER_REVIEW: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  RESOLVED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  REJECTED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  WITHDRAWN: 'bg-white/5 text-blue-200/40 border-white/5',
 };
 
 export default function LandlordDisputesPage() {
@@ -47,43 +47,46 @@ export default function LandlordDisputesPage() {
   }, [user?.id]);
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[2rem] border border-slate-200 bg-linear-to-br from-white via-slate-50 to-blue-50 p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 shadow-xl relative overflow-hidden">
+        {/* Decorative Orb */}
+        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-blue-600 blur-[100px] opacity-10" />
+        
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400 relative z-10">
           Resolution Desk
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-white leading-tight relative z-10">
           Review and respond to dispute cases from the landlord dashboard
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-slate-600">
+        <p className="mt-4 max-w-2xl text-sm font-medium text-blue-200/60 leading-relaxed relative z-10">
           This surface closes the frontend gap around dispute tracking by giving
           landlords a single place to watch case status, evidence volume, and
           outstanding response load.
         </p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-3 relative z-10">
           <Stat
-            icon={<AlertTriangle className="h-5 w-5 text-amber-600" />}
+            icon={<AlertTriangle className="h-5 w-5 text-amber-400" />}
             label="Open"
             value={`${disputes.filter((item) => item.status === 'OPEN').length}`}
           />
           <Stat
-            icon={<Gavel className="h-5 w-5 text-blue-600" />}
+            icon={<Gavel className="h-5 w-5 text-blue-400" />}
             label="Under review"
             value={`${disputes.filter((item) => item.status === 'UNDER_REVIEW').length}`}
           />
           <Stat
-            icon={<FileStack className="h-5 w-5 text-emerald-600" />}
+            icon={<FileStack className="h-5 w-5 text-emerald-400" />}
             label="Resolved"
             value={`${disputes.filter((item) => item.status === 'RESOLVED').length}`}
           />
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-6 py-5">
-          <h2 className="text-lg font-semibold text-slate-900">Active cases</h2>
-          <p className="text-sm text-slate-500">
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-xl mt-8">
+        <div className="border-b border-white/5 px-8 py-6">
+          <h2 className="text-xl font-bold text-white tracking-tight">Active cases</h2>
+          <p className="text-xs text-blue-200/40 font-medium mt-1">
             Each record includes dispute type, comment volume, evidence volume,
             and resolution notes where available.
           </p>
@@ -91,32 +94,32 @@ export default function LandlordDisputesPage() {
 
         {loading ? (
           <div className="flex min-h-80 items-center justify-center">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/5 border-t-blue-500" />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-white/5">
             {disputes.map((dispute) => (
-              <article key={dispute.id} className="px-6 py-5">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <article key={dispute.id} className="px-8 py-6 hover:bg-white/5 transition-all group">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/40">
                         {dispute.disputeId}
                       </p>
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[dispute.status]}`}
+                        className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${statusStyles[dispute.status]}`}
                       >
                         {dispute.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <h3 className="mt-3 text-lg font-semibold text-slate-900">
+                    <h3 className="mt-4 text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
                       {dispute.propertyName}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-blue-200/60 font-medium">
                       {dispute.agreementReference} • Raised by{' '}
                       {dispute.counterpartyName}
                     </p>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                    <p className="mt-4 max-w-2xl text-sm leading-relaxed text-blue-200/40 font-medium">
                       {dispute.description}
                     </p>
                   </div>
@@ -138,7 +141,7 @@ export default function LandlordDisputesPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+                <div className="mt-6 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-widest text-blue-300/40">
                   <span>
                     Created {format(new Date(dispute.createdAt), 'MMM d, yyyy')}
                   </span>
@@ -146,15 +149,15 @@ export default function LandlordDisputesPage() {
                     Updated {format(new Date(dispute.updatedAt), 'MMM d, yyyy')}
                   </span>
                   {typeof dispute.requestedAmount === 'number' ? (
-                    <span>
+                    <span className="text-white">
                       Requested {formatCurrency(dispute.requestedAmount)}
                     </span>
                   ) : null}
                 </div>
 
                 {dispute.resolution ? (
-                  <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    <span className="font-semibold">Resolution:</span>{' '}
+                  <div className="mt-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-5 py-4 text-xs font-medium text-emerald-400 leading-relaxed shadow-lg">
+                    <span className="font-bold text-white uppercase tracking-widest mr-2 opacity-50">Resolution:</span>{' '}
                     {dispute.resolution}
                   </div>
                 ) : null}
@@ -177,12 +180,12 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl group hover:border-white/20 transition-all">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20 shadow-inner group-hover:bg-blue-500/20 transition-all">
         {icon}
       </div>
-      <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+      <p className="mt-5 text-[10px] font-bold uppercase tracking-widest text-blue-300/40">{label}</p>
+      <p className="mt-1 text-3xl font-bold tracking-tight text-white">
         {value}
       </p>
     </div>
@@ -199,12 +202,12 @@ function MiniCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+    <div className="rounded-2xl border border-white/5 bg-white/5 px-5 py-4 hover:border-white/10 transition-all">
+      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-blue-300/40">
         {icon}
         {label}
       </div>
-      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+      <p className="mt-2 text-sm font-bold text-white leading-tight">{value}</p>
     </div>
   );
 }

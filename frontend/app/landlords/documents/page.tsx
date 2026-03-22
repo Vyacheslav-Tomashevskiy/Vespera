@@ -49,21 +49,28 @@ export default function LandlordDocumentsPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-black text-neutral-900 tracking-tight">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">
             Lease Agreements
           </h1>
-          <p className="text-neutral-500 mt-2 text-lg">
+          <p className="text-sm text-blue-200/60 font-medium mt-1">
             Manage your property documents and track signature statuses.
           </p>
         </div>
-        <div className="px-4 py-2 bg-blue-50 text-brand-blue rounded-xl font-bold flex items-center gap-2 border border-blue-100">
-          <FileSignature className="w-5 h-5" />
-          <span>
-            {leases.filter((l) => l.status === 'PENDING').length} Pending
-            Signatures
-          </span>
+        <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl px-5 py-3 flex items-center gap-3 shadow-xl">
+          <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+            <FileSignature className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-blue-300/40 font-bold tracking-widest uppercase">
+              Action Required
+            </p>
+            <p className="text-sm font-bold text-white">
+              {leases.filter((l) => l.status === 'PENDING').length} Pending
+              Signatures
+            </p>
+          </div>
         </div>
       </div>
 

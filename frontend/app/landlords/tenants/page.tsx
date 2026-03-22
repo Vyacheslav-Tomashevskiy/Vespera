@@ -212,17 +212,17 @@ const statusConfig: Record<
 > = {
   Active: {
     label: 'Active',
-    cls: 'bg-emerald-100 text-emerald-700',
+    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     dot: 'bg-emerald-500',
   },
   'Pending Sign': {
     label: 'Pending Sign',
-    cls: 'bg-amber-100 text-amber-700',
+    cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     dot: 'bg-amber-500',
   },
   Arrears: {
     label: 'Arrears',
-    cls: 'bg-rose-100 text-rose-700',
+    cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
     dot: 'bg-rose-500',
   },
 };
@@ -420,48 +420,48 @@ export default function TenantsPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-blue-900">Tenants</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">Tenants</h1>
+          <p className="text-sm text-blue-200/60 font-medium mt-1">
             Manage leases, track payments, and monitor tenant status
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-blue-900 text-white rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm">
+        <button className="flex items-center gap-2 bg-blue-600/50 border border-blue-500/30 text-white rounded-2xl px-6 py-3 text-xs font-bold hover:bg-blue-600 hover:border-blue-400 transition-all shadow-xl uppercase tracking-widest">
           <UserPlus size={16} />
           Invite Tenant
         </button>
       </div>
 
       {/* ── Stat Pills ── */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-4 flex-wrap">
         {[
           {
             label: 'Total Tenants',
             value: stats.total,
-            icon: <User size={14} />,
-            color: 'text-blue-900 bg-blue-50 border-blue-200',
+            icon: <User size={16} />,
+            color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
           },
           {
             label: 'Active Leases',
             value: stats.active,
-            icon: <Home size={14} />,
-            color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+            icon: <Home size={16} />,
+            color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
           },
           {
             label: 'Pending Sign',
             value: stats.pending,
-            icon: <Calendar size={14} />,
-            color: 'text-amber-700 bg-amber-50 border-amber-200',
+            icon: <Calendar size={16} />,
+            color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
           },
           {
             label: 'In Arrears',
             value: stats.arrears,
-            icon: <DollarSign size={14} />,
-            color: 'text-rose-700 bg-rose-50 border-rose-200',
+            icon: <DollarSign size={16} />,
+            color: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
           },
         ].map(({ label, value, icon, color }) => (
           <div
             key={label}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-sm font-semibold ${color}`}
+            className={`flex items-center gap-3 px-5 py-3 rounded-2xl border text-[10px] font-bold uppercase tracking-widest ${color} shadow-sm backdrop-blur-sm`}
           >
             {icon}
             <span>
@@ -472,14 +472,14 @@ export default function TenantsPage() {
       </div>
 
       {/* ── Table Card ── */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-xl overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 flex-wrap">
+        <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-white/5 flex-wrap">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <div className="relative group flex-1 min-w-[240px] max-w-sm">
             <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300/40 group-focus-within:text-blue-400 transition-colors"
             />
             <input
               type="text"
@@ -489,7 +489,7 @@ export default function TenantsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-900/20 focus:border-blue-300 transition-all"
+              className="w-full pl-11 pr-4 py-3 text-xs font-bold bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-blue-300/20 outline-none focus:border-blue-500 focus:bg-white/10 transition-all uppercase tracking-widest"
             />
           </div>
 
@@ -503,10 +503,10 @@ export default function TenantsPage() {
                     setStatusFilter(s);
                     setPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${
                     statusFilter === s
-                      ? 'bg-blue-900 text-white border-blue-900'
-                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-blue-600/20 text-blue-400 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.1)]'
+                      : 'bg-white/5 text-blue-200/40 border-white/5 hover:border-white/10 hover:bg-white/10'
                   }`}
                 >
                   {s}
@@ -522,10 +522,10 @@ export default function TenantsPage() {
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 text-slate-500 bg-slate-50 focus:outline-none"
+            className="text-[10px] font-bold uppercase tracking-widest border border-white/5 rounded-xl px-3 py-2 text-blue-200/40 bg-white/5 outline-none hover:border-white/10 transition-all flex item-center"
           >
             {PAGE_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>
+              <option key={n} value={n} className="bg-slate-900 text-white">
                 Show {n}
               </option>
             ))}
@@ -535,9 +535,9 @@ export default function TenantsPage() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="px-5 py-3 w-10">
+            <thead>
+              <tr className="bg-white/5 border-b border-white/5 text-blue-300/40">
+                <th className="px-5 py-4 w-10">
                   <input
                     type="checkbox"
                     checked={
@@ -545,7 +545,7 @@ export default function TenantsPage() {
                       paginated.length > 0
                     }
                     onChange={toggleAll}
-                    className="rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                    className="rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500/50"
                   />
                 </th>
                 <ThCell
@@ -590,7 +590,7 @@ export default function TenantsPage() {
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-left">
+                <th className="px-5 py-3 text-[10px] font-bold text-blue-300/40 uppercase tracking-widest text-left">
                   Action
                 </th>
               </tr>
@@ -604,7 +604,7 @@ export default function TenantsPage() {
                 paginated.map((tenant) => (
                   <tr
                     key={tenant.id}
-                    className="hover:bg-neutral-50 border-b border-neutral-100 transition-colors"
+                    className="hover:bg-white/5 border-b border-white/5 transition-all group"
                   >
                     {/* Checkbox */}
                     <td className="px-5 py-4">
@@ -612,7 +612,7 @@ export default function TenantsPage() {
                         type="checkbox"
                         checked={selected.includes(tenant.id)}
                         onChange={() => toggleSelect(tenant.id)}
-                        className="rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                        className="rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500/50"
                       />
                     </td>
 
@@ -621,10 +621,10 @@ export default function TenantsPage() {
                       <div className="flex items-center gap-3">
                         <Avatar name={tenant.name} />
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">
+                          <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
                             {tenant.name}
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-blue-200/40">
                             {tenant.email}
                           </p>
                         </div>
@@ -633,15 +633,15 @@ export default function TenantsPage() {
 
                     {/* Property */}
                     <td className="px-5 py-4">
-                      <p className="text-sm text-slate-700 font-medium">
+                      <p className="text-sm text-white font-medium">
                         {tenant.property}
                       </p>
-                      <p className="text-xs text-slate-400">{tenant.unit}</p>
+                      <p className="text-xs text-blue-200/40">{tenant.unit}</p>
                     </td>
 
                     {/* Lease Start */}
                     <td className="px-5 py-4">
-                      <span className="text-sm text-slate-600">
+                      <span className="text-sm text-blue-200/60 font-medium">
                         {tenant.leaseStart}
                       </span>
                     </td>
@@ -649,18 +649,18 @@ export default function TenantsPage() {
                     {/* Lease End */}
                     <td className="px-5 py-4">
                       <span
-                        className={`text-sm font-medium ${tenant.daysUntilExpiry < 0 ? 'text-rose-600' : tenant.daysUntilExpiry < 60 ? 'text-amber-600' : 'text-slate-600'}`}
+                        className={`text-sm font-bold ${tenant.daysUntilExpiry < 0 ? 'text-rose-400' : tenant.daysUntilExpiry < 60 ? 'text-amber-400' : 'text-blue-200'}`}
                       >
                         {tenant.leaseEnd}
                       </span>
                       {tenant.daysUntilExpiry < 0 && (
-                        <p className="text-[10px] text-rose-500 font-semibold">
+                        <p className="text-[10px] text-rose-500/60 font-bold uppercase tracking-widest mt-0.5">
                           Expired
                         </p>
                       )}
                       {tenant.daysUntilExpiry >= 0 &&
                         tenant.daysUntilExpiry < 60 && (
-                          <p className="text-[10px] text-amber-500 font-semibold">
+                          <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-widest mt-0.5">
                             Expiring soon
                           </p>
                         )}
@@ -668,7 +668,7 @@ export default function TenantsPage() {
 
                     {/* Rent */}
                     <td className="px-5 py-4">
-                      <span className="text-sm font-bold text-emerald-600">
+                      <span className="text-sm font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                         {fmtAmount(tenant.rentAmount)}
                       </span>
                     </td>
@@ -680,7 +680,7 @@ export default function TenantsPage() {
 
                     {/* Action */}
                     <td className="px-5 py-4">
-                      <button className="text-xs font-semibold text-blue-900 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors whitespace-nowrap">
+                      <button className="text-[10px] font-bold uppercase tracking-widest text-blue-200/40 border border-white/5 rounded-xl px-4 py-2 hover:text-white hover:bg-blue-600/20 hover:border-blue-500/30 transition-all">
                         View Details
                       </button>
                     </td>
@@ -692,24 +692,24 @@ export default function TenantsPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-slate-50 flex-wrap gap-3">
-          <p className="text-xs text-slate-400">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-white/5 flex-wrap gap-4">
+          <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
             Showing{' '}
-            <span className="font-semibold text-slate-600">
+            <span className="text-white">
               {Math.min((page - 1) * pageSize + 1, filtered.length)}–
               {Math.min(page * pageSize, filtered.length)}
             </span>{' '}
             of{' '}
-            <span className="font-semibold text-slate-600">
+            <span className="text-white">
               {filtered.length}
             </span>{' '}
             tenants
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg text-slate-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest border border-white/5 rounded-xl text-blue-200/40 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
             >
               ← Prev
             </button>
@@ -726,7 +726,7 @@ export default function TenantsPage() {
                 p === '...' ? (
                   <span
                     key={`ellipsis-${i}`}
-                    className="px-2 text-slate-400 text-xs"
+                    className="px-2 text-blue-300/20 text-xs"
                   >
                     …
                   </span>
@@ -734,10 +734,10 @@ export default function TenantsPage() {
                   <button
                     key={p}
                     onClick={() => setPage(p as number)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                    className={`min-w-[36px] h-9 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest rounded-xl border transition-all ${
                       page === p
-                        ? 'bg-blue-900 text-white border-blue-900'
-                        : 'border-slate-200 text-slate-500 hover:bg-white'
+                        ? 'bg-blue-600/20 text-blue-400 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.1)]'
+                        : 'border-white/5 text-blue-200/40 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {p}
@@ -747,7 +747,7 @@ export default function TenantsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || totalPages === 0}
-              className="px-3 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg text-slate-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest border border-white/5 rounded-xl text-blue-200/40 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
             >
               Next →
             </button>

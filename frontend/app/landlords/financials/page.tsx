@@ -157,12 +157,12 @@ interface TooltipProps {
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-lg">
-      <p className="text-sm font-bold text-blue-900 mb-1">{label}</p>
-      <p className="text-base font-bold text-emerald-500">
+    <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 shadow-2xl">
+      <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1.5">{label}</p>
+      <p className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
         {fmt(payload[0].value)}
       </p>
-      <p className="text-xs text-slate-400 mt-0.5">Revenue</p>
+      <p className="text-[10px] font-bold text-blue-200/40 mt-1 uppercase tracking-widest">Monthly Revenue</p>
     </div>
   );
 };
@@ -170,15 +170,15 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 const statusStyles: Record<string, string> = {
-  Confirmed: 'bg-emerald-100 text-emerald-800',
-  Processed: 'bg-blue-100 text-blue-800',
-  Deducted: 'bg-red-100 text-red-800',
-  Held: 'bg-amber-100 text-amber-800',
+  Confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  Processed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  Deducted: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  Held: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 
 const StatusBadge = ({ status }: { status: string }) => (
   <span
-    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${statusStyles[status] ?? 'bg-slate-100 text-slate-600'}`}
+    className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${statusStyles[status] ?? 'bg-white/5 text-blue-200/40 border-white/5'}`}
   >
     {status}
   </span>
@@ -204,22 +204,25 @@ const MetricCard = ({
   icon,
 }: MetricCardProps) => (
   <div
-    className={`bg-white rounded-2xl p-6 shadow-sm flex-1 min-w-[200px] border-t-4 ${borderColor}`}
+    className={`bg-white/5 backdrop-blur-sm rounded-3xl p-6 shadow-xl flex-1 min-w-[240px] border border-white/10 overflow-hidden group relative`}
   >
-    <div className="flex items-center gap-3 mb-4">
+    {/* Decorative Orb */}
+    <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity ${iconBg}`} />
+    
+    <div className="flex items-center gap-4 mb-5 relative z-10">
       <div
-        className={`${iconBg} rounded-xl w-10 h-10 flex items-center justify-center text-lg`}
+        className={`${iconBg} bg-opacity-20 rounded-2xl w-12 h-12 flex items-center justify-center text-xl shadow-inner border border-white/5`}
       >
         {icon}
       </div>
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
         {title}
       </p>
     </div>
-    <p className="text-3xl font-extrabold text-slate-900 leading-none">
+    <p className="text-3xl font-bold text-white leading-none relative z-10">
       {value}
     </p>
-    {sub && <p className="text-xs text-slate-400 mt-2">{sub}</p>}
+    {sub && <p className="text-xs text-blue-200/40 font-medium mt-3 relative z-10 italic">{sub}</p>}
   </div>
 );
 
@@ -256,24 +259,24 @@ export default function FinancialsPage() {
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-blue-900">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">
             Financials &amp; Revenue
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-blue-200/60 font-medium mt-1">
             Powered by Stellar blockchain · Real-time settlement
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 flex items-center gap-2">
-            <span className="text-base">⭐</span>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl px-5 py-3 flex items-center gap-3 shadow-xl">
+            <span className="text-xl">⭐</span>
             <div>
-              <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
+              <p className="text-[10px] text-blue-300/40 font-bold tracking-widest uppercase">
                 Stellar Wallet
               </p>
-              <p className="text-sm font-extrabold text-blue-900">45,200 XLM</p>
+              <p className="text-sm font-bold text-white">45,200 XLM</p>
             </div>
           </div>
-          <button className="bg-blue-900 text-white rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-blue-800 transition-colors">
+          <button className="bg-blue-600/50 border border-blue-500/30 text-white rounded-2xl px-6 py-3 text-xs font-bold hover:bg-blue-600 hover:border-blue-400 transition-all shadow-xl uppercase tracking-widest">
             ↓ Export Report
           </button>
         </div>
@@ -308,13 +311,13 @@ export default function FinancialsPage() {
       </div>
 
       {/* ── Area Chart ── */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
+      <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-white/10">
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">
+            <h2 className="text-xl font-bold text-white tracking-tight">
               Revenue Analytics
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-blue-200/40 font-medium mt-1">
               Monthly revenue over last 12 months
             </p>
           </div>
@@ -322,62 +325,63 @@ export default function FinancialsPage() {
             {['6M', '12M', 'YTD'].map((opt) => (
               <button
                 key={opt}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${opt === '12M' ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${opt === '12M' ? 'bg-blue-600/20 text-blue-400 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'bg-white/5 text-blue-200/40 border-white/5 hover:border-white/10 hover:bg-white/10'}`}
               >
                 {opt}
               </button>
             ))}
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={280}>
           <AreaChart
             data={revenueData}
-            margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
           >
             <defs>
               <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1e3a8a" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0} />
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }}
+              tick={{ fill: 'rgba(147, 197, 253, 0.4)', fontSize: 10, fontWeight: 700 }}
+              dy={15}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              tick={{ fill: 'rgba(147, 197, 253, 0.4)', fontSize: 10, fontWeight: 700 }}
               tickFormatter={(v: number) => fmt(v)}
-              width={58}
+              width={50}
             />
             <Tooltip
               content={<CustomTooltip />}
-              cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
+              cursor={{ stroke: 'rgba(59, 130, 246, 0.2)', strokeWidth: 2 }}
             />
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#1e3a8a"
-              strokeWidth={2.5}
+              stroke="#60a5fa"
+              strokeWidth={3}
               fill="url(#revenueGrad)"
-              dot={false}
-              activeDot={{ r: 5, fill: '#1e3a8a', strokeWidth: 0 }}
+              dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#1e293b' }}
+              activeDot={{ r: 6, fill: '#60a5fa', strokeWidth: 0 }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
       {/* ── Transaction Ledger ── */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between flex-wrap gap-3 px-6 py-5 border-b border-slate-100">
+      <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between flex-wrap gap-4 px-6 py-6 border-b border-white/5">
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">
+            <h2 className="text-xl font-bold text-white tracking-tight">
               Transaction Ledger
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-blue-200/40 font-medium mt-1">
               Blockchain-verified · Soroban RPC
             </p>
           </div>
@@ -386,7 +390,7 @@ export default function FinancialsPage() {
               <button
                 key={t}
                 onClick={() => setFilter(t)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors whitespace-nowrap ${filter === t ? 'bg-blue-900 text-white border-blue-900' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all whitespace-nowrap ${filter === t ? 'bg-blue-600/20 text-blue-400 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'bg-white/5 text-blue-200/40 border-white/5 hover:border-white/10 hover:bg-white/10'}`}
               >
                 {t}
               </button>
@@ -394,12 +398,12 @@ export default function FinancialsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-6 px-6 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="grid grid-cols-6 px-6 py-4 bg-white/5 border-b border-white/5">
           {['TX HASH', 'DATE', 'PROPERTY', 'TYPE', 'AMOUNT', 'STATUS'].map(
             (col) => (
               <span
                 key={col}
-                className="text-[10px] font-bold text-slate-400 tracking-widest uppercase"
+                className="text-[10px] font-bold text-blue-300/40 tracking-widest uppercase"
               >
                 {col}
               </span>
@@ -407,44 +411,50 @@ export default function FinancialsPage() {
           )}
         </div>
 
-        {filtered.map((tx, i) => (
-          <div
-            key={i}
-            className={`grid grid-cols-6 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${i < filtered.length - 1 ? 'border-b border-slate-50' : ''}`}
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full flex-shrink-0 ${tx.inflow ? 'bg-emerald-500' : 'bg-orange-400'}`}
-              />
-              <span className="font-mono text-xs text-blue-900 font-semibold bg-blue-50 px-2 py-0.5 rounded-md">
-                {tx.hash}
-              </span>
-            </div>
-            <span className="text-xs text-slate-500">{tx.date}</span>
-            <span className="text-xs text-slate-800 font-medium truncate pr-2">
-              {tx.property}
-            </span>
-            <span className="text-xs text-slate-500">{tx.type}</span>
-            <span
-              className={`text-sm font-bold ${tx.inflow ? 'text-emerald-600' : 'text-orange-500'}`}
+        <div className="divide-y divide-white/5">
+          {filtered.map((tx, i) => (
+            <div
+              key={i}
+              className={`grid grid-cols-6 px-6 py-5 items-center hover:bg-white/5 transition-all group`}
             >
-              {tx.inflow ? '+' : '−'} {fmtFull(tx.amount)}
-            </span>
-            <StatusBadge status={tx.status} />
-          </div>
-        ))}
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-2 h-2 rounded-full shadow-[0_0_8px] flex-shrink-0 ${tx.inflow ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-rose-500 shadow-rose-500/50'}`}
+                />
+                <span className="font-mono text-[10px] font-bold text-blue-400 bg-blue-600/10 border border-blue-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                  {tx.hash}
+                </span>
+              </div>
+              <span className="text-sm text-blue-200/60 font-medium">{tx.date}</span>
+              <span className="text-sm text-white font-bold truncate pr-4 group-hover:text-blue-400 transition-colors">
+                {tx.property}
+              </span>
+              <span className="text-sm text-blue-200/40 font-medium">{tx.type}</span>
+              <span
+                className={`text-sm font-bold ${tx.inflow ? 'bg-gradient-to-r from-emerald-400 to-teal-400' : 'bg-gradient-to-r from-rose-400 to-orange-400'} bg-clip-text text-transparent`}
+              >
+                {tx.inflow ? '+' : '−'} {fmtFull(tx.amount)}
+              </span>
+              <div className="flex justify-start">
+                <StatusBadge status={tx.status} />
+              </div>
+            </div>
+          ))}
+        </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-slate-400 text-sm">
-            No transactions found.
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-blue-300/40 font-bold uppercase tracking-widest text-sm">
+              No transactions found
+            </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50 flex-wrap gap-2">
-          <span className="text-xs text-slate-400">
-            Showing {filtered.length} of {transactions.length} transactions
+        <div className="flex items-center justify-between px-6 py-5 border-t border-white/5 bg-white/5 flex-wrap gap-4">
+          <span className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
+            Showing <span className="text-white">{filtered.length}</span> of <span className="text-white">{transactions.length}</span> transactions
           </span>
-          <button className="text-xs font-semibold text-blue-900 border border-slate-200 bg-white rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors">
+          <button className="flex items-center gap-2 px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest border border-blue-500/30 bg-blue-600/20 text-blue-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-lg">
             View All on Stellar Explorer →
           </button>
         </div>
