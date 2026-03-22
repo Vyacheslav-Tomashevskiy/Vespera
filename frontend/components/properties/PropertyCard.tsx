@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Heart, MapPin, Bed, Bath, Ruler } from 'lucide-react';
 
 interface PropertyCardProps {
@@ -20,7 +21,8 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ property }: PropertyCardProps) {
   return (
-    <div className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-white/20 transition-all duration-300 group">
+    <Link href={`/properties/${property.id}`} className="block">
+      <div className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-white/20 transition-all duration-300 group cursor-pointer">
       {/* Image Container */}
       <div className="relative aspect-4/3 sm:aspect-video bg-slate-200 overflow-hidden cursor-pointer">
         <Image
@@ -107,5 +109,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }
