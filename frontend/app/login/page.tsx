@@ -184,47 +184,61 @@ export default function LoginPage() {
 
           <WalletConnectButton className="w-full" />
 
-          {/* Demo Credentials - Development Only */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-              <p className="text-xs font-semibold text-amber-200 mb-3 text-center uppercase tracking-wide">
-                Demo Credentials
-              </p>
-              <div className="space-y-2 text-xs">
-                {[
-                  {
-                    role: 'Admin',
-                    email: 'admin@chioma.local',
-                    password: 'QwW??H<EauRx6EyB>wm_',
-                  },
-                  {
-                    role: 'Agent',
-                    email: 'agent@chioma.local',
-                    password: 'nWkW~HWN6S*-6o!??kHg',
-                  },
-                  {
-                    role: 'Tenant',
-                    email: 'tenant@chioma.local',
-                    password: '8T<}2QXRm(?rwyJ4Pq3/',
-                  },
-                ].map(({ role, email, password }) => (
-                  <button
-                    key={email}
-                    onClick={() => {
-                      setValue('email', email);
-                      setValue('password', password);
-                    }}
-                    className="w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-amber-100 hover:text-amber-50 transition-colors flex justify-between items-center group"
-                  >
-                    <span className="font-medium">{role}</span>
-                    <span className="font-mono text-amber-200/70 group-hover:text-amber-200 text-xs">
-                      {email}
-                    </span>
-                  </button>
-                ))}
-              </div>
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <p className="text-xs font-semibold text-amber-200 mb-3 text-center uppercase tracking-wide">
+              Demo Accounts
+            </p>
+            <div className="space-y-2 text-xs">
+              {[
+                {
+                  role: 'Admin',
+                  email:
+                    process.env.NODE_ENV === 'production'
+                      ? 'admin@chioma.demo'
+                      : 'admin@chioma.local',
+                },
+                {
+                  role: 'Agent',
+                  email:
+                    process.env.NODE_ENV === 'production'
+                      ? 'agent@chioma.demo'
+                      : 'agent@chioma.local',
+                },
+                {
+                  role: 'Landlord',
+                  email:
+                    process.env.NODE_ENV === 'production'
+                      ? 'landlord@chioma.demo'
+                      : 'landlord@chioma.local',
+                },
+                {
+                  role: 'Tenant',
+                  email:
+                    process.env.NODE_ENV === 'production'
+                      ? 'tenant@chioma.demo'
+                      : 'tenant@chioma.local',
+                },
+              ].map(({ role, email }) => (
+                <button
+                  key={email}
+                  type="button"
+                  onClick={() => {
+                    setValue('email', email);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-amber-100 hover:text-amber-50 transition-colors flex justify-between items-center group"
+                >
+                  <span className="font-medium">{role}</span>
+                  <span className="font-mono text-amber-200/70 group-hover:text-amber-200 text-xs">
+                    {email}
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
+            <p className="text-amber-200/60 text-xs mt-3 text-center">
+              Click to auto-fill email • Password required
+            </p>
+          </div>
 
           <p className="text-center text-white/60 text-sm pt-2">
             Don&apos;t have an account?{' '}
