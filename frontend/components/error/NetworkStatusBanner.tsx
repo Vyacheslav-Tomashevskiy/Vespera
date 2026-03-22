@@ -7,7 +7,8 @@ export default function NetworkStatusBanner() {
 
   useEffect(() => {
     // Sync actual status after hydration to avoid SSR false positives
-    setIsOnline(navigator.onLine);
+    const updateOnlineStatus = () => setIsOnline(navigator.onLine);
+    updateOnlineStatus();
 
     const onOnline = () => setIsOnline(true);
     const onOffline = () => setIsOnline(false);
