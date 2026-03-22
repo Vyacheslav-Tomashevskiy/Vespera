@@ -1,12 +1,9 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { MessageSquare, Wrench, CreditCard, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Notification, NotificationType } from './types';
-
-// ─── Icon / colour mapping per notification type ────────────────────────────
 
 const typeConfig: Record<
   NotificationType,
@@ -14,32 +11,26 @@ const typeConfig: Record<
 > = {
   message: {
     icon: MessageSquare,
-    bg: 'bg-brand-blue/10',
-    text: 'text-brand-blue',
+    bg: 'bg-blue-500/15',
+    text: 'text-blue-300',
   },
   maintenance: {
     icon: Wrench,
-    bg: 'bg-brand-orange/10',
-    text: 'text-brand-orange',
+    bg: 'bg-orange-500/15',
+    text: 'text-orange-300',
   },
   payment: {
     icon: CreditCard,
-    bg: 'bg-brand-green/10',
-    text: 'text-brand-green',
+    bg: 'bg-green-500/15',
+    text: 'text-green-300',
   },
 };
 
-// ─── Props ──────────────────────────────────────────────────────────────────
-
 interface NotificationItemProps {
   notification: Notification;
-  /** Called when the user clicks "Mark read". */
   onToggleRead: (id: string) => void;
-  /** Compact = dropdown row, full = page row. */
   variant?: 'compact' | 'full';
 }
-
-// ─── Component ──────────────────────────────────────────────────────────────
 
 export default function NotificationItem({
   notification,
@@ -55,8 +46,8 @@ export default function NotificationItem({
     <div
       className={`flex items-start gap-3 px-4 transition-colors
         ${variant === 'compact' ? 'py-2.5' : 'py-4'}
-        ${notification.read ? 'bg-white' : 'bg-brand-blue/5'}
-        ${variant === 'compact' ? 'hover:bg-neutral-50' : 'hover:bg-neutral-50'}
+        ${notification.read ? 'bg-transparent' : 'bg-blue-500/5'}
+        hover:bg-white/5
       `}
     >
       {/* Icon */}
@@ -72,34 +63,31 @@ export default function NotificationItem({
           <p
             className={`text-sm ${
               notification.read
-                ? 'font-normal text-neutral-500'
-                : 'font-semibold text-neutral-900'
+                ? 'font-normal text-blue-200/50'
+                : 'font-semibold text-white'
             }`}
           >
             {notification.title}
           </p>
 
           {!notification.read && (
-            <span className="shrink-0 w-2 h-2 rounded-full bg-brand-blue" />
+            <span className="shrink-0 w-2 h-2 rounded-full bg-blue-400" />
           )}
         </div>
 
         {variant === 'full' && (
-          <p className="text-sm text-neutral-500 mt-0.5 line-clamp-2">
+          <p className="text-sm text-blue-200/50 mt-0.5 line-clamp-2">
             {notification.body}
           </p>
         )}
 
-        <p className="text-xs text-neutral-400 mt-1">{timeAgo}</p>
+        <p className="text-xs text-blue-200/30 mt-1">{timeAgo}</p>
       </div>
 
-      {/* Read status indicator / mark-read button (full variant only) */}
+      {/* Mark read button */}
       {variant === 'full' &&
         (notification.read ? (
-          <span
-            className="shrink-0 flex items-center gap-1 text-xs text-brand-blue mt-0.5"
-            title="Read"
-          >
+          <span className="shrink-0 flex items-center gap-1 text-xs text-blue-400/50 mt-0.5">
             <CheckCheck size={16} />
           </span>
         ) : (
@@ -109,7 +97,7 @@ export default function NotificationItem({
               e.stopPropagation();
               onToggleRead(notification.id);
             }}
-            className="shrink-0 text-xs text-brand-blue hover:text-brand-blue-dark hover:underline mt-0.5 cursor-pointer transition-colors"
+            className="shrink-0 text-xs text-blue-300 hover:text-white hover:underline mt-0.5 cursor-pointer transition-colors"
           >
             Mark read
           </button>
@@ -117,7 +105,6 @@ export default function NotificationItem({
     </div>
   );
 
-  // If there's a link, wrap in a <Link>
   if (notification.link) {
     return (
       <Link href={notification.link} className="block">

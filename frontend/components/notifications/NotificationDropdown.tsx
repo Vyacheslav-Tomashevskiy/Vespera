@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { CheckCheck } from 'lucide-react';
 import {
@@ -9,19 +8,12 @@ import {
 } from '@/store/notificationStore';
 import NotificationItem from './NotificationItem';
 
-// ─── Props ──────────────────────────────────────────────────────────────────
-
 interface NotificationDropdownProps {
-  /** The "View All" page link — differs per dashboard role. */
   viewAllHref: string;
   onClose: () => void;
 }
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-
 const MAX_VISIBLE = 4;
-
-// ─── Component ──────────────────────────────────────────────────────────────
 
 export default function NotificationDropdown({
   viewAllHref,
@@ -35,13 +27,13 @@ export default function NotificationDropdown({
   const recent = notifications.slice(0, MAX_VISIBLE);
 
   return (
-    <div className="fixed inset-x-0 top-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-full mt-2 mx-3 sm:mx-0 sm:w-80 bg-white rounded-xl shadow-card border border-neutral-200 z-[70] overflow-hidden animate-dropdown">
+    <div className="fixed inset-x-0 top-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-full mt-2 mx-3 sm:mx-0 sm:w-80 backdrop-blur-xl bg-slate-900/95 rounded-xl shadow-2xl border border-white/10 z-[70] overflow-hidden animate-dropdown">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-neutral-200 bg-neutral-50">
-        <h3 className="text-sm font-semibold text-neutral-900">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/10 bg-white/5">
+        <h3 className="text-sm font-semibold text-white">
           Notifications
           {unreadCount > 0 && (
-            <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full bg-brand-blue/10 text-brand-blue">
+            <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full bg-blue-500/20 text-blue-300">
               {unreadCount}
             </span>
           )}
@@ -50,7 +42,7 @@ export default function NotificationDropdown({
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-1 text-xs text-brand-blue hover:text-brand-blue-dark hover:underline cursor-pointer transition-colors"
+            className="flex items-center gap-1 text-xs text-blue-300 hover:text-white transition-colors cursor-pointer"
           >
             <CheckCheck size={14} />
             Mark all read
@@ -59,9 +51,9 @@ export default function NotificationDropdown({
       </div>
 
       {/* List */}
-      <div className="divide-y divide-neutral-100">
+      <div className="divide-y divide-white/5">
         {recent.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-neutral-400">
+          <p className="px-3 py-6 text-center text-sm text-blue-200/40">
             No notifications yet.
           </p>
         ) : (
@@ -79,11 +71,11 @@ export default function NotificationDropdown({
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div className="border-t border-neutral-200 bg-neutral-50">
+        <div className="border-t border-white/10 bg-white/5">
           <Link
             href={viewAllHref}
             onClick={onClose}
-            className="block text-center text-sm font-medium text-brand-blue hover:text-brand-blue-dark py-2.5 transition-colors"
+            className="block text-center text-sm font-medium text-blue-300 hover:text-white py-2.5 transition-colors"
           >
             View All Notifications
           </Link>
