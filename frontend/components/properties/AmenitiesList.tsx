@@ -48,7 +48,7 @@ interface AmenitiesListProps {
 export default function AmenitiesList({ amenities }: AmenitiesListProps) {
   if (!amenities || amenities.length === 0) {
     return (
-      <div className="text-neutral-500 italic text-sm py-4">
+      <div className="text-blue-200/70 italic text-sm py-4">
         No specific amenities listed for this property.
       </div>
     );
@@ -69,7 +69,7 @@ export default function AmenitiesList({ amenities }: AmenitiesListProps) {
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">
+      <h3 className="text-xl font-bold text-white mb-6">
         What this place offers
       </h3>
       <div className="flex flex-wrap gap-4">
@@ -79,9 +79,9 @@ export default function AmenitiesList({ amenities }: AmenitiesListProps) {
           return (
             <div
               key={idx}
-              className="flex items-center gap-2 bg-neutral-100 text-neutral-700 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-neutral-200 hover:shadow-sm"
+              className="flex items-center gap-2 backdrop-blur-xl bg-slate-800/50 border border-white/10 text-blue-200/90 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-slate-700/50 hover:border-white/20 hover:shadow-lg"
             >
-              <IconComponent size={18} className="text-neutral-500" />
+              <IconComponent size={18} className="text-blue-400" />
               <span>{amenity.name}</span>
             </div>
           );
