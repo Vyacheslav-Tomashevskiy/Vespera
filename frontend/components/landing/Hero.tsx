@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Hero() {
   return (
@@ -106,9 +107,7 @@ export default function Hero() {
           <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl backdrop-blur-sm bg-white/5 p-1">
             <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center">
               <div className="text-center space-y-4 p-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
-                  <span className="text-white font-bold text-3xl">C</span>
-                </div>
+                <Image src="/logo_256.png" alt="Chioma" width={80} height={80} className="rounded-2xl mx-auto" />
                 <p className="text-white/60 text-sm">Platform Dashboard Preview</p>
               </div>
             </div>

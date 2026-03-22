@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Twitter, Linkedin, Github, Mail } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const footerLinks = {
   platform: [
@@ -45,12 +46,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">C</span>
-              </div>
-              <span className="text-xl font-bold text-white">Chioma</span>
-            </Link>
+            <Logo size="lg" textClassName="text-xl font-bold text-white" className="mb-4" />
             <p className="text-blue-200/70 text-sm leading-relaxed mb-6">
               Open financial infrastructure for housing, powered by Stellar blockchain.
             </p>
