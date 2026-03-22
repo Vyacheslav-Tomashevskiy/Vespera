@@ -110,17 +110,17 @@ const CustomEarningsTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-neutral-100 rounded-xl shadow-xl p-4 min-w-[160px]">
-        <p className="text-xs font-semibold text-neutral-400 mb-2 uppercase tracking-wider">
+      <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 min-w-[160px]">
+        <p className="text-[10px] font-bold text-blue-300/40 mb-3 uppercase tracking-widest">
           {label}
         </p>
         {payload.map((entry, i) => (
-          <div key={i} className="flex items-center justify-between gap-4">
-            <span className="text-xs text-neutral-500 capitalize">
+          <div key={i} className="flex items-center justify-between gap-4 mb-2 last:mb-0">
+            <span className="text-xs font-medium text-blue-200/60 capitalize">
               {entry.name === 'commission' ? 'Earned' : 'Target'}
             </span>
             <span
-              className={`text-sm font-bold ${entry.name === 'commission' ? 'text-blue-600' : 'text-neutral-400'}`}
+              className={`text-sm font-bold ${entry.name === 'commission' ? 'text-blue-400' : 'text-blue-200/40'}`}
             >
               ${entry.value.toLocaleString()}
             </span>
@@ -145,20 +145,20 @@ const ExportModal = ({
   const [period, setPeriod] = useState('this-year');
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/10">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-bold text-neutral-900">
+            <h2 className="text-xl font-bold text-white tracking-tight">
               Export Report
             </h2>
-            <p className="text-sm text-neutral-500 mt-0.5">
+            <p className="text-sm text-blue-200/60 font-medium mt-1">
               Download your analytics data
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 rounded-lg text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="p-2 hover:bg-white/5 rounded-xl text-blue-300/40 hover:text-white transition-all shadow-sm"
           >
             ✕
           </button>
@@ -166,7 +166,7 @@ const ExportModal = ({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-3">
               File Format
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -174,10 +174,10 @@ const ExportModal = ({
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
-                  className={`py-2.5 rounded-lg text-sm font-semibold border transition-all ${
+                  className={`py-3 rounded-xl text-sm font-bold border transition-all uppercase tracking-widest ${
                     format === f
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'
+                      ? 'border-blue-500 bg-blue-500/20 text-white shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                      : 'border-white/10 text-blue-200/40 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
                   {f.toUpperCase()}
@@ -187,20 +187,20 @@ const ExportModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-3">
               Time Period
             </label>
             <div className="relative">
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                className="w-full appearance-none bg-white border border-neutral-200 rounded-lg px-4 py-2.5 text-sm text-neutral-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all pr-10"
+                className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-medium outline-none focus:border-blue-500 transition-all pr-10 hover:bg-white/10"
               >
-                <option value="this-month">This Month</option>
-                <option value="last-quarter">Last Quarter</option>
-                <option value="this-year">This Year (2024)</option>
-                <option value="last-year">Last Year (2023)</option>
-                <option value="all-time">All Time</option>
+                <option value="this-month" className="bg-slate-900">This Month</option>
+                <option value="last-quarter" className="bg-slate-900">Last Quarter</option>
+                <option value="this-year" className="bg-slate-900">This Year (2024)</option>
+                <option value="last-year" className="bg-slate-900">Last Year (2023)</option>
+                <option value="all-time" className="bg-slate-900">All Time</option>
               </select>
               <ChevronDown
                 size={16}
@@ -209,28 +209,37 @@ const ExportModal = ({
             </div>
           </div>
 
-          <div className="bg-neutral-50 rounded-xl p-4 text-sm text-neutral-500 border border-neutral-100">
-            <p className="font-medium text-neutral-700 mb-1">
+          <div className="bg-white/5 rounded-2xl p-5 text-sm border border-white/5">
+            <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-3">
               Report will include:
             </p>
-            <ul className="space-y-1 list-disc list-inside">
-              <li>Monthly commission earnings</li>
-              <li>Conversion funnel breakdown</li>
-              <li>Per-listing performance stats</li>
+            <ul className="space-y-2 text-blue-200/60 font-medium">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                Monthly commission earnings
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                Conversion funnel breakdown
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                Per-listing performance stats
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-4 mt-8">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors"
+            className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-blue-300/40 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
           >
             Cancel
           </button>
           <button
             onClick={() => onExport(format, period)}
-            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+            className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 uppercase tracking-widest"
           >
             <Download size={16} />
             Download
@@ -281,8 +290,8 @@ export default function AgentAnalyticsPage() {
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Analytics</h1>
-            <p className="text-sm text-neutral-500 mt-0.5">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">Analytics</h1>
+            <p className="text-sm text-blue-200/60 font-medium mt-1">
               Track your performance and commission earnings
             </p>
           </div>
@@ -308,9 +317,9 @@ export default function AgentAnalyticsPage() {
             {/* Export Button */}
             <button
               onClick={() => setShowExportModal(true)}
-              className="flex items-center gap-2 bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:shadow-sm"
+              className="flex items-center gap-2 bg-white/5 border border-white/10 hover:border-white/20 text-white px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all hover:bg-white/10 uppercase tracking-widest shadow-sm"
             >
-              <Download size={16} />
+              <Download size={16} className="text-blue-400" />
               Export Report
             </button>
           </div>
@@ -323,28 +332,28 @@ export default function AgentAnalyticsPage() {
             return (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-5 border border-neutral-100 shadow-sm"
+                className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-xl group hover:border-white/20 transition-all"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
                       {kpi.label}
                     </p>
-                    <p className="text-2xl font-bold text-neutral-900 mt-1.5">
+                    <p className="text-2xl font-bold text-white mt-2 tracking-tight">
                       {kpi.value}
                     </p>
                   </div>
-                  <div className={`p-2.5 rounded-xl ${kpi.iconBg}`}>
-                    <Icon size={18} className={kpi.iconColor} />
+                  <div className={`p-3 rounded-xl bg-white/5 border border-white/5 shadow-inner`}>
+                    <Icon size={18} className={kpi.iconColor.replace('600', '400')} />
                   </div>
                 </div>
                 <div
-                  className={`flex items-center gap-1 mt-3 text-sm font-semibold ${kpi.positive ? 'text-emerald-600' : 'text-red-500'}`}
+                  className={`flex items-center gap-1.5 mt-4 text-[10px] font-bold uppercase tracking-wider ${kpi.positive ? 'text-emerald-400' : 'text-red-400'}`}
                 >
                   {kpi.positive ? (
-                    <TrendingUp size={14} />
+                    <TrendingUp size={14} strokeWidth={2.5} />
                   ) : (
-                    <TrendingDown size={14} />
+                    <TrendingDown size={14} strokeWidth={2.5} />
                   )}
                   <span>{kpi.change} vs last year</span>
                 </div>
@@ -354,44 +363,44 @@ export default function AgentAnalyticsPage() {
         </div>
 
         {/* ── Commission Earnings Chart ── */}
-        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-xl p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-base font-bold text-neutral-900">
+              <h2 className="text-lg font-bold text-white tracking-tight">
                 Monthly Commission Earnings
               </h2>
-              <p className="text-sm text-neutral-500 mt-0.5">
+              <p className="text-sm text-blue-200/60 font-medium mt-1">
                 Total for {yearFilter}:{' '}
-                <span className="font-semibold text-neutral-700">
+                <span className="font-bold text-blue-300">
                   ${totalCommission.toLocaleString()}
                 </span>
               </p>
             </div>
-            <div className="flex items-center gap-5 text-xs font-medium text-neutral-500">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" />
+            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-blue-200/40">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] inline-block" />
                 Earned
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-neutral-200 inline-block" />
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-white/10 inline-block" />
                 Target
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={320}>
             <LineChart
               data={monthlyEarnings}
-              margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 12, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontWeight: 700 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontWeight: 700 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
@@ -400,7 +409,7 @@ export default function AgentAnalyticsPage() {
               <Line
                 type="monotone"
                 dataKey="target"
-                stroke="#e2e8f0"
+                stroke="rgba(255,255,255,0.1)"
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
@@ -409,9 +418,9 @@ export default function AgentAnalyticsPage() {
                 type="monotone"
                 dataKey="commission"
                 stroke="#3b82f6"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: '#3b82f6' }}
+                strokeWidth={3}
+                dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#1e293b' }}
+                activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -420,14 +429,14 @@ export default function AgentAnalyticsPage() {
         {/* ── Conversion Funnel + Listing Performance ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Conversion Funnel */}
-          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-bold text-neutral-900">
+          <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-xl p-8">
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-white tracking-tight">
                 Conversion Funnel
               </h2>
-              <p className="text-sm text-neutral-500 mt-0.5">
+              <p className="text-sm text-blue-200/60 font-medium mt-1">
                 Overall conversion rate:{' '}
-                <span className="font-semibold text-emerald-600">
+                <span className="font-bold text-emerald-400">
                   {conversionRate}%
                 </span>
               </p>
@@ -447,24 +456,24 @@ export default function AgentAnalyticsPage() {
 
                 return (
                   <div key={item.name}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-neutral-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-blue-100">
                         {item.name}
                       </span>
                       <div className="flex items-center gap-3">
                         {dropOff !== null && (
-                          <span className="text-xs text-red-400 font-medium">
+                          <span className="text-[10px] text-red-400 font-bold uppercase">
                             −{dropOff}%
                           </span>
                         )}
-                        <span className="text-sm font-bold text-neutral-900 tabular-nums w-12 text-right">
+                        <span className="text-sm font-bold text-white tabular-nums w-12 text-right">
                           {item.value.toLocaleString()}
                         </span>
                       </div>
                     </div>
-                    <div className="h-2.5 bg-neutral-100 rounded-full overflow-hidden">
+                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
                       <div
-                        className="h-full rounded-full transition-all duration-700"
+                        className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.1)]"
                         style={{
                           width: `${pct}%`,
                           backgroundColor: item.fill,
@@ -478,12 +487,12 @@ export default function AgentAnalyticsPage() {
           </div>
 
           {/* Listing Performance */}
-          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-bold text-neutral-900">
+          <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-xl p-8">
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-white tracking-tight">
                 Listing Performance
               </h2>
-              <p className="text-sm text-neutral-500 mt-0.5">
+              <p className="text-sm text-blue-200/60 font-medium mt-1">
                 Views, inquiries and contracts per listing
               </p>
             </div>
@@ -493,15 +502,15 @@ export default function AgentAnalyticsPage() {
                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
                 barSize={10}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontWeight: 700 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontWeight: 700 }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -524,23 +533,23 @@ export default function AgentAnalyticsPage() {
         </div>
 
         {/* ── Export CTA Banner ── */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white/20 rounded-xl">
-              <FileText size={22} className="text-white" />
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-xl shadow-blue-500/20 border border-white/10 group">
+          <div className="flex items-center gap-6">
+            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md border border-white/20 group-hover:scale-110 transition-transform">
+              <FileText size={24} className="text-white" />
             </div>
             <div>
-              <p className="text-white font-bold text-base">
+              <p className="text-white font-bold text-lg tracking-tight">
                 Need your earnings for tax season?
               </p>
-              <p className="text-blue-100 text-sm mt-0.5">
+              <p className="text-blue-100/60 font-medium text-sm mt-1">
                 Export a full report — CSV, PDF, or Excel — in one click.
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowExportModal(true)}
-            className="shrink-0 bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 shadow-lg"
+            className="shrink-0 bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-xl uppercase tracking-widest"
           >
             <Download size={16} />
             Export Now

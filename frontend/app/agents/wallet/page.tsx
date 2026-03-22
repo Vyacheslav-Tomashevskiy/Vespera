@@ -11,11 +11,11 @@ export default function WalletPage() {
         </p>
       </div>
 
-      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-neutral-100">
-        <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-neutral-200 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-brand-blue/10 flex items-center justify-center mb-4">
           <Wallet size={28} className="text-brand-blue" />
         </div>
-        <h2 className="text-lg font-semibold text-neutral-800">
+        <h2 className="text-lg font-semibold text-neutral-900">
           No transactions yet
         </h2>
         <p className="text-sm text-neutral-500 mt-1 max-w-xs">
