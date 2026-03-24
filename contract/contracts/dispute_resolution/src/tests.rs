@@ -769,3 +769,87 @@ fn test_appeal_window_expired() {
     );
     assert_eq!(result, Err(Ok(DisputeError::AppealWindowExpired)));
 }
+
+#[test]
+fn test_dispute_timeout_auto_resolve_and_config() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "dispute-timeout-1");
+    env.mock_all_auths();
+
+    client.initialize(&admin, &3, &Address::generate(&env));
+    client.set_timeout_config(
+        &admin,
+        &TimeoutConfig {
+            escrow_timeout_days: 14,
+            dispute_timeout_days: 1,
+            payment_timeout_days: 7,
+        },
+    );
+
+    env.ledger().with_mut(|l| l.timestamp = 1_000);
+    env.as_contract(&client.address, || {
+        let dispute = Dispute {
+            agreement_id: agreement_id.clone(),
+            details_hash: String::from_str(&env, "QmTimeout"),
+            raised_at: 1_000,
+            resolved: false,
+            resolved_at: None,
+            votes_favor_landlord: 0,
+            votes_favor_tenant: 0,
+            voters: soroban_sdk::Vec::new(&env),
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::Dispute(agreement_id.clone()), &dispute);
+    });
+
+    env.ledger().with_mut(|l| l.timestamp = 1_000 + 2 * 86_400);
+    let outcome = client.resolve_dispute_on_timeout(&agreement_id);
+    assert_eq!(outcome, DisputeOutcome::FavorTenant);
+
+    let stored = client.get_dispute(&agreement_id).unwrap();
+    assert!(stored.resolved);
+    assert!(stored.resolved_at.is_some());
+}
+
+#[test]
+fn test_dispute_timeout_not_reached() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "dispute-timeout-2");
+    env.mock_all_auths();
+
+    client.initialize(&admin, &3, &Address::generate(&env));
+    client.set_timeout_config(
+        &admin,
+        &TimeoutConfig {
+            escrow_timeout_days: 14,
+            dispute_timeout_days: 30,
+            payment_timeout_days: 7,
+        },
+    );
+
+    env.ledger().with_mut(|l| l.timestamp = 10_000);
+    env.as_contract(&client.address, || {
+        let dispute = Dispute {
+            agreement_id: agreement_id.clone(),
+            details_hash: String::from_str(&env, "QmNoTimeout"),
+            raised_at: 10_000,
+            resolved: false,
+            resolved_at: None,
+            votes_favor_landlord: 1,
+            votes_favor_tenant: 0,
+            voters: soroban_sdk::Vec::new(&env),
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::Dispute(agreement_id.clone()), &dispute);
+    });
+
+    env.ledger().with_mut(|l| l.timestamp = 10_000 + 5 * 86_400);
+    let result = client.try_resolve_dispute_on_timeout(&agreement_id);
+    assert_eq!(result, Err(Ok(DisputeError::TimeoutNotReached)));
+}

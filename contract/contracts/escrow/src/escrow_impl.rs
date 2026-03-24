@@ -3,11 +3,12 @@
 use soroban_sdk::{contract, contractimpl, token, xdr::ToXdr, Address, BytesN, Env};
 
 use crate::dispute::DisputeHandler;
+use crate::events;
 
 use crate::access::AccessControl;
 use crate::errors::EscrowError;
 use crate::storage::EscrowStorage;
-use crate::types::{Escrow, EscrowStatus, ReleaseApproval};
+use crate::types::{Escrow, EscrowStatus, ReleaseApproval, TimeoutConfig};
 
 /// Core escrow contract implementation.
 #[contract]
@@ -68,6 +69,8 @@ impl EscrowContract {
             token,
             status: EscrowStatus::Pending,
             created_at: env.ledger().timestamp(),
+            timeout_days: EscrowStorage::get_timeout_config(&env).escrow_timeout_days,
+            disputed_at: None,
             dispute_reason: None,
         };
 
@@ -227,6 +230,74 @@ impl EscrowContract {
         release_to: Address,
     ) -> Result<(), EscrowError> {
         DisputeHandler::resolve_dispute(env, escrow_id, caller, release_to)
+    }
+
+    /// Refund escrow to depositor if escrow timeout has elapsed.
+    /// Intended for stale escrows that are not released yet.
+    pub fn release_escrow_on_timeout(env: Env, escrow_id: BytesN<32>) -> Result<(), EscrowError> {
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        if escrow.status != EscrowStatus::Pending && escrow.status != EscrowStatus::Funded {
+            return Err(EscrowError::InvalidState);
+        }
+
+        let timeout_seconds = escrow.timeout_days.saturating_mul(86_400);
+        let deadline = escrow.created_at.saturating_add(timeout_seconds);
+        let now = env.ledger().timestamp();
+        if now <= deadline {
+            return Err(EscrowError::TimeoutNotReached);
+        }
+
+        escrow.status = EscrowStatus::Refunded;
+        EscrowStorage::save(&env, &escrow);
+
+        EscrowStorage::clear_approvals(&env, &escrow_id);
+        let targets = [escrow.beneficiary.clone(), escrow.depositor.clone()];
+        let signers = [
+            escrow.depositor.clone(),
+            escrow.beneficiary.clone(),
+            escrow.arbiter.clone(),
+        ];
+        EscrowStorage::clear_approval_counts(&env, &escrow_id, &targets, &signers);
+
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(
+            &env.current_contract_address(),
+            &escrow.depositor,
+            &escrow.amount,
+        );
+
+        events::escrow_timeout(&env, escrow_id);
+        Ok(())
+    }
+
+    /// Resolve disputed escrow on timeout by auto-refunding the depositor.
+    pub fn resolve_dispute_on_timeout(env: Env, escrow_id: BytesN<32>) -> Result<(), EscrowError> {
+        DisputeHandler::resolve_dispute_on_timeout(env, escrow_id)
+    }
+
+    /// Set contract-level timeout config.
+    pub fn set_timeout_config(
+        env: Env,
+        caller: Address,
+        config: TimeoutConfig,
+    ) -> Result<(), EscrowError> {
+        caller.require_auth();
+
+        if config.escrow_timeout_days == 0
+            || config.dispute_timeout_days == 0
+            || config.payment_timeout_days == 0
+        {
+            return Err(EscrowError::InvalidTimeoutConfig);
+        }
+
+        EscrowStorage::set_timeout_config(&env, &config);
+        Ok(())
+    }
+
+    /// Get contract-level timeout config.
+    pub fn get_timeout_config(env: Env) -> TimeoutConfig {
+        EscrowStorage::get_timeout_config(&env)
     }
 
     /// Get details of an escrow.

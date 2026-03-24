@@ -23,6 +23,7 @@ For example, if a landlord and tenant disagree on a security deposit release, ve
 - **Minimum Votes Requirement**: Configurable minimum number of votes required for resolution
 - **Transparent Outcome**: Clear outcomes (FavorLandlord or FavorTenant)
 - **Dispute Appeals**: Second-level review with separate arbiters and majority decision
+- **Timeout Auto-Resolution**: Disputes can be auto-resolved after configurable timeout
 
 ## Architecture
 
@@ -40,6 +41,11 @@ pub enum DisputeOutcome {
 - `admin`: Address with administrative privileges
 - `initialized`: Initialization status
 - `min_votes_required`: Minimum votes needed to resolve a dispute (default: 3)
+
+#### TimeoutConfig
+- `escrow_timeout_days`: Escrow timeout in days (cross-contract coordination)
+- `dispute_timeout_days`: Dispute timeout in days for auto-resolution
+- `payment_timeout_days`: Payment timeout in days (cross-contract coordination)
 
 #### Arbiter
 - `address`: Arbiter's address
@@ -153,6 +159,23 @@ Resolves a dispute by evaluating votes and determining the outcome.
 - `DisputeAlreadyResolved`: Dispute already resolved
 - `InsufficientVotes`: Minimum required votes not met
 
+### Resolve Dispute On Timeout
+```rust
+pub fn resolve_dispute_on_timeout(env: Env, agreement_id: String) -> Result<DisputeOutcome, DisputeError>
+```
+Resolves stale disputes once timeout is reached, even if minimum vote threshold is not met.
+Outcome uses current vote totals; ties default to `FavorTenant`.
+
+### Set Timeout Config (Admin Only)
+```rust
+pub fn set_timeout_config(env: Env, admin: Address, config: TimeoutConfig) -> Result<(), DisputeError>
+```
+
+### Get Timeout Config
+```rust
+pub fn get_timeout_config(env: Env) -> TimeoutConfig
+```
+
 ### Create Appeal
 ```rust
 pub fn create_appeal(env: Env, appellant: Address, dispute_id: String, reason: String) -> Result<String, DisputeError>
@@ -244,6 +267,8 @@ Returns a specific vote for a dispute.
 | 21 | InsufficientAppealVotes | Not enough votes to resolve appeal |
 | 22 | AppealFeeRequired | Appeal fee required |
 | 23 | AppealNotCancelable | Appeal cannot be canceled in current state |
+| 24 | TimeoutNotReached | Timeout threshold has not been reached |
+| 25 | InvalidTimeoutConfig | Timeout configuration contains invalid values |
 
 ## Events
 
@@ -261,6 +286,9 @@ Emitted when an arbiter casts a vote.
 
 ### DisputeResolved
 Emitted when a dispute is resolved with the outcome.
+
+### DisputeTimeout
+Emitted when a dispute is auto-resolved due to timeout.
 
 ### AppealCreated
 Emitted when an appeal is created.

@@ -2,12 +2,16 @@
 //! Implements single-responsibility getter/setter helpers.
 use soroban_sdk::{Address, BytesN, Env, Vec};
 
-use crate::types::{DataKey, Escrow, ReleaseApproval};
+use crate::types::{DataKey, Escrow, ReleaseApproval, TimeoutConfig};
 
 /// Escrow storage management.
 pub struct EscrowStorage;
 
 impl EscrowStorage {
+    pub const DEFAULT_ESCROW_TIMEOUT_DAYS: u64 = 14;
+    pub const DEFAULT_DISPUTE_TIMEOUT_DAYS: u64 = 30;
+    pub const DEFAULT_PAYMENT_TIMEOUT_DAYS: u64 = 7;
+
     /// Retrieve an escrow by ID.
     /// Returns None if escrow doesn't exist.
     pub fn get(env: &Env, id: &BytesN<32>) -> Option<Escrow> {
@@ -126,5 +130,24 @@ impl EscrowStorage {
         env.storage()
             .instance()
             .set(&DataKey::EscrowCount, &(count + 1));
+    }
+
+    /// Fetch timeout config or return defaults.
+    pub fn get_timeout_config(env: &Env) -> TimeoutConfig {
+        env.storage()
+            .instance()
+            .get(&DataKey::TimeoutConfig)
+            .unwrap_or(TimeoutConfig {
+                escrow_timeout_days: Self::DEFAULT_ESCROW_TIMEOUT_DAYS,
+                dispute_timeout_days: Self::DEFAULT_DISPUTE_TIMEOUT_DAYS,
+                payment_timeout_days: Self::DEFAULT_PAYMENT_TIMEOUT_DAYS,
+            })
+    }
+
+    /// Persist timeout configuration in instance storage.
+    pub fn set_timeout_config(env: &Env, config: &TimeoutConfig) {
+        env.storage()
+            .instance()
+            .set(&DataKey::TimeoutConfig, config);
     }
 }

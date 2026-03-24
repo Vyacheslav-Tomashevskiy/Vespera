@@ -18,6 +18,14 @@ pub struct ContractState {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TimeoutConfig {
+    pub escrow_timeout_days: u64,
+    pub dispute_timeout_days: u64,
+    pub payment_timeout_days: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Arbiter {
     pub address: Address,
     pub added_at: u64,

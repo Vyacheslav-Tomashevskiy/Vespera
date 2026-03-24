@@ -71,6 +71,12 @@ pub struct AppealCancelled {
     pub appeal_id: String,
 }
 
+#[contractevent(topics = ["dispute_timeout"])]
+pub struct DisputeTimeout {
+    #[topic]
+    pub agreement_id: String,
+}
+
 pub(crate) fn contract_initialized(env: &Env, admin: Address, min_votes_required: u32) {
     ContractInitialized {
         admin,
@@ -134,4 +140,8 @@ pub(crate) fn appeal_resolved(env: &Env, appeal_id: String, outcome: DisputeOutc
 
 pub(crate) fn appeal_cancelled(env: &Env, appeal_id: String) {
     AppealCancelled { appeal_id }.publish(env);
+}
+
+pub(crate) fn dispute_timeout(env: &Env, agreement_id: String) {
+    DisputeTimeout { agreement_id }.publish(env);
 }

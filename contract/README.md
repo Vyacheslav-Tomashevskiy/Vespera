@@ -30,3 +30,17 @@ The `contracts/chioma` contract now includes an emergency pause mechanism:
 - Pause metadata is stored as `PauseState` (`is_paused`, `paused_at`, `paused_by`, `pause_reason`).
 - Critical mutating operations (booking, payment, escrow, and token-management entrypoints) are blocked while paused.
 - `Paused` and `Unpaused` events are emitted for operational monitoring.
+
+## Timeout Mechanisms (Escrow + Dispute Resolution)
+
+Timeout protection is now available to prevent stale funds/disputes from remaining open indefinitely.
+
+- Escrow contract supports:
+  - `set_timeout_config(caller, config)` / `get_timeout_config()`
+  - `release_escrow_on_timeout(escrow_id)` for stale pending/funded escrows (refunds depositor)
+  - `resolve_dispute_on_timeout(escrow_id)` for stale disputed escrows (auto-refund path)
+  - timeout events: `EscrowTimeout`, `DisputeTimeout`
+- Dispute resolution contract supports:
+  - admin-configurable timeout settings via `set_timeout_config(admin, config)`
+  - `resolve_dispute_on_timeout(agreement_id)` for stale unresolved disputes
+  - timeout event: `DisputeTimeout`

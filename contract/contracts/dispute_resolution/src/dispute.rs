@@ -4,12 +4,57 @@ use crate::errors::DisputeError;
 use crate::events;
 use crate::storage::DataKey;
 use crate::types::{
-    AppealStatus, AppealVote, Arbiter, ContractState, Dispute, DisputeAppeal, DisputeOutcome, Vote,
+    AppealStatus, AppealVote, Arbiter, ContractState, Dispute, DisputeAppeal, DisputeOutcome,
+    TimeoutConfig, Vote,
 };
 
 const APPEAL_WINDOW_SECONDS: u64 = 7 * 24 * 60 * 60;
 const APPEAL_MIN_ARBITERS: u32 = 3;
 const APPEAL_FEE: i128 = 100;
+const DEFAULT_ESCROW_TIMEOUT_DAYS: u64 = 14;
+const DEFAULT_DISPUTE_TIMEOUT_DAYS: u64 = 30;
+const DEFAULT_PAYMENT_TIMEOUT_DAYS: u64 = 7;
+
+pub fn get_timeout_config(env: &Env) -> TimeoutConfig {
+    env.storage()
+        .instance()
+        .get(&DataKey::TimeoutConfig)
+        .unwrap_or(TimeoutConfig {
+            escrow_timeout_days: DEFAULT_ESCROW_TIMEOUT_DAYS,
+            dispute_timeout_days: DEFAULT_DISPUTE_TIMEOUT_DAYS,
+            payment_timeout_days: DEFAULT_PAYMENT_TIMEOUT_DAYS,
+        })
+}
+
+pub fn set_timeout_config(
+    env: &Env,
+    admin: Address,
+    config: TimeoutConfig,
+) -> Result<(), DisputeError> {
+    let state: ContractState = env
+        .storage()
+        .instance()
+        .get(&DataKey::State)
+        .ok_or(DisputeError::NotInitialized)?;
+
+    admin.require_auth();
+    if admin != state.admin {
+        return Err(DisputeError::Unauthorized);
+    }
+
+    if config.escrow_timeout_days == 0
+        || config.dispute_timeout_days == 0
+        || config.payment_timeout_days == 0
+    {
+        return Err(DisputeError::InvalidTimeoutConfig);
+    }
+
+    env.storage()
+        .instance()
+        .set(&DataKey::TimeoutConfig, &config);
+    env.storage().instance().extend_ttl(500000, 500000);
+    Ok(())
+}
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -280,6 +325,53 @@ pub fn resolve_dispute(env: &Env, agreement_id: String) -> Result<DisputeOutcome
         dispute.votes_favor_tenant,
     );
 
+    Ok(outcome)
+}
+
+pub fn resolve_dispute_on_timeout(
+    env: &Env,
+    agreement_id: String,
+) -> Result<DisputeOutcome, DisputeError> {
+    let dispute_key = DataKey::Dispute(agreement_id.clone());
+    let mut dispute: Dispute = env
+        .storage()
+        .persistent()
+        .get(&dispute_key)
+        .ok_or(DisputeError::DisputeNotFound)?;
+
+    if dispute.resolved {
+        return Err(DisputeError::DisputeAlreadyResolved);
+    }
+
+    let timeout_days = get_timeout_config(env).dispute_timeout_days;
+    let timeout_seconds = timeout_days.saturating_mul(86_400);
+    let deadline = dispute.raised_at.saturating_add(timeout_seconds);
+    let now = env.ledger().timestamp();
+    if now <= deadline {
+        return Err(DisputeError::TimeoutNotReached);
+    }
+
+    dispute.resolved = true;
+    dispute.resolved_at = Some(now);
+    env.storage().persistent().set(&dispute_key, &dispute);
+    env.storage()
+        .persistent()
+        .extend_ttl(&dispute_key, 500000, 500000);
+
+    let outcome = if dispute.votes_favor_landlord > dispute.votes_favor_tenant {
+        DisputeOutcome::FavorLandlord
+    } else {
+        DisputeOutcome::FavorTenant
+    };
+
+    events::dispute_timeout(env, agreement_id.clone());
+    events::dispute_resolved(
+        env,
+        agreement_id,
+        outcome.clone(),
+        dispute.votes_favor_landlord,
+        dispute.votes_favor_tenant,
+    );
     Ok(outcome)
 }
 

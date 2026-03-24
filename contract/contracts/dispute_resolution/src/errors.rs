@@ -27,4 +27,6 @@ pub enum DisputeError {
     InsufficientAppealVotes = 21,
     AppealFeeRequired = 22,
     AppealNotCancelable = 23,
+    TimeoutNotReached = 24,
+    InvalidTimeoutConfig = 25,
 }

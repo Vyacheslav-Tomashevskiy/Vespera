@@ -15,4 +15,5 @@ pub enum DataKey {
     AppealCount,
     AppealFeePaid(String),
     AppealFeeRefunded(String),
+    TimeoutConfig,
 }

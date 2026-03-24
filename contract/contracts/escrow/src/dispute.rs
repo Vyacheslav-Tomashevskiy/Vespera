@@ -4,6 +4,7 @@ use soroban_sdk::{token, Address, BytesN, Env, String};
 
 use crate::access::AccessControl;
 use crate::errors::EscrowError;
+use crate::events;
 use crate::storage::EscrowStorage;
 use crate::types::EscrowStatus;
 
@@ -51,6 +52,7 @@ impl DisputeHandler {
 
         // EFFECTS: Update status and store reason
         escrow.status = EscrowStatus::Disputed;
+        escrow.disputed_at = Some(env.ledger().timestamp());
         escrow.dispute_reason = Some(reason);
         EscrowStorage::save(&env, &escrow);
 
@@ -103,6 +105,7 @@ impl DisputeHandler {
 
         // EFFECTS: Update status and clear dispute
         escrow.status = EscrowStatus::Released;
+        escrow.disputed_at = None;
         escrow.dispute_reason = None;
         EscrowStorage::save(&env, &escrow);
 
@@ -131,5 +134,48 @@ impl DisputeHandler {
     pub fn is_disputed(env: Env, escrow_id: BytesN<32>) -> Result<bool, EscrowError> {
         let escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
         Ok(escrow.status == EscrowStatus::Disputed)
+    }
+
+    /// Resolve a disputed escrow automatically when dispute timeout is reached.
+    /// On timeout, funds are refunded to depositor.
+    pub fn resolve_dispute_on_timeout(env: Env, escrow_id: BytesN<32>) -> Result<(), EscrowError> {
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        if escrow.status != EscrowStatus::Disputed {
+            return Err(EscrowError::InvalidState);
+        }
+
+        let disputed_at = escrow.disputed_at.unwrap_or(escrow.created_at);
+        let timeout_days = EscrowStorage::get_timeout_config(&env).dispute_timeout_days;
+        let timeout_seconds = timeout_days.saturating_mul(86_400);
+        let deadline = disputed_at.saturating_add(timeout_seconds);
+        let now = env.ledger().timestamp();
+        if now <= deadline {
+            return Err(EscrowError::TimeoutNotReached);
+        }
+
+        escrow.status = EscrowStatus::Refunded;
+        escrow.disputed_at = None;
+        escrow.dispute_reason = None;
+        EscrowStorage::save(&env, &escrow);
+
+        EscrowStorage::clear_approvals(&env, &escrow_id);
+        let targets = [escrow.beneficiary.clone(), escrow.depositor.clone()];
+        let signers = [
+            escrow.depositor.clone(),
+            escrow.beneficiary.clone(),
+            escrow.arbiter.clone(),
+        ];
+        EscrowStorage::clear_approval_counts(&env, &escrow_id, &targets, &signers);
+
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(
+            &env.current_contract_address(),
+            &escrow.depositor,
+            &escrow.amount,
+        );
+
+        events::dispute_timeout(&env, escrow_id);
+        Ok(())
     }
 }

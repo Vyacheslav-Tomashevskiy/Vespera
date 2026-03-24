@@ -13,13 +13,14 @@ mod tests;
 
 pub use dispute::{
     add_arbiter, cancel_appeal, create_appeal, get_appeal, get_arbiter, get_arbiter_count,
-    get_dispute, get_vote, raise_dispute, resolve_appeal, resolve_dispute, vote_on_appeal,
-    vote_on_dispute,
+    get_dispute, get_timeout_config, get_vote, raise_dispute, resolve_appeal, resolve_dispute,
+    resolve_dispute_on_timeout, set_timeout_config, vote_on_appeal, vote_on_dispute,
 };
 pub use errors::DisputeError;
 pub use storage::DataKey;
 pub use types::{
-    AppealStatus, AppealVote, Arbiter, ContractState, Dispute, DisputeAppeal, DisputeOutcome, Vote,
+    AppealStatus, AppealVote, Arbiter, ContractState, Dispute, DisputeAppeal, DisputeOutcome,
+    TimeoutConfig, Vote,
 };
 
 #[contract]
@@ -150,6 +151,13 @@ impl DisputeResolutionContract {
         dispute::resolve_dispute(&env, agreement_id)
     }
 
+    pub fn resolve_dispute_on_timeout(
+        env: Env,
+        agreement_id: String,
+    ) -> Result<DisputeOutcome, DisputeError> {
+        dispute::resolve_dispute_on_timeout(&env, agreement_id)
+    }
+
     /// Get information about a specific dispute.
     ///
     /// # Arguments
@@ -190,6 +198,18 @@ impl DisputeResolutionContract {
     /// * `Option<Vote>` - The vote information if it exists
     pub fn get_vote(env: Env, agreement_id: String, arbiter: Address) -> Option<Vote> {
         dispute::get_vote(&env, agreement_id, arbiter)
+    }
+
+    pub fn set_timeout_config(
+        env: Env,
+        admin: Address,
+        config: TimeoutConfig,
+    ) -> Result<(), DisputeError> {
+        dispute::set_timeout_config(&env, admin, config)
+    }
+
+    pub fn get_timeout_config(env: Env) -> TimeoutConfig {
+        dispute::get_timeout_config(&env)
     }
 
     pub fn create_appeal(
