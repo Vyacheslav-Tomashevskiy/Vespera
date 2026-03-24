@@ -47,6 +47,7 @@ import { I18nModule } from './modules/i18n/i18n.module';
 import { LocalizationMiddleware } from './modules/i18n/middleware/localization.middleware';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { AiModule } from './modules/ai/ai.module';
+import { LoggerModule } from './common/services/logger.module';
 
 const appLogger = new Logger('AppModule');
 
@@ -56,6 +57,7 @@ const appLogger = new Logger('AppModule');
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    LoggerModule,
     process.env.NODE_ENV === 'test'
       ? CacheModule.register({
           isGlobal: true,
