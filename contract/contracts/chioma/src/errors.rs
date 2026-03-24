@@ -80,32 +80,50 @@ impl RentalError {
             RentalError::AgreementAlreadyExists => "Agreement already exists for the given ID.",
             RentalError::InvalidAmount => "Invalid amount provided for the operation.",
             RentalError::InvalidDate => "Invalid date or timestamp range.",
-            RentalError::InvalidCommissionRate => "Commission rate must be between 0 and 10000 bps.",
+            RentalError::InvalidCommissionRate => {
+                "Commission rate must be between 0 and 10000 bps."
+            }
             RentalError::AgreementNotActive => "Agreement is not in an Active state.",
             RentalError::AgreementNotFound => "Agreement not found. Please check the ID.",
             RentalError::NotTenant => "The caller is not the tenant of this agreement.",
             RentalError::Unauthorized => "You are not authorized to perform this action.",
-            RentalError::InvalidState => "Contract or agreement state is invalid for this operation.",
+            RentalError::InvalidState => {
+                "Contract or agreement state is invalid for this operation."
+            }
             RentalError::Expired => "The agreement or operation has expired.",
             RentalError::ContractPaused => "Operations are currently paused by the administrator.",
             RentalError::TokenNotSupported => "The specified payment token is not supported.",
             RentalError::RateNotFound => "Exchange rate for the given token pair not found.",
-            RentalError::ConversionError => "Error occurred while converting amounts between tokens.",
-            RentalError::InsufficientPayment => "Provided payment is insufficient for the required amount.",
+            RentalError::ConversionError => {
+                "Error occurred while converting amounts between tokens."
+            }
+            RentalError::InsufficientPayment => {
+                "Provided payment is insufficient for the required amount."
+            }
             RentalError::AlreadyPaused => "The contract is already in a paused state.",
             RentalError::NotPaused => "The contract is not currently paused.",
-            RentalError::InterestConfigNotFound => "Interest configuration for the agreement not found.",
-            RentalError::InterestAlreadyInitialized => "Deposit interest is already initialized for this agreement.",
+            RentalError::InterestConfigNotFound => {
+                "Interest configuration for the agreement not found."
+            }
+            RentalError::InterestAlreadyInitialized => {
+                "Deposit interest is already initialized for this agreement."
+            }
             RentalError::NoPrincipal => "No security deposit found to accrue interest on.",
 
             RentalError::BookingNotFound => "Booking not found. Please check the booking ID.",
-            RentalError::BookingAlreadyExists => "Booking already exists for this property and date range.",
+            RentalError::BookingAlreadyExists => {
+                "Booking already exists for this property and date range."
+            }
             RentalError::BookingInvalidDates => "Invalid dates: check-out must be after check-in.",
-            RentalError::BookingNotAvailable => "The requested property is not available for these dates.",
+            RentalError::BookingNotAvailable => {
+                "The requested property is not available for these dates."
+            }
             RentalError::BookingAlreadyCheckedIn => "Booking has already been checked in.",
             RentalError::BookingAlreadyCheckedOut => "Booking has already been checked out.",
 
-            RentalError::PaymentInsufficientFunds => "Insufficient funds. Please ensure you have enough balance.",
+            RentalError::PaymentInsufficientFunds => {
+                "Insufficient funds. Please ensure you have enough balance."
+            }
             RentalError::PaymentAlreadyProcessed => "This payment has already been processed.",
             RentalError::PaymentFailed => "Payment transfer failed. Check permissions and balance.",
             RentalError::PaymentInvalidAmount => "The payment amount is invalid or zero.",
@@ -113,14 +131,20 @@ impl RentalError {
             RentalError::DisputeNotFound => "Dispute record not found.",
             RentalError::DisputeAlreadyResolved => "This dispute has already been resolved.",
             RentalError::DisputeInvalidOutcome => "The proposed dispute outcome is invalid.",
-            RentalError::DisputeInsufficientVotes => "Not enough votes reached to resolve the dispute.",
+            RentalError::DisputeInsufficientVotes => {
+                "Not enough votes reached to resolve the dispute."
+            }
 
             RentalError::EscrowNotFound => "Escrow account not found for this agreement.",
             RentalError::EscrowAlreadyReleased => "Escrow funds have already been released.",
-            RentalError::EscrowInsufficientFunds => "Insufficient funds in escrow for this withdrawal.",
+            RentalError::EscrowInsufficientFunds => {
+                "Insufficient funds in escrow for this withdrawal."
+            }
             RentalError::EscrowTimeoutNotReached => "Escrow period has not yet expired.",
 
-            RentalError::InsufficientPermissions => "Insufficient permissions to perform this action.",
+            RentalError::InsufficientPermissions => {
+                "Insufficient permissions to perform this action."
+            }
             RentalError::AdminOnly => "This operation is restricted to contract administrators.",
             RentalError::InvalidTransition => "Invalid state transition for the current record.",
             RentalError::InvalidInput => "Invalid input data provided to the function.",
@@ -145,8 +169,12 @@ pub fn log_error(
     operation: String,
     details: String,
 ) -> Result<(), RentalError> {
-    let mut count: u32 = env.storage().instance().get(&DataKey::ErrorLogCount).unwrap_or(0);
-    
+    let mut count: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ErrorLogCount)
+        .unwrap_or(0);
+
     let context = ErrorContext {
         error_code: error.code(),
         error_message: error.message(env),
@@ -155,28 +183,45 @@ pub fn log_error(
         operation,
     };
 
-    env.storage().persistent().set(&DataKey::ErrorLog(count), &context);
-    
+    env.storage()
+        .persistent()
+        .set(&DataKey::ErrorLog(count), &context);
+
     count += 1;
-    env.storage().instance().set(&DataKey::ErrorLogCount, &count);
-    
+    env.storage()
+        .instance()
+        .set(&DataKey::ErrorLogCount, &count);
+
     // Publish event
-    crate::events::error_occurred(env, context.error_code, context.operation, context.timestamp);
-    
+    crate::events::error_occurred(
+        env,
+        context.error_code,
+        context.operation,
+        context.timestamp,
+    );
+
     Ok(())
 }
 
 pub fn get_error_logs(env: &Env, limit: u32) -> Result<Vec<ErrorContext>, RentalError> {
-    let count: u32 = env.storage().instance().get(&DataKey::ErrorLogCount).unwrap_or(0);
+    let count: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ErrorLogCount)
+        .unwrap_or(0);
     let mut logs = Vec::new(env);
-    
+
     let start = if count > limit { count - limit } else { 0 };
-    
+
     for i in start..count {
-        if let Some(log) = env.storage().persistent().get::<DataKey, ErrorContext>(&DataKey::ErrorLog(i)) {
+        if let Some(log) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, ErrorContext>(&DataKey::ErrorLog(i))
+        {
             logs.push_back(log);
         }
     }
-    
+
     Ok(logs)
 }
