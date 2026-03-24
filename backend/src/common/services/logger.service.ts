@@ -1,4 +1,8 @@
-import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
+import {
+  Injectable,
+  LoggerService as NestLoggerService,
+  Optional,
+} from '@nestjs/common';
 import * as winston from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
 import { ConfigService } from '@nestjs/config';
@@ -18,8 +22,8 @@ export class LoggerService implements NestLoggerService {
   private context?: string;
 
   constructor(
-    private configService?: ConfigService,
-    context?: string,
+    @Optional() private configService?: ConfigService,
+    @Optional() context?: string,
   ) {
     this.context = context;
     this.logger = this.createLogger();
