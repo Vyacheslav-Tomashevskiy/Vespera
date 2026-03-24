@@ -342,3 +342,37 @@ pub(crate) fn error_occurred(env: &Env, error_code: u32, operation: String, time
     }
     .publish(env);
 }
+
+// ─── Royalty Events ───────────────────────────────────────────────────────────
+
+#[contractevent]
+pub struct RoyaltySet {
+    pub token_id: String,
+    pub percentage: u32,
+    pub recipient: Address,
+}
+
+#[contractevent]
+pub struct RoyaltyPaid {
+    pub token_id: String,
+    pub amount: i128,
+    pub recipient: Address,
+}
+
+pub(crate) fn royalty_set(env: &Env, token_id: String, percentage: u32, recipient: Address) {
+    RoyaltySet {
+        token_id,
+        percentage,
+        recipient,
+    }
+    .publish(env);
+}
+
+pub(crate) fn royalty_paid(env: &Env, token_id: String, amount: i128, recipient: Address) {
+    RoyaltyPaid {
+        token_id,
+        amount,
+        recipient,
+    }
+    .publish(env);
+}

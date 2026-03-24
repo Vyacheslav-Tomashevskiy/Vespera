@@ -161,3 +161,23 @@ pub struct ErrorContext {
     pub timestamp: u64,
     pub operation: String,
 }
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoyaltyConfig {
+    pub token_id: String,
+    pub creator: Address,
+    pub royalty_percentage: u32, // basis points (0-2500 for 0-25%)
+    pub royalty_recipient: Address,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoyaltyPayment {
+    pub token_id: String,
+    pub from: Address,
+    pub to: Address,
+    pub amount: i128,
+    pub royalty_amount: i128,
+    pub timestamp: u64,
+}

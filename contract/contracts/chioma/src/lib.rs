@@ -13,6 +13,7 @@ mod deposit_interest;
 mod errors;
 mod events;
 mod multi_token;
+mod royalties;
 mod storage;
 mod types;
 
@@ -27,6 +28,9 @@ mod tests_deposit_interest;
 
 #[cfg(test)]
 mod tests_errors;
+
+#[cfg(test)]
+mod tests_royalties;
 
 pub use agreement::{
     cancel_agreement, create_agreement, create_agreement_with_token, get_agreement,
@@ -43,7 +47,8 @@ pub use storage::DataKey;
 pub use types::{
     AgreementStatus, AgreementWithToken, CompoundingFrequency, Config, ContractState,
     DepositInterest, DepositInterestConfig, ErrorContext, InterestAccrual, InterestRecipient,
-    PauseState, PaymentSplit, RentAgreement, SupportedToken, TokenExchangeRate,
+    PauseState, PaymentSplit, RentAgreement, RoyaltyConfig, RoyaltyPayment, SupportedToken,
+    TokenExchangeRate,
 };
 
 /// Chioma rental agreement contract.
@@ -591,5 +596,51 @@ impl Contract {
     /// Retrieve the most recent error logs.
     pub fn get_error_logs(env: Env, limit: u32) -> Result<Vec<ErrorContext>, RentalError> {
         errors::get_error_logs(&env, limit)
+    }
+
+    // ─── Royalty Functions ───────────────────────────────────────────────────
+
+    /// Set the royalty configuration for a specific token (agreement).
+    pub fn set_royalty(
+        env: Env,
+        token_id: String,
+        royalty_percentage: u32,
+        royalty_recipient: Address,
+    ) -> Result<(), RentalError> {
+        Self::check_paused(&env)?;
+        royalties::set_royalty(env, token_id, royalty_percentage, royalty_recipient)
+    }
+
+    /// Retrieve the royalty configuration for a token.
+    pub fn get_royalty(env: Env, token_id: String) -> Result<RoyaltyConfig, RentalError> {
+        royalties::get_royalty(env, token_id)
+    }
+
+    /// Calculate the royalty amount for a given sale price.
+    pub fn calculate_royalty(
+        env: Env,
+        token_id: String,
+        sale_price: i128,
+    ) -> Result<i128, RentalError> {
+        royalties::calculate_royalty(env, token_id, sale_price)
+    }
+
+    /// Perform a transfer of the "agreement" ownership with royalty payment.
+    pub fn transfer_with_royalty(
+        env: Env,
+        token_id: String,
+        to: Address,
+        sale_price: i128,
+    ) -> Result<(), RentalError> {
+        Self::check_paused(&env)?;
+        royalties::transfer_with_royalty(env, token_id, to, sale_price)
+    }
+
+    /// Get the royalty payment history for a token.
+    pub fn get_royalty_payments(
+        env: Env,
+        token_id: String,
+    ) -> Result<Vec<RoyaltyPayment>, RentalError> {
+        royalties::get_royalty_payments(env, token_id)
     }
 }

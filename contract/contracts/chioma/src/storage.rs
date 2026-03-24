@@ -16,4 +16,6 @@ pub enum DataKey {
     DepositInterest(String),
     ErrorLog(u32),
     ErrorLogCount,
+    RoyaltyConfig(String),
+    RoyaltyPayments(String),
 }
