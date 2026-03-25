@@ -25,7 +25,7 @@ export class DisputeEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'dispute_id', length: 100 })
+  @Column({ name: 'dispute_id', type: 'varchar', length: 100 })
   disputeId: string;
 
   @Column({
@@ -41,10 +41,20 @@ export class DisputeEvent {
   @Column({ type: 'timestamp' })
   timestamp: Date;
 
-  @Column({ name: 'triggered_by', length: 100, nullable: true })
+  @Column({
+    name: 'triggered_by',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   triggeredBy: string | null;
 
-  @Column({ name: 'transaction_hash', length: 100, nullable: true })
+  @Column({
+    name: 'transaction_hash',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   transactionHash: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

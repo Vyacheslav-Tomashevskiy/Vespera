@@ -40,7 +40,12 @@ export class DisputeVote {
   @Column({ name: 'blockchain_voted_at', type: 'bigint', nullable: true })
   blockchainVotedAt: number | null;
 
-  @Column({ name: 'transaction_hash', length: 100, nullable: true })
+  @Column({
+    name: 'transaction_hash',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   transactionHash: string | null;
 
   @Column({ type: 'text', nullable: true })

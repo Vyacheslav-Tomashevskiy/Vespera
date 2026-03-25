@@ -35,7 +35,12 @@ export class Arbiter {
   @Column({ name: 'blockchain_added_at', type: 'bigint', nullable: true })
   blockchainAddedAt: number | null;
 
-  @Column({ name: 'transaction_hash', length: 100, nullable: true })
+  @Column({
+    name: 'transaction_hash',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   transactionHash: string | null;
 
   @Column({ name: 'total_votes', default: 0 })
