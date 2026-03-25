@@ -5,7 +5,9 @@ import {
   User,
   UserRole,
 } from '../modules/users/entities/user.entity';
+import { LoggerService } from '../common/services/logger.service';
 
+const logger = new LoggerService(undefined, 'AgentSeed');
 const SALT_ROUNDS = 12;
 
 interface SeedAgentOptions {
@@ -192,10 +194,10 @@ export async function seedAgentUser(
 
     if (existingUser) {
       if (!config.force) {
-        console.log(
+        logger.warn(
           `Agent seed skipped: user already exists for ${config.email}`,
         );
-        console.log('Use --force to update the existing user.');
+        logger.warn('Use --force to update the existing user.');
         return;
       }
 
@@ -214,7 +216,7 @@ export async function seedAgentUser(
 
       await userRepository.save(existingUser);
 
-      console.log(`Agent user updated: ${existingUser.email}`);
+      logger.log(`Agent user updated: ${existingUser.email}`);
     } else {
       const agentUser = userRepository.create({
         email: config.email,
@@ -234,12 +236,12 @@ export async function seedAgentUser(
       });
 
       const savedAgent = await userRepository.save(agentUser);
-      console.log(`Agent user created: ${savedAgent.email}`);
+      logger.log(`Agent user created: ${savedAgent.email}`);
     }
 
     const passwordSource = config.password ? 'provided' : 'generated';
-    console.log(`Agent password (${passwordSource}): ${plainPassword}`);
-    console.log('Agent seeding completed successfully.');
+    logger.debug(`Agent password (${passwordSource}): ${plainPassword}`);
+    logger.log('Agent seeding completed successfully.');
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

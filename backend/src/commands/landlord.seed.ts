@@ -5,7 +5,9 @@ import {
   User,
   UserRole,
 } from '../modules/users/entities/user.entity';
+import { LoggerService } from '../common/services/logger.service';
 
+const logger = new LoggerService(undefined, 'LandlordSeed');
 const SALT_ROUNDS = 12;
 
 interface SeedLandlordOptions {
@@ -192,10 +194,10 @@ export async function seedLandlordUser(
 
     if (existingUser) {
       if (!config.force) {
-        console.log(
+        logger.warn(
           `Landlord seed skipped: user already exists for ${config.email}`,
         );
-        console.log('Use --force to update the existing user.');
+        logger.warn('Use --force to update the existing user.');
         return;
       }
 
@@ -214,7 +216,7 @@ export async function seedLandlordUser(
 
       await userRepository.save(existingUser);
 
-      console.log(`Landlord user updated: ${existingUser.email}`);
+      logger.log(`Landlord user updated: ${existingUser.email}`);
     } else {
       const landlordUser = userRepository.create({
         email: config.email,
@@ -234,12 +236,12 @@ export async function seedLandlordUser(
       });
 
       const savedLandlord = await userRepository.save(landlordUser);
-      console.log(`Landlord user created: ${savedLandlord.email}`);
+      logger.log(`Landlord user created: ${savedLandlord.email}`);
     }
 
     const passwordSource = config.password ? 'provided' : 'generated';
-    console.log(`Landlord password (${passwordSource}): ${plainPassword}`);
-    console.log('Landlord seeding completed successfully.');
+    logger.debug(`Landlord password (${passwordSource}): ${plainPassword}`);
+    logger.log('Landlord seeding completed successfully.');
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

@@ -5,6 +5,9 @@ import {
   User,
   UserRole,
 } from '../modules/users/entities/user.entity';
+import { LoggerService } from '../common/services/logger.service';
+ 
+const logger = new LoggerService(undefined, 'AdminSeed');
 
 const SALT_ROUNDS = 12;
 
@@ -194,10 +197,10 @@ export async function seedAdminUser(
 
     if (existingUser) {
       if (!config.force) {
-        console.log(
+        logger.warn(
           `Admin seed skipped: user already exists for ${config.email}`,
         );
-        console.log('Use --force to update the existing user.');
+        logger.warn('Use --force to update the existing user.');
         return;
       }
 
@@ -216,7 +219,7 @@ export async function seedAdminUser(
 
       await userRepository.save(existingUser);
 
-      console.log(`Admin user updated: ${existingUser.email}`);
+      logger.log(`Admin user updated: ${existingUser.email}`);
     } else {
       const adminUser = userRepository.create({
         email: config.email,
@@ -236,12 +239,12 @@ export async function seedAdminUser(
       });
 
       const savedAdmin = await userRepository.save(adminUser);
-      console.log(`Admin user created: ${savedAdmin.email}`);
+      logger.log(`Admin user created: ${savedAdmin.email}`);
     }
 
     const passwordSource = config.password ? 'provided' : 'generated';
-    console.log(`Admin password (${passwordSource}): ${plainPassword}`);
-    console.log('Admin seeding completed successfully.');
+    logger.debug(`Admin password (${passwordSource}): ${plainPassword}`);
+    logger.log('Admin seeding completed successfully.');
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

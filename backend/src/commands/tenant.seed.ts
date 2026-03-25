@@ -5,7 +5,9 @@ import {
   User,
   UserRole,
 } from '../modules/users/entities/user.entity';
+import { LoggerService } from '../common/services/logger.service';
 
+const logger = new LoggerService(undefined, 'TenantSeed');
 const SALT_ROUNDS = 12;
 
 interface SeedTenantOptions {
@@ -192,10 +194,10 @@ export async function seedTenantUser(
 
     if (existingUser) {
       if (!config.force) {
-        console.log(
+        logger.warn(
           `Tenant seed skipped: user already exists for ${config.email}`,
         );
-        console.log('Use --force to update the existing user.');
+        logger.warn('Use --force to update the existing user.');
         return;
       }
 
@@ -214,7 +216,7 @@ export async function seedTenantUser(
 
       await userRepository.save(existingUser);
 
-      console.log(`Tenant user updated: ${existingUser.email}`);
+      logger.log(`Tenant user updated: ${existingUser.email}`);
     } else {
       const tenantUser = userRepository.create({
         email: config.email,
@@ -234,12 +236,12 @@ export async function seedTenantUser(
       });
 
       const savedTenant = await userRepository.save(tenantUser);
-      console.log(`Tenant user created: ${savedTenant.email}`);
+      logger.log(`Tenant user created: ${savedTenant.email}`);
     }
 
     const passwordSource = config.password ? 'provided' : 'generated';
-    console.log(`Tenant password (${passwordSource}): ${plainPassword}`);
-    console.log('Tenant seeding completed successfully.');
+    logger.debug(`Tenant password (${passwordSource}): ${plainPassword}`);
+    logger.log('Tenant seeding completed successfully.');
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

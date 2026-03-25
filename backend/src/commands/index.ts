@@ -5,24 +5,27 @@ import {
   parseCliArgs as parseLandlordArgs,
   seedLandlordUser,
 } from './landlord.seed';
+import { LoggerService } from '../common/services/logger.service';
+
+const logger = new LoggerService(undefined, 'CommandRunner');
 
 type SupportedCommand = 'admin' | 'agent' | 'tenant' | 'landlord';
 
 function printUsage(): void {
-  console.log('Usage: pnpm run seed:[command] -- [options]');
-  console.log('');
-  console.log('Commands:');
-  console.log('  admin      Create admin user');
-  console.log('  agent      Create agent user');
-  console.log('  tenant     Create tenant user');
-  console.log('  landlord   Create landlord user');
-  console.log('');
-  console.log('Options:');
-  console.log('  --email <email>            User email');
-  console.log('  --password <password>      User password');
-  console.log('  --first-name <firstName>   User first name');
-  console.log('  --last-name <lastName>     User last name');
-  console.log('  --force                    Update existing user');
+  logger.log('Usage: pnpm run seed:[command] -- [options]');
+  logger.log('');
+  logger.log('Commands:');
+  logger.log('  admin      Create admin user');
+  logger.log('  agent      Create agent user');
+  logger.log('  tenant     Create tenant user');
+  logger.log('  landlord   Create landlord user');
+  logger.log('');
+  logger.log('Options:');
+  logger.log('  --email <email>            User email');
+  logger.log('  --password <password>      User password');
+  logger.log('  --first-name <firstName>   User first name');
+  logger.log('  --last-name <lastName>     User last name');
+  logger.log('  --force                    Update existing user');
 }
 
 async function run(): Promise<void> {
