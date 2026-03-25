@@ -17,6 +17,7 @@ mod multi_token;
 mod rate_limit;
 mod royalties;
 mod storage;
+mod timelock;
 mod types;
 
 #[cfg(test)]
@@ -40,6 +41,9 @@ mod tests_rate_limit;
 #[cfg(test)]
 mod tests_multisig;
 
+#[cfg(test)]
+mod tests_timelock;
+
 pub use agreement::{
     cancel_agreement, create_agreement, create_agreement_with_token, get_agreement,
     get_agreement_count, get_agreement_token, get_payment_history, get_payment_split,
@@ -57,7 +61,7 @@ pub use types::{
     Attribute, CompoundingFrequency, Config, ContractState, DepositInterest, DepositInterestConfig,
     ErrorContext, InterestAccrual, InterestRecipient, MultiSigConfig, PauseState, PaymentSplit,
     RateLimitConfig, RateLimitReason, RentAgreement, RoyaltyConfig, RoyaltyPayment, SupportedToken,
-    TokenExchangeRate, UserCallCount,
+    TimelockAction, TimelockActionType, TokenExchangeRate, UserCallCount,
 };
 
 /// Chioma rental agreement contract.
@@ -778,5 +782,56 @@ impl Contract {
     /// Get total proposal count
     pub fn get_proposal_count(env: Env) -> u32 {
         multi_sig::get_proposal_count(&env)
+    }
+
+    // ─── Timelock Functions ───────────────────────────────────────────────────
+
+    /// Queue an admin action that can only be executed after the mandatory delay.
+    ///
+    /// `delay` is in seconds and must meet the minimum for the given `action_type`:
+    /// UpdateAdmin (7 days), UpdateConfig (3 days), UpdateRates (2 days),
+    /// PauseContract (1 day), UnpauseContract (1 hour).
+    pub fn queue_timelock_action(
+        env: Env,
+        caller: Address,
+        action_type: TimelockActionType,
+        target: Address,
+        data: soroban_sdk::Bytes,
+        delay: u64,
+    ) -> Result<String, RentalError> {
+        timelock::queue_action(&env, caller, action_type, target, data, delay)
+    }
+
+    /// Execute a queued timelock action once its ETA has been reached.
+    pub fn execute_timelock_action(
+        env: Env,
+        caller: Address,
+        action_id: String,
+    ) -> Result<(), RentalError> {
+        timelock::execute_action(&env, caller, action_id)
+    }
+
+    /// Cancel a queued timelock action (admin only).
+    pub fn cancel_timelock_action(
+        env: Env,
+        caller: Address,
+        action_id: String,
+    ) -> Result<(), RentalError> {
+        timelock::cancel_action(&env, caller, action_id)
+    }
+
+    /// Retrieve a timelock action by ID.
+    pub fn get_timelock_action(env: Env, action_id: String) -> Result<TimelockAction, RentalError> {
+        timelock::get_action(&env, action_id)
+    }
+
+    /// Get all active (pending) timelock action IDs.
+    pub fn get_active_timelock_actions(env: Env) -> Vec<String> {
+        timelock::get_active_actions(&env)
+    }
+
+    /// Get total count of timelock actions ever queued.
+    pub fn get_timelock_action_count(env: Env) -> u32 {
+        timelock::get_action_count(&env)
     }
 }

@@ -1,5 +1,29 @@
 use soroban_sdk::{contracttype, Address, Bytes, String, Vec};
 
+// ─── Timelock Types ───────────────────────────────────────────────────────────
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TimelockActionType {
+    UpdateAdmin,
+    UpdateConfig,
+    UpdateRates,
+    PauseContract,
+    UnpauseContract,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TimelockAction {
+    pub id: String,
+    pub action_type: TimelockActionType,
+    pub target: Address,
+    pub data: Bytes,
+    pub eta: u64, // Execution timestamp (Unix seconds)
+    pub executed: bool,
+    pub cancelled: bool,
+}
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AgreementStatus {

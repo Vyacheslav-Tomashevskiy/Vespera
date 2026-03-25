@@ -558,3 +558,36 @@ pub(crate) fn required_signatures_updated(env: &Env, old_required: u32, new_requ
     }
     .publish(env);
 }
+
+// ─── Timelock Events ──────────────────────────────────────────────────────────
+
+#[contractevent(topics = ["tl_queued"])]
+pub struct TimelockActionQueued {
+    #[topic]
+    pub action_id: String,
+    pub eta: u64,
+}
+
+#[contractevent(topics = ["tl_executed"])]
+pub struct TimelockActionExecuted {
+    #[topic]
+    pub action_id: String,
+}
+
+#[contractevent(topics = ["tl_cancelled"])]
+pub struct TimelockActionCancelled {
+    #[topic]
+    pub action_id: String,
+}
+
+pub(crate) fn timelock_action_queued(env: &Env, action_id: String, eta: u64) {
+    TimelockActionQueued { action_id, eta }.publish(env);
+}
+
+pub(crate) fn timelock_action_executed(env: &Env, action_id: String) {
+    TimelockActionExecuted { action_id }.publish(env);
+}
+
+pub(crate) fn timelock_action_cancelled(env: &Env, action_id: String) {
+    TimelockActionCancelled { action_id }.publish(env);
+}
