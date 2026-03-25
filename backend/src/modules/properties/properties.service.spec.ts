@@ -163,6 +163,10 @@ describe('PropertiesService', () => {
           useValue: mockRentalUnitRepository,
         },
         {
+          provide: getRepositoryToken(PropertyListingDraft),
+          useValue: mockPropertyListingDraftRepository,
+        },
+        {
           provide: CacheService,
           useValue: mockCacheService,
         },

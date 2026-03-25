@@ -7,11 +7,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
-import { Property, ListingStatus } from './entities/property.entity';
+import {
+  Property,
+  ListingStatus,
+  PropertyType,
+} from './entities/property.entity';
+import { PropertyListingDraft } from './entities/property-listing-draft.entity';
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyListingWizardStepDto } from './dto/property-listing-wizard.dto';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyAmenity } from './entities/property-amenity.entity';
 import { RentalUnit } from './entities/rental-unit.entity';
-import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -36,6 +42,8 @@ export class PropertiesService {
     private readonly amenityRepository: Repository<PropertyAmenity>,
     @InjectRepository(RentalUnit)
     private readonly rentalUnitRepository: Repository<RentalUnit>,
+    @InjectRepository(PropertyListingDraft)
+    private readonly propertyListingDraftRepository: Repository<PropertyListingDraft>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -290,6 +298,139 @@ export class PropertiesService {
     const saved = await this.propertyRepository.save(property);
     await this.cacheService.invalidatePropertyDomainCaches(id);
     return saved;
+  }
+
+  async startWizard(
+    landlordId: string,
+    data: Record<string, unknown> = {},
+  ): Promise<PropertyListingDraft> {
+    const draft = this.propertyListingDraftRepository.create({
+      landlordId,
+      data,
+      currentStep: 1,
+      completedSteps: [],
+    });
+    return this.propertyListingDraftRepository.save(draft);
+  }
+
+  async updateWizardStep(
+    draftId: string,
+    landlordId: string,
+    body: UpdatePropertyListingWizardStepDto,
+  ): Promise<PropertyListingDraft> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    const mergedData = { ...draft.data, ...body.data };
+    const completed = new Set([
+      ...(draft.completedSteps ?? []),
+      ...(body.completedSteps ?? []),
+    ]);
+    draft.data = mergedData;
+    draft.currentStep = body.step;
+    draft.completedSteps = Array.from(completed).sort((a, b) => a - b);
+    return this.propertyListingDraftRepository.save(draft);
+  }
+
+  async getWizardDraft(
+    draftId: string,
+    landlordId: string,
+  ): Promise<PropertyListingDraft> {
+    return this.requireDraftForLandlord(draftId, landlordId);
+  }
+
+  async deleteWizardDraft(draftId: string, landlordId: string): Promise<void> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    await this.propertyListingDraftRepository.remove(draft);
+  }
+
+  async publishWizardDraft(
+    draftId: string,
+    landlordId: string,
+  ): Promise<Property> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    const createDto = this.buildCreateDtoFromWizardData(draft.data);
+    const property = await this.create(createDto, landlordId);
+    const published = await this.publish(property.id, {
+      id: landlordId,
+      role: UserRole.LANDLORD,
+    } as User);
+    await this.propertyListingDraftRepository.remove(draft);
+    return published;
+  }
+
+  private async requireDraftForLandlord(
+    draftId: string,
+    landlordId: string,
+  ): Promise<PropertyListingDraft> {
+    const draft = await this.propertyListingDraftRepository.findOne({
+      where: { id: draftId, landlordId },
+    });
+    if (!draft) {
+      throw new NotFoundException(`Wizard draft ${draftId} not found`);
+    }
+    return draft;
+  }
+
+  private buildCreateDtoFromWizardData(
+    data: Record<string, unknown>,
+  ): CreatePropertyDto {
+    const basic = (data.basicInfo as Record<string, unknown>) || {};
+    const pricing = (data.pricing as Record<string, unknown>) || {};
+    const title =
+      (data.title as string) ||
+      (basic.title as string) ||
+      (data.name as string) ||
+      '';
+    const priceRaw =
+      data.price ?? pricing.monthlyRent ?? basic.price ?? pricing.rent;
+    const price = Number(priceRaw);
+    if (!String(title).trim()) {
+      throw new BadRequestException(
+        'Wizard draft must include a title before publishing.',
+      );
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      throw new BadRequestException(
+        'Wizard draft must include a valid price before publishing.',
+      );
+    }
+    const typeRaw = basic.type ?? data.type;
+    const type =
+      typeRaw !== undefined &&
+      typeRaw !== null &&
+      Object.values(PropertyType).includes(typeRaw as PropertyType)
+        ? (typeRaw as PropertyType)
+        : PropertyType.APARTMENT;
+
+    return {
+      title: String(title).trim(),
+      price,
+      description:
+        (data.description as string) || (basic.description as string),
+      type,
+      latitude: (data.latitude as number) ?? (basic.latitude as number),
+      longitude: (data.longitude as number) ?? (basic.longitude as number),
+      address: (data.address as string) || (basic.address as string),
+      city: (data.city as string) || (basic.city as string),
+      state: (data.state as string) || (basic.state as string),
+      postalCode: (data.postalCode as string) || (basic.postalCode as string),
+      country: (data.country as string) || (basic.country as string),
+      currency: (data.currency as string) || (pricing.currency as string),
+      bedrooms: (data.bedrooms as number) ?? (basic.bedrooms as number),
+      bathrooms: (data.bathrooms as number) ?? (basic.bathrooms as number),
+      area: (data.area as number) ?? (basic.area as number),
+      floor: (data.floor as number) ?? (basic.floor as number),
+      isFurnished:
+        (data.isFurnished as boolean) ?? (basic.isFurnished as boolean),
+      hasParking: (data.hasParking as boolean) ?? (basic.hasParking as boolean),
+      petsAllowed:
+        (data.petsAllowed as boolean) ?? (basic.petsAllowed as boolean),
+      metadata:
+        (data.metadata as Record<string, unknown>) ||
+        (basic.metadata as Record<string, unknown>),
+      images: data.images as CreatePropertyDto['images'],
+      amenities: data.amenities as CreatePropertyDto['amenities'],
+      rentalUnits: data.rentalUnits as CreatePropertyDto['rentalUnits'],
+    };
   }
 
   private verifyOwnership(property: Property, user: User): void {

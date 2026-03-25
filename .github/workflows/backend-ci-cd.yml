@@ -139,11 +139,70 @@ jobs:
             sleep 2
           done
 
-      - name: Run database migrations
-        run: cd backend && pnpm run migration:run
+      - name: Run database migrations (safe runner)
+        run: cd backend && pnpm run migration:run:safe
 
       - name: Run E2E tests
         run: cd backend && pnpm run test:e2e --forceExit
+
+  # ============================================================================
+  # MIGRATION ROLLBACK: verify revert + re-apply on a disposable Postgres
+  # ============================================================================
+  migration-rollback-verify:
+    runs-on: ubuntu-latest
+    name: Migration rollback verify
+    needs: test
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chioma_migration_verify
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DB_TYPE: postgres
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: chioma_migration_verify
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'backend/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: cd backend && pnpm install --frozen-lockfile
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Verify migration rollback and re-apply
+        run: cd backend && bash ./scripts/test-migration-rollback.sh
 
   # ============================================================================
   # SECURITY: Trivy vulnerability scanning
@@ -319,7 +378,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Build & Push Docker
-    needs: [build, e2e-tests]
+    needs: [build, e2e-tests, migration-rollback-verify]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     permissions:
       contents: read
@@ -369,6 +428,31 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'backend/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: cd backend && pnpm install --frozen-lockfile
+
+      - name: Build backend (for compiled data-source)
+        run: cd backend && pnpm run build
+
+      - name: Run database migrations (staging)
+        if: ${{ secrets.DATABASE_URL_STAGING != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+        run: cd backend && pnpm run migration:run:prod
+
       - name: Deploy to staging
         run: echo "Deploying to staging environment..."
 
@@ -382,6 +466,31 @@ jobs:
       url: https://chioma-sqq1.onrender.com
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'backend/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: cd backend && pnpm install --frozen-lockfile
+
+      - name: Build backend (for compiled data-source)
+        run: cd backend && pnpm run build
+
+      - name: Run database migrations (production)
+        if: ${{ secrets.DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: cd backend && pnpm run migration:run:prod
+
       - name: Deploy to production
         run: echo "Deploying to production environment..."
 
