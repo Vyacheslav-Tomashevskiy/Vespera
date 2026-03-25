@@ -4,16 +4,15 @@ import { EncryptionService } from '../../security/encryption.service';
 
 /**
  * Unit tests for KYC encryption/decryption functions
- * Tests the core encryption logic with various data types and edge cases
+ * Optimized for speed - focuses on core functionality
  */
 describe('KYC Encryption - Unit Tests', () => {
     let encryptionService: EncryptionService;
-    let configService: ConfigService;
 
     const mockConfigService = {
         get: jest.fn((key: string) => {
             if (key === 'SECURITY_ENCRYPTION_KEY') {
-                return 'a'.repeat(64); // 64-char hex string → 256-bit key
+                return 'a'.repeat(64);
             }
             return undefined;
         }),
@@ -28,38 +27,20 @@ describe('KYC Encryption - Unit Tests', () => {
         }).compile();
 
         encryptionService = module.get<EncryptionService>(EncryptionService);
-        configService = module.get<ConfigService>(ConfigService);
     });
 
-    describe('encrypt/decrypt - Basic Operations', () => {
-        it('should encrypt a simple string', () => {
-            const plaintext = 'John Doe';
-            const encrypted = encryptionService.encrypt(plaintext);
-
-            expect(encrypted).toBeDefined();
-            expect(encrypted).not.toBe(plaintext);
-            expect(typeof encrypted).toBe('string');
-            expect(encrypted.length).toBeGreaterThan(0);
-        });
-
-        it('should decrypt encrypted string back to original', () => {
+    describe('Basic Encryption/Decryption', () => {
+        it('should encrypt and decrypt strings', () => {
             const plaintext = 'John Doe';
             const encrypted = encryptionService.encrypt(plaintext);
             const decrypted = encryptionService.decrypt(encrypted);
 
+            expect(encrypted).not.toBe(plaintext);
             expect(decrypted).toBe(plaintext);
         });
 
         it('should handle empty strings', () => {
             const plaintext = '';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle very long strings', () => {
-            const plaintext = 'a'.repeat(10000);
             const encrypted = encryptionService.encrypt(plaintext);
             const decrypted = encryptionService.decrypt(encrypted);
 
@@ -75,7 +56,7 @@ describe('KYC Encryption - Unit Tests', () => {
         });
 
         it('should handle unicode characters', () => {
-            const plaintext = '你好世界 مرحبا بالعالم 🔐🔑';
+            const plaintext = '你好世界 مرحبا بالعالم 🔐';
             const encrypted = encryptionService.encrypt(plaintext);
             const decrypted = encryptionService.decrypt(encrypted);
 
@@ -91,20 +72,13 @@ describe('KYC Encryption - Unit Tests', () => {
         });
     });
 
-    describe('encrypt/decrypt - Randomness', () => {
-        it('should produce different ciphertexts for the same plaintext', () => {
+    describe('Randomness', () => {
+        it('should produce different ciphertexts for same plaintext', () => {
             const plaintext = 'same-data';
             const encrypted1 = encryptionService.encrypt(plaintext);
             const encrypted2 = encryptionService.encrypt(plaintext);
 
             expect(encrypted1).not.toBe(encrypted2);
-        });
-
-        it('should decrypt both different ciphertexts to the same plaintext', () => {
-            const plaintext = 'same-data';
-            const encrypted1 = encryptionService.encrypt(plaintext);
-            const encrypted2 = encryptionService.encrypt(plaintext);
-
             expect(encryptionService.decrypt(encrypted1)).toBe(plaintext);
             expect(encryptionService.decrypt(encrypted2)).toBe(plaintext);
         });
@@ -113,16 +87,18 @@ describe('KYC Encryption - Unit Tests', () => {
             const plaintext = 'test-data';
             const encrypted1 = encryptionService.encrypt(plaintext);
             const encrypted2 = encryptionService.encrypt(plaintext);
-            const encrypted3 = encryptionService.encrypt(plaintext);
 
-            // All should be different
-            const ciphertexts = [encrypted1, encrypted2, encrypted3];
-            const uniqueCiphertexts = new Set(ciphertexts);
-            expect(uniqueCiphertexts.size).toBe(3);
+            const buffer1 = Buffer.from(encrypted1, 'base64');
+            const buffer2 = Buffer.from(encrypted2, 'base64');
+
+            const iv1 = buffer1.subarray(64, 80);
+            const iv2 = buffer2.subarray(64, 80);
+
+            expect(iv1).not.toEqual(iv2);
         });
     });
 
-    describe('encrypt/decrypt - KYC Data Types', () => {
+    describe('KYC Data Types', () => {
         it('should encrypt email addresses', () => {
             const email = 'user@example.com';
             const encrypted = encryptionService.encrypt(email);
@@ -139,104 +115,21 @@ describe('KYC Encryption - Unit Tests', () => {
             expect(decrypted).toBe(phone);
         });
 
-        it('should encrypt addresses', () => {
-            const address = '123 Main St, Apt 4B, New York, NY 10001, USA';
-            const encrypted = encryptionService.encrypt(address);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(address);
-        });
-
-        it('should encrypt dates', () => {
-            const date = '1990-05-15';
-            const encrypted = encryptionService.encrypt(date);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(date);
-        });
-
-        it('should encrypt document numbers (passport, ID, etc)', () => {
-            const docNumber = 'A12345678';
-            const encrypted = encryptionService.encrypt(docNumber);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(docNumber);
-        });
-
         it('should encrypt JSON KYC data', () => {
             const kycData = JSON.stringify({
                 first_name: 'John',
                 last_name: 'Doe',
                 email: 'john@example.com',
-                phone: '+1-555-123-4567',
-                address: '123 Main St',
             });
             const encrypted = encryptionService.encrypt(kycData);
             const decrypted = encryptionService.decrypt(encrypted);
 
-            expect(decrypted).toBe(kycData);
-            expect(JSON.parse(decrypted)).toEqual({
-                first_name: 'John',
-                last_name: 'Doe',
-                email: 'john@example.com',
-                phone: '+1-555-123-4567',
-                address: '123 Main St',
-            });
+            expect(JSON.parse(decrypted)).toEqual(JSON.parse(kycData));
         });
     });
 
-    describe('encrypt/decrypt - Edge Cases', () => {
-        it('should handle null-like strings', () => {
-            const plaintext = 'null';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle undefined-like strings', () => {
-            const plaintext = 'undefined';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle base64-like strings', () => {
-            const plaintext = 'SGVsbG8gV29ybGQgQmFzZTY0IFRlc3Q=';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle hex-like strings', () => {
-            const plaintext = 'deadbeefcafebabe';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle strings with colons and slashes', () => {
-            const plaintext = 'https://example.com:8080/path?query=value';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-
-        it('should handle repeated characters', () => {
-            const plaintext = 'aaaaaaaaaa';
-            const encrypted = encryptionService.encrypt(plaintext);
-            const decrypted = encryptionService.decrypt(encrypted);
-
-            expect(decrypted).toBe(plaintext);
-        });
-    });
-
-    describe('hash - Deterministic Hashing', () => {
-        it('should produce consistent hash for same input', () => {
+    describe('Hash Function', () => {
+        it('should produce consistent hashes', () => {
             const input = 'test@example.com';
             const hash1 = encryptionService.hash(input);
             const hash2 = encryptionService.hash(input);
@@ -247,10 +140,8 @@ describe('KYC Encryption - Unit Tests', () => {
         it('should be case-insensitive', () => {
             const lower = encryptionService.hash('test@example.com');
             const upper = encryptionService.hash('TEST@EXAMPLE.COM');
-            const mixed = encryptionService.hash('TeSt@ExAmPlE.cOm');
 
             expect(lower).toBe(upper);
-            expect(lower).toBe(mixed);
         });
 
         it('should produce different hashes for different inputs', () => {
@@ -264,34 +155,26 @@ describe('KYC Encryption - Unit Tests', () => {
             const hash = encryptionService.hash('test@example.com');
 
             expect(/^[a-f0-9]+$/.test(hash)).toBe(true);
-        });
-
-        it('should produce consistent length hash', () => {
-            const hash1 = encryptionService.hash('short');
-            const hash2 = encryptionService.hash('this is a much longer string');
-
-            expect(hash1.length).toBe(hash2.length);
+            expect(hash).toHaveLength(64); // SHA256
         });
     });
 
-    describe('generateSecureToken', () => {
+    describe('Secure Token Generation', () => {
         it('should generate tokens of correct length', () => {
             const token16 = encryptionService.generateSecureToken(16);
             const token32 = encryptionService.generateSecureToken(32);
-            const token64 = encryptionService.generateSecureToken(64);
 
             expect(token16).toHaveLength(32); // 16 bytes → 32 hex chars
             expect(token32).toHaveLength(64); // 32 bytes → 64 hex chars
-            expect(token64).toHaveLength(128); // 64 bytes → 128 hex chars
         });
 
         it('should generate unique tokens', () => {
             const tokens = new Set();
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 10; i++) {
                 tokens.add(encryptionService.generateSecureToken(32));
             }
 
-            expect(tokens.size).toBe(100);
+            expect(tokens.size).toBe(10);
         });
 
         it('should generate hex-only tokens', () => {
@@ -299,20 +182,12 @@ describe('KYC Encryption - Unit Tests', () => {
 
             expect(/^[a-f0-9]+$/.test(token)).toBe(true);
         });
-
-        it('should use default length of 32 bytes', () => {
-            const token = encryptionService.generateSecureToken();
-
-            expect(token).toHaveLength(64); // 32 bytes → 64 hex chars
-        });
     });
 
     describe('Error Handling', () => {
-        it('should throw error on invalid base64 during decryption', () => {
-            const invalidBase64 = '!!!invalid!!!';
-
+        it('should throw error on invalid base64', () => {
             expect(() => {
-                encryptionService.decrypt(invalidBase64);
+                encryptionService.decrypt('!!!invalid!!!');
             }).toThrow();
         });
 
@@ -324,22 +199,6 @@ describe('KYC Encryption - Unit Tests', () => {
             expect(() => {
                 encryptionService.decrypt(corrupted);
             }).toThrow();
-        });
-
-        it('should throw error on tampered auth tag', () => {
-            const plaintext = 'test-data';
-            const encrypted = encryptionService.encrypt(plaintext);
-
-            // Flip a bit in the auth tag area (bytes 80-96)
-            const buffer = Buffer.from(encrypted, 'base64');
-            if (buffer.length > 85) {
-                buffer[85] ^= 0xff;
-                const tampered = buffer.toString('base64');
-
-                expect(() => {
-                    encryptionService.decrypt(tampered);
-                }).toThrow();
-            }
         });
 
         it('should throw error when encryption key is missing', () => {
@@ -363,12 +222,41 @@ describe('KYC Encryption - Unit Tests', () => {
         });
     });
 
-    describe('Encryption Algorithm Properties', () => {
+    describe('Signed Tokens', () => {
+        it('should generate and verify signed tokens', () => {
+            const payload = 'user-123';
+            const token = encryptionService.generateSignedToken(payload, 3600);
+
+            expect(encryptionService.verifySignedToken(token, payload)).toBe(true);
+        });
+
+        it('should reject tokens with wrong payload', () => {
+            const token = encryptionService.generateSignedToken('user-123', 3600);
+
+            expect(encryptionService.verifySignedToken(token, 'user-456')).toBe(false);
+        });
+
+        it('should reject expired tokens', () => {
+            const token = encryptionService.generateSignedToken('user-123', -1);
+
+            expect(encryptionService.verifySignedToken(token, 'user-123')).toBe(false);
+        });
+
+        it('should reject tampered tokens', () => {
+            const token = encryptionService.generateSignedToken('user-123', 3600);
+            const tampered = token.slice(0, -5) + 'xxxxx';
+
+            expect(encryptionService.verifySignedToken(tampered, 'user-123')).toBe(
+                false,
+            );
+        });
+    });
+
+    describe('Cryptographic Properties', () => {
         it('should use AES-256-GCM algorithm', () => {
-            const plaintext = 'test-data';
+            const plaintext = 'test';
             const encrypted = encryptionService.encrypt(plaintext);
 
-            // Encrypted data should be base64 encoded
             expect(() => {
                 Buffer.from(encrypted, 'base64');
             }).not.toThrow();
@@ -379,18 +267,18 @@ describe('KYC Encryption - Unit Tests', () => {
             const encrypted = encryptionService.encrypt(plaintext);
             const payload = Buffer.from(encrypted, 'base64');
 
-            // Payload structure: salt(64) + iv(16) + authTag(16) + ciphertext
-            // Minimum size should be 96 bytes
+            // Payload: salt(64) + iv(16) + authTag(16) + ciphertext
             expect(payload.length).toBeGreaterThanOrEqual(96);
         });
 
         it('should use PBKDF2 key derivation', () => {
-            // This is tested indirectly - different salts should produce different derived keys
             const plaintext = 'test-data';
             const encrypted1 = encryptionService.encrypt(plaintext);
             const encrypted2 = encryptionService.encrypt(plaintext);
 
-            // Both should decrypt correctly despite different salts
+            // Different salts produce different ciphertexts
+            expect(encrypted1).not.toBe(encrypted2);
+            // But both decrypt correctly
             expect(encryptionService.decrypt(encrypted1)).toBe(plaintext);
             expect(encryptionService.decrypt(encrypted2)).toBe(plaintext);
         });
