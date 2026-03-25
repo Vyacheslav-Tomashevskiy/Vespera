@@ -229,7 +229,9 @@ export default function LandlordsAuditLogsPage() {
                   <td className="px-4 py-3 text-blue-100/90">
                     {new Date(row.performed_at).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 font-medium text-white">{row.action}</td>
+                  <td className="px-4 py-3 font-medium text-white">
+                    {row.action}
+                  </td>
                   <td className="px-4 py-3 text-blue-200/80">
                     {row.entity_type || '-'}
                     {row.entity_id ? ` (${row.entity_id})` : ''}
@@ -251,7 +253,10 @@ export default function LandlordsAuditLogsPage() {
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-blue-200/60">
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-blue-200/60"
+                >
                   No audit logs found for the current filters.
                 </td>
               </tr>
@@ -259,7 +264,10 @@ export default function LandlordsAuditLogsPage() {
 
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-blue-200/60">
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-blue-200/60"
+                >
                   Loading audit logs...
                 </td>
               </tr>

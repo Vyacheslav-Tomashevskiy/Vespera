@@ -65,7 +65,9 @@ export class CreateAuditLogsTable1773052746000 implements MigrationInterface {
     await queryRunner.query(
       `DROP TRIGGER IF EXISTS trg_prevent_audit_logs_update ON "audit_logs"`,
     );
-    await queryRunner.query(`DROP FUNCTION IF EXISTS prevent_audit_logs_update`);
+    await queryRunner.query(
+      `DROP FUNCTION IF EXISTS prevent_audit_logs_update`,
+    );
     await queryRunner.query(
       `DROP INDEX IF EXISTS "IDX_audit_logs_performed_at"`,
     );
