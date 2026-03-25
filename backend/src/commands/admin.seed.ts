@@ -6,7 +6,7 @@ import {
   UserRole,
 } from '../modules/users/entities/user.entity';
 import { LoggerService } from '../common/services/logger.service';
- 
+
 const logger = new LoggerService(undefined, 'AdminSeed');
 
 const SALT_ROUNDS = 12;
