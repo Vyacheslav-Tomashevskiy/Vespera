@@ -3,24 +3,30 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
-import { Property, ListingStatus } from './entities/property.entity';
+import {
+  Property,
+  ListingStatus,
+  PropertyType,
+} from './entities/property.entity';
+import { PropertyListingDraft } from './entities/property-listing-draft.entity';
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyListingWizardStepDto } from './dto/property-listing-wizard.dto';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyAmenity } from './entities/property-amenity.entity';
 import { RentalUnit } from './entities/rental-unit.entity';
-import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { User, UserRole } from '../users/entities/user.entity';
 import { PropertyQueryBuilder } from './property-query-builder';
-import { PropertyListingDraft } from './entities/property-listing-draft.entity';
-import { UpdatePropertyListingWizardStepDto } from './dto/property-listing-wizard.dto';
+import { CacheService } from '../../common/cache/cache.service';
+import {
+  CACHE_PREFIX_PROPERTIES_LIST,
+  TTL_PUBLIC_PROPERTY_LIST_MS,
+} from '../../common/cache/cache.constants';
 
 @Injectable()
 export class PropertiesService {
@@ -38,216 +44,13 @@ export class PropertiesService {
     private readonly rentalUnitRepository: Repository<RentalUnit>,
     @InjectRepository(PropertyListingDraft)
     private readonly propertyListingDraftRepository: Repository<PropertyListingDraft>,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
+    private readonly cacheService: CacheService,
   ) {}
-
-  private buildDefaultWizardData(): Record<string, unknown> {
-    return {
-      basicInfo: {},
-      pricing: {},
-      amenities: {},
-      rules: {},
-      photos: [],
-      description: {},
-      availability: {},
-    };
-  }
-
-  private buildWizardExpiryDate(): Date {
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 30);
-    return expires;
-  }
-
-  private normalizeCompletedSteps(steps?: number[]): number[] {
-    if (!steps?.length) return [];
-    return Array.from(new Set(steps.filter((step) => step >= 1 && step <= 8)));
-  }
-
-  private mergeWizardData(
-    currentData: Record<string, unknown>,
-    incomingData: Record<string, unknown>,
-  ): Record<string, unknown> {
-    return {
-      ...currentData,
-      ...incomingData,
-    };
-  }
-
-  async startWizard(
-    landlordId: string,
-    data?: Record<string, unknown>,
-  ): Promise<PropertyListingDraft> {
-    const draft = this.propertyListingDraftRepository.create({
-      landlordId,
-      data: {
-        ...this.buildDefaultWizardData(),
-        ...(data || {}),
-      },
-      currentStep: 1,
-      completedSteps: [],
-      expiresAt: this.buildWizardExpiryDate(),
-    });
-
-    return this.propertyListingDraftRepository.save(draft);
-  }
-
-  async updateWizardStep(
-    draftId: string,
-    landlordId: string,
-    updateDto: UpdatePropertyListingWizardStepDto,
-  ): Promise<PropertyListingDraft> {
-    const draft = await this.propertyListingDraftRepository.findOne({
-      where: { id: draftId, landlordId },
-    });
-
-    if (!draft) {
-      throw new NotFoundException(`Draft with ID ${draftId} not found`);
-    }
-
-    draft.data = this.mergeWizardData(draft.data || {}, updateDto.data || {});
-    draft.currentStep = updateDto.step;
-    draft.completedSteps = this.normalizeCompletedSteps([
-      ...(draft.completedSteps || []),
-      ...(updateDto.completedSteps || []),
-    ]);
-    draft.expiresAt = this.buildWizardExpiryDate();
-
-    return this.propertyListingDraftRepository.save(draft);
-  }
-
-  async getWizardDraft(
-    draftId: string,
-    landlordId: string,
-  ): Promise<PropertyListingDraft> {
-    const draft = await this.propertyListingDraftRepository.findOne({
-      where: { id: draftId, landlordId },
-    });
-
-    if (!draft) {
-      throw new NotFoundException(`Draft with ID ${draftId} not found`);
-    }
-
-    return draft;
-  }
-
-  async deleteWizardDraft(draftId: string, landlordId: string): Promise<void> {
-    const draft = await this.getWizardDraft(draftId, landlordId);
-    await this.propertyListingDraftRepository.remove(draft);
-  }
-
-  private validateWizardForPublish(data: Record<string, any>): void {
-    const basicInfo = data.basicInfo || {};
-    const pricing = data.pricing || {};
-    const photos = Array.isArray(data.photos) ? data.photos : [];
-    const description = data.description || {};
-    const availability = data.availability || {};
-
-    if (!basicInfo.propertyType || !basicInfo.address) {
-      throw new BadRequestException(
-        'Basic information is incomplete. Property type and address are required.',
-      );
-    }
-
-    if (!pricing.monthlyRent || Number(pricing.monthlyRent) <= 0) {
-      throw new BadRequestException(
-        'Pricing is incomplete. Monthly rent must be greater than zero.',
-      );
-    }
-
-    if (photos.length < 3) {
-      throw new BadRequestException(
-        'At least 3 photos are required to publish.',
-      );
-    }
-
-    const descriptionText = String(
-      description.propertyDescription || '',
-    ).trim();
-    if (descriptionText.length < 40) {
-      throw new BadRequestException(
-        'Property description must be at least 40 characters.',
-      );
-    }
-
-    if (!availability.availableFrom) {
-      throw new BadRequestException(
-        'Availability is incomplete. Available from date is required.',
-      );
-    }
-  }
-
-  async publishWizardDraft(
-    draftId: string,
-    landlordId: string,
-  ): Promise<Property> {
-    const draft = await this.getWizardDraft(draftId, landlordId);
-    const data = (draft.data || {}) as Record<string, any>;
-    this.validateWizardForPublish(data);
-
-    const basicInfo = data.basicInfo || {};
-    const pricing = data.pricing || {};
-    const description = data.description || {};
-    const amenities = data.amenities || {};
-    const rules = data.rules || {};
-    const photos = Array.isArray(data.photos) ? data.photos : [];
-
-    const createdProperty = await this.create(
-      {
-        title:
-          String(basicInfo.title || '').trim() ||
-          `${basicInfo.propertyType || 'Property'} in ${basicInfo.city || 'City'}`,
-        description: String(description.propertyDescription || '').trim(),
-        type: basicInfo.propertyType || 'apartment',
-        address: basicInfo.address,
-        city: basicInfo.city,
-        state: basicInfo.state,
-        postalCode: basicInfo.postalCode,
-        country: basicInfo.country,
-        price: Number(pricing.monthlyRent),
-        currency: pricing.currency || 'USD',
-        bedrooms: basicInfo.bedrooms ? Number(basicInfo.bedrooms) : undefined,
-        bathrooms: basicInfo.bathrooms
-          ? Number(basicInfo.bathrooms)
-          : undefined,
-        area: basicInfo.squareFootage
-          ? Number(basicInfo.squareFootage)
-          : undefined,
-        isFurnished: Boolean(amenities.furnished),
-        hasParking: Boolean(amenities.parking),
-        petsAllowed: Boolean(rules.petsAllowed),
-        metadata: {
-          wizardData: data,
-          moveInDate: pricing.moveInDate,
-          leaseTermMonths: pricing.leaseTermMonths,
-          photos,
-        },
-      },
-      landlordId,
-    );
-
-    createdProperty.status = ListingStatus.PUBLISHED;
-    const published = await this.propertyRepository.save(createdProperty);
-    await this.propertyListingDraftRepository.remove(draft);
-    await this.clearPropertiesCache();
-    return published;
-  }
-
-  private async clearPropertiesCache(): Promise<void> {
-    const store = (this.cacheManager as any).store;
-    if (store.keys) {
-      const keys = await store.keys('properties:list:*');
-      for (const key of keys) {
-        await this.cacheManager.del(key);
-      }
-    }
-  }
 
   private generateCacheKey(query: QueryPropertyDto): string {
     const queryStr = JSON.stringify(query);
     const hash = crypto.createHash('md5').update(queryStr).digest('hex');
-    return `properties:list:${hash}`;
+    return `${CACHE_PREFIX_PROPERTIES_LIST}:${hash}`;
   }
 
   async create(
@@ -295,11 +98,34 @@ export class PropertiesService {
       await this.rentalUnitRepository.save(propertyUnits);
     }
 
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(savedProperty.id);
     return this.findOne(savedProperty.id);
   }
 
   async findAll(query: QueryPropertyDto): Promise<{
+    data: Property[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }> {
+    const isPublicListing =
+      query.status === ListingStatus.PUBLISHED && !query.ownerId;
+
+    if (isPublicListing) {
+      const cacheKey = this.generateCacheKey(query);
+      return this.cacheService.getOrSet(
+        cacheKey,
+        () => this.fetchListingsPage(query),
+        TTL_PUBLIC_PROPERTY_LIST_MS,
+      );
+    }
+
+    return this.fetchListingsPage(query);
+  }
+
+  private async fetchListingsPage(query: QueryPropertyDto): Promise<{
     data: Property[];
     meta: {
       total: number;
@@ -315,35 +141,12 @@ export class PropertiesService {
       ...filters
     } = query;
 
-    // Caching logic
-    const isPublicListing =
-      filters.status === ListingStatus.PUBLISHED && !filters.ownerId;
-    let cacheKey: string | null = null;
-
-    if (isPublicListing) {
-      cacheKey = this.generateCacheKey(query);
-      const cachedData = await this.cacheManager.get<{
-        data: Property[];
-        meta: {
-          total: number;
-          page: number;
-          limit: number;
-        };
-      }>(cacheKey);
-
-      if (cachedData) {
-        return cachedData;
-      }
-    }
-
-    // Create base query with relations
     const baseQuery = this.propertyRepository
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.images', 'images')
       .leftJoinAndSelect('property.amenities', 'amenities')
       .leftJoinAndSelect('property.owner', 'owner');
 
-    // Use PropertyQueryBuilder for clean, maintainable query building
     const propertyQueryBuilder = new PropertyQueryBuilder(baseQuery);
 
     const [data, total] = await propertyQueryBuilder
@@ -352,7 +155,7 @@ export class PropertiesService {
       .applyPagination(page, limit)
       .execute();
 
-    const result = {
+    return {
       data,
       meta: {
         total,
@@ -360,13 +163,6 @@ export class PropertiesService {
         limit,
       },
     };
-
-    // Cache public listings
-    if (isPublicListing && cacheKey) {
-      await this.cacheManager.set(cacheKey, result, 300000); // 5 minutes
-    }
-
-    return result;
   }
 
   async findOne(id: string): Promise<Property> {
@@ -445,7 +241,7 @@ export class PropertiesService {
       }
     }
 
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(id);
     return this.findOne(id);
   }
 
@@ -453,7 +249,7 @@ export class PropertiesService {
     const property = await this.findOne(id);
     this.verifyOwnership(property, user);
     await this.propertyRepository.remove(property);
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(id);
   }
 
   async publish(id: string, user: User): Promise<Property> {
@@ -482,7 +278,7 @@ export class PropertiesService {
 
     property.status = ListingStatus.PUBLISHED;
     const saved = await this.propertyRepository.save(property);
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(id);
     return saved;
   }
 
@@ -491,7 +287,7 @@ export class PropertiesService {
     this.verifyOwnership(property, user);
     property.status = ListingStatus.ARCHIVED;
     const saved = await this.propertyRepository.save(property);
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(id);
     return saved;
   }
 
@@ -500,8 +296,143 @@ export class PropertiesService {
     this.verifyOwnership(property, user);
     property.status = ListingStatus.RENTED;
     const saved = await this.propertyRepository.save(property);
-    await this.clearPropertiesCache();
+    await this.cacheService.invalidatePropertyDomainCaches(id);
     return saved;
+  }
+
+  async startWizard(
+    landlordId: string,
+    data: Record<string, unknown> = {},
+  ): Promise<PropertyListingDraft> {
+    const draft = this.propertyListingDraftRepository.create({
+      landlordId,
+      data,
+      currentStep: 1,
+      completedSteps: [],
+    });
+    return this.propertyListingDraftRepository.save(draft);
+  }
+
+  async updateWizardStep(
+    draftId: string,
+    landlordId: string,
+    body: UpdatePropertyListingWizardStepDto,
+  ): Promise<PropertyListingDraft> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    draft.data = { ...draft.data, ...body.data };
+    draft.currentStep = body.step;
+    const mergedData = { ...draft.data, ...body.data };
+    const completed = new Set([
+      ...(draft.completedSteps ?? []),
+      ...(body.completedSteps ?? []),
+    ]);
+    draft.data = mergedData;
+    draft.currentStep = body.step;
+    draft.completedSteps = Array.from(completed).sort((a, b) => a - b);
+    return this.propertyListingDraftRepository.save(draft);
+  }
+
+  async getWizardDraft(
+    draftId: string,
+    landlordId: string,
+  ): Promise<PropertyListingDraft> {
+    return this.requireDraftForLandlord(draftId, landlordId);
+  }
+
+  async deleteWizardDraft(draftId: string, landlordId: string): Promise<void> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    await this.propertyListingDraftRepository.remove(draft);
+  }
+
+  async publishWizardDraft(
+    draftId: string,
+    landlordId: string,
+  ): Promise<Property> {
+    const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    const createDto = this.buildCreateDtoFromWizardData(draft.data);
+    const property = await this.create(createDto, landlordId);
+    const published = await this.publish(property.id, {
+      id: landlordId,
+      role: UserRole.LANDLORD,
+    } as User);
+    await this.propertyListingDraftRepository.remove(draft);
+    return published;
+  }
+
+  private async requireDraftForLandlord(
+    draftId: string,
+    landlordId: string,
+  ): Promise<PropertyListingDraft> {
+    const draft = await this.propertyListingDraftRepository.findOne({
+      where: { id: draftId, landlordId },
+    });
+    if (!draft) {
+      throw new NotFoundException(`Wizard draft ${draftId} not found`);
+    }
+    return draft;
+  }
+
+  private buildCreateDtoFromWizardData(
+    data: Record<string, unknown>,
+  ): CreatePropertyDto {
+    const basic = (data.basicInfo as Record<string, unknown>) || {};
+    const pricing = (data.pricing as Record<string, unknown>) || {};
+    const title =
+      (data.title as string) ||
+      (basic.title as string) ||
+      (data.name as string) ||
+      '';
+    const priceRaw =
+      data.price ?? pricing.monthlyRent ?? basic.price ?? pricing.rent;
+    const price = Number(priceRaw);
+    if (!String(title).trim()) {
+      throw new BadRequestException(
+        'Wizard draft must include a title before publishing.',
+      );
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      throw new BadRequestException(
+        'Wizard draft must include a valid price before publishing.',
+      );
+    }
+    const typeRaw = basic.type ?? data.type;
+    const type =
+      typeRaw !== undefined &&
+      typeRaw !== null &&
+      Object.values(PropertyType).includes(typeRaw as PropertyType)
+        ? (typeRaw as PropertyType)
+        : PropertyType.APARTMENT;
+
+    return {
+      title: String(title).trim(),
+      price,
+      description:
+        (data.description as string) || (basic.description as string),
+      type,
+      latitude: (data.latitude as number) ?? (basic.latitude as number),
+      longitude: (data.longitude as number) ?? (basic.longitude as number),
+      address: (data.address as string) || (basic.address as string),
+      city: (data.city as string) || (basic.city as string),
+      state: (data.state as string) || (basic.state as string),
+      postalCode: (data.postalCode as string) || (basic.postalCode as string),
+      country: (data.country as string) || (basic.country as string),
+      currency: (data.currency as string) || (pricing.currency as string),
+      bedrooms: (data.bedrooms as number) ?? (basic.bedrooms as number),
+      bathrooms: (data.bathrooms as number) ?? (basic.bathrooms as number),
+      area: (data.area as number) ?? (basic.area as number),
+      floor: (data.floor as number) ?? (basic.floor as number),
+      isFurnished:
+        (data.isFurnished as boolean) ?? (basic.isFurnished as boolean),
+      hasParking: (data.hasParking as boolean) ?? (basic.hasParking as boolean),
+      petsAllowed:
+        (data.petsAllowed as boolean) ?? (basic.petsAllowed as boolean),
+      metadata:
+        (data.metadata as Record<string, unknown>) ||
+        (basic.metadata as Record<string, unknown>),
+      images: data.images as CreatePropertyDto['images'],
+      amenities: data.amenities as CreatePropertyDto['amenities'],
+      rentalUnits: data.rentalUnits as CreatePropertyDto['rentalUnits'],
+    };
   }
 
   private verifyOwnership(property: Property, user: User): void {

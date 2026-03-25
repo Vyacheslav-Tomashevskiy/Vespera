@@ -1,13 +1,18 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import {
   Property,
   PropertyType,
   ListingStatus,
 } from '../properties/entities/property.entity';
+import { CacheService } from '../../common/cache/cache.service';
+import {
+  CACHE_PREFIX_SEARCH_PROPERTIES,
+  CACHE_PREFIX_SUGGEST,
+  TTL_SEARCH_RESULTS_MS,
+  TTL_SUGGEST_MS,
+} from '../../common/cache/cache.constants';
 
 export interface SearchFilters {
   query?: string;
@@ -55,12 +60,10 @@ export interface SearchFacets {
 
 @Injectable()
 export class SearchService {
-  private readonly logger = new Logger(SearchService.name);
-
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepo: Repository<Property>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly cacheService: CacheService,
   ) {}
 
   async searchProperties(
@@ -68,15 +71,22 @@ export class SearchService {
     page = 1,
     limit = 20,
   ): Promise<SearchResult<Property>> {
-    const cacheKey = `search:properties:${JSON.stringify({ filters, page, limit })}`;
-    const cached =
-      await this.cacheManager.get<SearchResult<Property>>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = `${CACHE_PREFIX_SEARCH_PROPERTIES}:${JSON.stringify({ filters, page, limit })}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () => this.executeSearchProperties(filters, page, limit),
+      TTL_SEARCH_RESULTS_MS,
+    );
+  }
 
+  private async executeSearchProperties(
+    filters: SearchFilters,
+    page: number,
+    limit: number,
+  ): Promise<SearchResult<Property>> {
     const qb = this.buildPropertyQuery(filters);
     const countQb = this.buildPropertyQuery(filters);
 
-    // Pagination
     qb.skip((page - 1) * limit).take(limit);
     qb.orderBy('property.createdAt', 'DESC');
 
@@ -87,25 +97,30 @@ export class SearchService {
 
     const facets = await this.buildFacets(filters);
 
-    const result: SearchResult<Property> = {
+    return {
       items,
       total,
       page,
       limit,
       facets,
     };
-    await this.cacheManager.set(cacheKey, result, 120); // cache 2min
-
-    return result;
   }
 
   async suggest(partialQuery: string, limit = 10): Promise<string[]> {
     if (!partialQuery || partialQuery.length < 2) return [];
 
-    const cacheKey = `suggest:${partialQuery}`;
-    const cached = await this.cacheManager.get<string[]>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = `${CACHE_PREFIX_SUGGEST}:${partialQuery}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () => this.executeSuggest(partialQuery, limit),
+      TTL_SUGGEST_MS,
+    );
+  }
 
+  private async executeSuggest(
+    partialQuery: string,
+    limit: number,
+  ): Promise<string[]> {
     const results = await this.propertyRepo
       .createQueryBuilder('property')
       .select(['property.title', 'property.city', 'property.address'])
@@ -121,15 +136,12 @@ export class SearchService {
       .limit(limit)
       .getMany();
 
-    const suggestions = [
+    return [
       ...new Set([
         ...results.map((p) => p.title),
         ...results.map((p) => p.city).filter(Boolean),
       ]),
     ].slice(0, limit);
-
-    await this.cacheManager.set(cacheKey, suggestions, 300);
-    return suggestions;
   }
 
   private buildPropertyQuery(
@@ -205,7 +217,6 @@ export class SearchService {
       });
     }
 
-    // Geospatial radius filter (Haversine)
     if (
       filters.lat !== undefined &&
       filters.lng !== undefined &&
@@ -221,7 +232,6 @@ export class SearchService {
   }
 
   private async buildFacets(baseFilters: SearchFilters): Promise<SearchFacets> {
-    // Run facet queries in parallel for speed
     const baseQb = () => {
       const qb = this.propertyRepo.createQueryBuilder('property');
       if (baseFilters.query) {

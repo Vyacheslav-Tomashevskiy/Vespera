@@ -2,6 +2,30 @@
 
 All notable changes to the Chioma REST API are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1] - 2026-03
+
+### Added
+
+- **API Key Rotation**
+  - Key expiration with 90-day default and custom expiration dates
+  - Expiration warnings (30 days before)
+  - Key rotation mechanism with transition period
+  - Rotation history tracking
+  - Automatic deactivation of expired keys
+  - New endpoints:
+    - `POST /developer/api-keys/:id/rotate` - Rotate API key
+    - `GET /developer/api-keys/:id/rotation-history` - View rotation history
+    - `PATCH /developer/api-keys/:id` - Update expiration
+    - `GET /developer/api-keys/expiring-soon` - Get keys expiring within 30 days
+
+### Changed
+
+- API key validation now checks expiration status
+- Expired keys are automatically marked as expired
+- Revoked keys can no longer be used for authentication
+
+---
+
 ## [1.0] - 2025-02
 
 ### Added

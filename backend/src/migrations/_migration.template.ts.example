@@ -1,0 +1,27 @@
+/**
+ * Template for new migrations (copy to src/migrations/{timestamp}-{Name}.ts).
+ *
+ * Naming: {UnixMsTimestamp}-{PascalCaseDescription}.ts
+ * Example: 1769187000000-CreatePaymentEntities.ts
+ *
+ * Class name must match: {Description}{Timestamp} (TypeORM convention).
+ *
+ * Generate from entity diff (preferred when schema changes exist):
+ *   pnpm run migration:generate -- src/migrations/1769999999999-DescribeChange
+ *
+ * Empty migration skeleton:
+ *   pnpm run migration:create -- src/migrations/1769999999999-DescribeChange
+ */
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class DescribeChange1769999999999 implements MigrationInterface {
+  name = 'DescribeChange1769999999999';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(``);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(``);
+  }
+}

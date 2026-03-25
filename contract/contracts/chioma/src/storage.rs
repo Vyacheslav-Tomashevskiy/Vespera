@@ -27,4 +27,8 @@ pub enum DataKey {
     AdminProposal(String),
     ProposalCount,
     ActiveProposals,
+    // Timelock keys
+    TimelockAction(String),
+    TimelockActionCount,
+    ActiveTimelockActions,
 }

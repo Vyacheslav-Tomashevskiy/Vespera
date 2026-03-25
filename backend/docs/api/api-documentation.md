@@ -467,6 +467,138 @@ For API support:
 - Email: api-support@chioma.com
 - Discord: [Community Server](https://discord.gg/chioma)
 
+## API Keys (Developer Portal)
+
+API keys provide programmatic access to the Chioma API. All API key endpoints require JWT authentication.
+
+### Key Expiration
+
+- **Default Expiration**: 90 days from creation
+- **Custom Expiration**: You can set a custom expiration date when creating or updating a key
+- **Warning Period**: Keys within 30 days of expiration will be flagged in the API response
+
+### Key Rotation
+
+API keys can be rotated to maintain security. When rotating:
+- A new key is generated while the old key remains active for a transition period
+- The old key is marked as expired
+- A rotation history record is created for audit purposes
+
+#### Create API Key
+```http
+POST /developer/api-keys
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "name": "My Integration"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid-string",
+  "key": "chioma_sk_xxxxxxxxxxxxxxxxxxxx",
+  "name": "My Integration",
+  "expiresAt": "2026-06-25T12:00:00Z"
+}
+```
+
+#### List API Keys
+```http
+GET /developer/api-keys
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid-string",
+    "name": "My Integration",
+    "prefix": "chioma_sk_xxx...",
+    "lastUsedAt": "2024-01-26T17:32:00Z",
+    "createdAt": "2024-01-26T17:32:00Z",
+    "expiresAt": "2026-06-25T12:00:00Z",
+    "isNearExpiration": false,
+    "isExpired": false,
+    "status": "active",
+    "isRotated": false
+  }
+]
+```
+
+#### Rotate API Key
+```http
+POST /developer/api-keys/:id/rotate
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "new-uuid-string",
+  "key": "chioma_sk_xxxxxxxxxxxxxxxxxxxx",
+  "name": "My Integration",
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+```
+
+#### Get Rotation History
+```http
+GET /developer/api-keys/:id/rotation-history
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "history-uuid",
+    "rotatedAt": "2024-02-01T10:00:00Z",
+    "oldKeyPrefix": "chioma_sk_old...",
+    "newKeyPrefix": "chioma_sk_new..."
+  }
+]
+```
+
+#### Update API Key
+```http
+PATCH /developer/api-keys/:id
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "name": "New Name",
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+```
+
+#### Revoke API Key
+```http
+DELETE /developer/api-keys/:id
+Authorization: Bearer <jwt_token>
+```
+
+#### Get Keys Expiring Soon
+```http
+GET /developer/api-keys/expiring-soon
+Authorization: Bearer <jwt_token>
+```
+
+### Using API Keys
+
+Include the API key in the `X-API-Key` header:
+```http
+X-API-Key: chioma_sk_xxxxxxxxxxxxxxxxxxxx
+```
+
 ## Changelog
 
 ### v1.0.0 (Current)

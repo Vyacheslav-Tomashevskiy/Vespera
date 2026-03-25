@@ -23,7 +23,7 @@ import {
   TrackVoteDto,
   CastVoteDto,
   EnforceResolutionDto,
-  ResolveDisputeDto,
+  ResolveStellarDisputeDto,
   UpdateReputationDto,
   ArbiterInfoDto,
   VoteResultsDto,
@@ -38,7 +38,7 @@ export class DisputeController {
   constructor(
     private readonly disputeEnhancedService: DisputeContractEnhancedService,
     private readonly disputeContractService: DisputeContractService,
-  ) {}
+  ) { }
 
   // ==================== Arbiter Management ====================
 
@@ -204,7 +204,7 @@ export class DisputeController {
     description: 'Dispute resolved successfully',
   })
   async resolveDispute(
-    @Body() dto: ResolveDisputeDto,
+    @Body() dto: ResolveStellarDisputeDto,
   ): Promise<{ outcome: string; transactionHash: string }> {
     const result = await this.disputeContractService.resolveDispute(
       dto.agreementId,

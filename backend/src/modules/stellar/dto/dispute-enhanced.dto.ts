@@ -140,7 +140,7 @@ export class EnforceResolutionDto {
   enforcementAction?: string;
 }
 
-export class ResolveDisputeDto {
+export class ResolveStellarDisputeDto {
   @ApiProperty({ description: 'Agreement ID' })
   @IsString()
   @IsNotEmpty()

@@ -34,6 +34,10 @@ export class ApiKeyGuard implements CanActivate {
       request.user = { id: key.userId, apiKeyId: key.id };
       return true;
     }
-    return false;
+
+    throw new UnauthorizedException({
+      message: 'Invalid, expired, or revoked API key',
+      code: 'API_KEY_INVALID',
+    });
   }
 }

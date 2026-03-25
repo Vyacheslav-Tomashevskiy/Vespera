@@ -43,6 +43,7 @@ import { JobQueueService } from './common/services/job-queue.service';
 import { RateLimitingModule } from './modules/rate-limiting/rate-limiting.module';
 import { RateLimitHeadersMiddleware } from './modules/rate-limiting/middleware/rate-limit-headers.middleware';
 import { upstashStore } from './common/cache/upstash-cache.store';
+import { AppCacheModule } from './common/cache/cache.module';
 import { I18nModule } from './modules/i18n/i18n.module';
 import { LocalizationMiddleware } from './modules/i18n/middleware/localization.middleware';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
@@ -119,6 +120,7 @@ const appLogger = new Logger('AppModule');
             };
           },
         }),
+    AppCacheModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',
