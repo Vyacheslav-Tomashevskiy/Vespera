@@ -319,6 +319,8 @@ export class PropertiesService {
     body: UpdatePropertyListingWizardStepDto,
   ): Promise<PropertyListingDraft> {
     const draft = await this.requireDraftForLandlord(draftId, landlordId);
+    draft.data = { ...draft.data, ...body.data };
+    draft.currentStep = body.step;
     const mergedData = { ...draft.data, ...body.data };
     const completed = new Set([
       ...(draft.completedSteps ?? []),
