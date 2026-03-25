@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft,
@@ -513,9 +514,12 @@ export default function NewPropertyListingWizardPage() {
                 key={photo.id}
                 className="rounded-xl border border-white/10 p-3 bg-white/5"
               >
-                <img
+                <Image
                   src={photo.url}
                   alt={photo.name}
+                  width={640}
+                  height={320}
+                  unoptimized
                   className="w-full h-40 object-cover rounded-lg"
                 />
                 <div className="mt-2 flex items-center justify-between text-xs text-blue-200/70">

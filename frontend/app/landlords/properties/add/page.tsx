@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -26,7 +27,7 @@ type WizardPhoto = {
   previewUrl: string;
   size: number;
 };
-type WizardData = Record<string, any>;
+type WizardData = Record<string, unknown>;
 
 const steps = [
   'Basic Information',
@@ -64,7 +65,10 @@ function computeCompleteness(data: WizardData): number {
 
 export default function AddPropertyPage() {
   const router = useRouter();
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('property_wizard_draft_id');
+  });
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [formData, setFormData] = useState<WizardData>(emptyData);
@@ -78,11 +82,6 @@ export default function AddPropertyPage() {
 
   const completeness = useMemo(() => computeCompleteness(formData), [formData]);
   const canPublish = completeness >= 100;
-
-  useEffect(() => {
-    const saved = localStorage.getItem('property_wizard_draft_id');
-    if (saved) setDraftId(saved);
-  }, []);
 
   useEffect(() => {
     if (draftId || startWizard.isPending) return;
@@ -170,10 +169,16 @@ export default function AddPropertyPage() {
         await deleteWizard.mutateAsync(draftId).catch(() => undefined);
         router.push('/landlords/properties');
       },
-      onError: (e: any) => {
+      onError: (e: unknown) => {
+        const message =
+          typeof e === 'object' &&
+          e !== null &&
+          'message' in e &&
+          typeof (e as { message?: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : 'Unable to publish property. Please check required fields.';
         setError(
-          e?.message ||
-            'Unable to publish property. Please check required fields.',
+          message,
         );
       },
     });
@@ -417,9 +422,12 @@ export default function AddPropertyPage() {
               {(formData.photos || []).map(
                 (photo: WizardPhoto, index: number) => (
                   <div key={photo.id} className="rounded-xl border p-2">
-                    <img
+                    <Image
                       src={photo.previewUrl}
                       alt={photo.fileName}
+                      width={512}
+                      height={256}
+                      unoptimized
                       className="h-32 w-full rounded-lg object-cover"
                     />
                     <input

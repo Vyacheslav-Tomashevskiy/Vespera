@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   ShieldCheck,
   Download,
-  Plus,
   Activity,
   AlertCircle,
   Users,
