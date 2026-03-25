@@ -1,108 +1,64 @@
-# Data Management
+# Database migrations (TypeORM)
 
-Production-grade data management: migrations, seeding, consistency checks, backup and restore.
-
-## Overview
-
-| Component               | Purpose                                                        |
-| ----------------------- | -------------------------------------------------------------- |
-| **Migration runner**    | Run migrations with automatic rollback on failure              |
-| **Seed runner**         | Reference data seeding (currencies, etc.) for all environments |
-| **Consistency checker** | Verify tables and migration state after deploy                 |
-| **Backup / Restore**    | Scripts for PostgreSQL backup and restore                      |
-
-## Runbooks
-
-### Migrations
-
-**Run migrations (with rollback on failure)**
-
-```bash
-pnpm run migration:run:safe
-```
-
-- Runs pending TypeORM migrations.
-- If any migration fails, the last executed migration is reverted automatically.
-- Post-run: verifies migrations table.
-
-**Revert last migration**
-
-```bash
-pnpm run migration:revert
-```
-
-**Generate a new migration (after entity changes)**
-
-```bash
-pnpm run migration:generate -- src/migrations/YourMigrationName
-```
-
-### Seeding
-
-**Reference data only (currencies, etc.) – all environments**
-
-```bash
-pnpm run seed:data
-```
-
-**User seeds (admin / agent / tenant)**
-
-```bash
-pnpm run seed:admin -- --email admin@example.com
-pnpm run seed:agent
-pnpm run seed:tenant
-pnpm run seed:all   # admin + agent + tenant
-```
-
-- In production, user seeds require explicit `--force` where applicable.
-
-### Data consistency
-
-**Run after migrations or on a schedule**
-
-```bash
-pnpm run db:consistency
-```
-
-- Checks that critical tables exist and migrations table is present.
-- Exit code 0 = all checks passed; 1 = one or more failed.
-
-### Backup and restore
-
-**Backup (direct PostgreSQL)**
-
-```bash
-# Load env (e.g. from .env) then:
-./scripts/backup-db.sh
-```
-
-- Uses `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`.
-- Optional: `BACKUP_DIR`, `RETENTION_DAYS`.
-
-**Backup (Docker)**
-
-```bash
-USE_DOCKER=1 DOCKER_CONTAINER=chioma-postgres-production ./scripts/backup-db.sh
-```
-
-**Restore**
-
-```bash
-./scripts/db-restore.sh                          # from latest backup
-./scripts/db-restore.sh /path/to/backup.sql.gz   # from file
-```
-
-- Same env vars for target database; `USE_DOCKER=1` for Docker.
-
-## Success metrics
-
-- **Migration success rate**: Use `migration:run:safe`; rollback on failure.
-- **Backup**: Run `backup-db.sh` on a schedule; retain per `RETENTION_DAYS`.
-- **Consistency**: Run `db:consistency` after each migration run and periodically.
-- **Seeding**: Use `seed:data` for reference data; user seeds via existing commands.
+This project uses **TypeORM migrations** with a versioned `migrations` table. Schema changes must go through migrations in production (`synchronize: false` in `AppModule`).
 
 ## Configuration
 
-- **DataSource**: `src/database/data-source.ts` (env: `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`).
-- **Migrations**: `src/migrations/*.ts`.
-- **Seeds**: `src/database/seeds/`, `src/commands/*.seed.ts`.
+| File | Purpose |
+|------|---------|
+| [`data-source.ts`](./data-source.ts) | CLI `DataSource` for generate / run / revert / show |
+| [`migration-runner.ts`](./migration-runner.ts) | `run` with optional auto-revert on failure, `revert`, `show` |
+
+Connection uses either **`DATABASE_URL`** or discrete **`DB_HOST`**, **`DB_PORT`**, **`DB_USERNAME`**, **`DB_PASSWORD`**, **`DB_NAME`**.
+
+Optional TLS: **`DB_SSL=true`**. By default `rejectUnauthorized` is **false** (common for managed providers). Set **`DB_SSL_REJECT_UNAUTHORIZED=true`** to enforce certificate verification.
+
+## Naming convention
+
+- **File**: `{timestamp}-{PascalCaseDescription}.ts` under `src/migrations/` (or `migrations/` at the backend package root; both are loaded and compiled)
+- **Class**: `{Description}{timestamp}` (must match TypeORM expectations)
+- **Property** `name`: same as class name string (e.g. `CreatePaymentEntities1769187000000`)
+
+Use a **new** Unix-ms timestamp greater than the latest migration in the repo.
+
+## Commands (development)
+
+| Script | Description |
+|--------|-------------|
+| `pnpm run migration:generate -- src/migrations/<ts-path>` | Generate migration from entity/schema diff |
+| `pnpm run migration:create -- src/migrations/<ts-path>` | Empty migration file |
+| `pnpm run migration:run` | Apply pending migrations (TypeORM CLI) |
+| `pnpm run migration:run:safe` | Apply pending migrations; on failure attempts undo last migration |
+| `pnpm run migration:revert` | Revert **one** migration (last in batch order) |
+| `pnpm run migration:revert:safe` | Same as `migration:revert` via runner |
+| `pnpm run migration:show` | Show pending migrations (CLI) |
+| `pnpm run migration:show:safe` | Show pending migrations (runner) |
+
+## Commands (production / compiled)
+
+After `pnpm run build` (Nest emits under `dist/src/`):
+
+| Script | Description |
+|--------|-------------|
+| `pnpm run migration:run:prod` | Run pending migrations using `dist/src/database/data-source.js` |
+| `pnpm run migration:show:prod` | Show pending |
+| `pnpm run migration:revert:prod` | Revert last |
+
+## Rollback testing
+
+On a **throwaway** database:
+
+```bash
+pnpm run migration:verify-rollback
+```
+
+This runs `migration:run` → `migration:revert` → `migration:run` to prove the last migration can be rolled back and reapplied.
+
+## Docker / deployment
+
+- Set **`RUN_MIGRATIONS_ON_START=true`** to run `migration:run:prod` in the container entrypoint before the app starts (see `scripts/docker-entrypoint.sh`).
+- **Alternatively**, run migrations as a **release phase** or **CI job** against your production/staging `DATABASE_URL` (recommended for zero-downtime strategies).
+
+## CI/CD
+
+GitHub Actions runs migrations before E2E tests and includes a **rollback verification** job. Deployment workflows can run migrations when `DATABASE_URL` / `DATABASE_URL_STAGING` secrets are configured.

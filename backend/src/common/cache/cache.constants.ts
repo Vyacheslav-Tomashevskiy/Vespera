@@ -1,4 +1,4 @@
-/** Public property list cache (hashed query keys) */
+/** Cache key prefix for public property listings (hashed query keys). */
 export const CACHE_PREFIX_PROPERTIES_LIST = 'properties:list';
 
 /** Search results */

@@ -5,6 +5,7 @@
  * Usage:
  *   ts-node -r tsconfig-paths/register src/database/migration-runner.ts run
  *   ts-node -r tsconfig-paths/register src/database/migration-runner.ts revert
+ *   ts-node -r tsconfig-paths/register src/database/migration-runner.ts show
  */
 
 import { AppDataSource } from './data-source';
@@ -14,12 +15,8 @@ const MIGRATIONS_TABLE = 'migrations';
 async function ensureMigrationsTableExists(): Promise<boolean> {
   const qr = AppDataSource.createQueryRunner();
   try {
-    await qr.query(
-      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
-      [MIGRATIONS_TABLE],
-    );
     const rows = await qr.query(
-      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1 LIMIT 1`,
       [MIGRATIONS_TABLE],
     );
     return Array.isArray(rows) && rows.length > 0;
@@ -170,7 +167,17 @@ async function main(): Promise<void> {
       return;
     }
 
-    console.error('Usage: migration-runner.ts run | revert');
+    if (command === 'show') {
+      const pending = await AppDataSource.showMigrations();
+      console.log(
+        pending
+          ? 'There are pending migrations to apply.'
+          : 'No pending migrations (schema matches migration files).',
+      );
+      return;
+    }
+
+    console.error('Usage: migration-runner.ts run | revert | show');
     process.exit(1);
   } finally {
     await AppDataSource.destroy();

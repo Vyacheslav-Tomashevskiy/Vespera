@@ -9,6 +9,7 @@ import { PropertyImage } from './entities/property-image.entity';
 import { PropertyAmenity } from './entities/property-amenity.entity';
 import { RentalUnit } from './entities/rental-unit.entity';
 import { PropertyListingDraft } from './entities/property-listing-draft.entity';
+import { CacheService } from '../../common/cache/cache.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { PropertyListingDraft } from './entities/property-listing-draft.entity';
     ]),
   ],
   controllers: [PropertiesController],
-  providers: [PropertiesService, PropertyCacheWarmingService],
+  providers: [PropertiesService, PropertyCacheWarmingService, CacheService],
   exports: [PropertiesService],
 })
-export class PropertiesModule {}
+export class PropertiesModule { }

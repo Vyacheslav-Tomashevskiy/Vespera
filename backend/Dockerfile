@@ -36,6 +36,10 @@ RUN pnpm install --prod --frozen-lockfile
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
+# Optional migrations on start (RUN_MIGRATIONS_ON_START=true)
+COPY scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Create a non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 USER nestjs
@@ -47,5 +51,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD curl -e "require('http').get('http://localhost:3000/health', (res) => {if (res.statusCode !== 200) throw new Error(res.statusCode)})"
 
-# Start the application
-CMD ["node", "dist/src/main"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["node", "dist/src/main.js"]

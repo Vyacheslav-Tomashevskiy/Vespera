@@ -7,13 +7,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
-import { Property, ListingStatus, PropertyType } from './entities/property.entity';
+import {
+  Property,
+  ListingStatus,
+  PropertyType,
+} from './entities/property.entity';
 import { PropertyListingDraft } from './entities/property-listing-draft.entity';
+import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyListingWizardStepDto } from './dto/property-listing-wizard.dto';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyAmenity } from './entities/property-amenity.entity';
 import { RentalUnit } from './entities/rental-unit.entity';
-import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -317,10 +321,13 @@ export class PropertiesService {
     const draft = await this.requireDraftForLandlord(draftId, landlordId);
     draft.data = { ...draft.data, ...body.data };
     draft.currentStep = body.step;
+    const mergedData = { ...draft.data, ...body.data };
     const completed = new Set([
       ...(draft.completedSteps ?? []),
       ...(body.completedSteps ?? []),
     ]);
+    draft.data = mergedData;
+    draft.currentStep = body.step;
     draft.completedSteps = Array.from(completed).sort((a, b) => a - b);
     return this.propertyListingDraftRepository.save(draft);
   }
@@ -407,8 +414,7 @@ export class PropertiesService {
       address: (data.address as string) || (basic.address as string),
       city: (data.city as string) || (basic.city as string),
       state: (data.state as string) || (basic.state as string),
-      postalCode:
-        (data.postalCode as string) || (basic.postalCode as string),
+      postalCode: (data.postalCode as string) || (basic.postalCode as string),
       country: (data.country as string) || (basic.country as string),
       currency: (data.currency as string) || (pricing.currency as string),
       bedrooms: (data.bedrooms as number) ?? (basic.bedrooms as number),
@@ -417,8 +423,7 @@ export class PropertiesService {
       floor: (data.floor as number) ?? (basic.floor as number),
       isFurnished:
         (data.isFurnished as boolean) ?? (basic.isFurnished as boolean),
-      hasParking:
-        (data.hasParking as boolean) ?? (basic.hasParking as boolean),
+      hasParking: (data.hasParking as boolean) ?? (basic.hasParking as boolean),
       petsAllowed:
         (data.petsAllowed as boolean) ?? (basic.petsAllowed as boolean),
       metadata:

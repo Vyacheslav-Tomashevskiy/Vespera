@@ -262,16 +262,16 @@ export class UpdateKycEncryptionSchema1774292331248 implements MigrationInterfac
       `CREATE TABLE "mfa_devices" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "type" "public"."mfa_devices_type_enum" NOT NULL DEFAULT 'totp', "status" "public"."mfa_devices_status_enum" NOT NULL DEFAULT 'active', "device_name" character varying, "secret_key" character varying, "backup_codes" text, "last_used_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_0815c03589ecce2ae6ed87f18a1" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "audit_logs" ("id" SERIAL NOT NULL, "action" character varying(50) NOT NULL, "entity_type" character varying(50), "entity_id" character varying(36), "old_values" jsonb, "new_values" jsonb, "performed_by" uuid, "performed_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "ip_address" inet, "user_agent" text, "status" character varying(20), "error_message" text, "level" character varying(20) NOT NULL DEFAULT 'INFO', "metadata" jsonb, CONSTRAINT "PK_1bb179d048bbc581caa3b013439" PRIMARY KEY ("id"))`,
+      `CREATE TABLE IF NOT EXISTS "audit_logs" ("id" SERIAL NOT NULL, "action" character varying(50) NOT NULL, "entity_type" character varying(50), "entity_id" character varying(36), "old_values" jsonb, "new_values" jsonb, "performed_by" uuid, "performed_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "ip_address" inet, "user_agent" text, "status" character varying(20), "error_message" text, "level" character varying(20) NOT NULL DEFAULT 'INFO', "metadata" jsonb, CONSTRAINT "PK_1bb179d048bbc581caa3b013439" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_19a17dd79fd3546ccc39d3da7e" ON "audit_logs" ("performed_at") `,
+      `CREATE INDEX IF NOT EXISTS "IDX_19a17dd79fd3546ccc39d3da7e" ON "audit_logs" ("performed_at") `,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_ae97aac6d6d471b9d88cea1c97" ON "audit_logs" ("performed_by") `,
+      `CREATE INDEX IF NOT EXISTS "IDX_ae97aac6d6d471b9d88cea1c97" ON "audit_logs" ("performed_by") `,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_7421efc125d95e413657efa3c6" ON "audit_logs" ("entity_type", "entity_id") `,
+      `CREATE INDEX IF NOT EXISTS "IDX_7421efc125d95e413657efa3c6" ON "audit_logs" ("entity_type", "entity_id") `,
     );
     await queryRunner.query(
       `CREATE TABLE "rent_obligation_nfts" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "agreement_id" character varying NOT NULL, "obligation_id" character varying NOT NULL, "current_owner" character varying NOT NULL, "original_landlord" character varying NOT NULL, "mint_tx_hash" character varying NOT NULL, "last_transfer_tx_hash" character varying, "minted_at" TIMESTAMP NOT NULL, "last_transferred_at" TIMESTAMP, "transfer_count" integer NOT NULL DEFAULT '0', "status" character varying NOT NULL DEFAULT 'active', "metadata_uri" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_ad1289fcba7affeae8811e9d46d" UNIQUE ("agreement_id"), CONSTRAINT "PK_cf6d54c7ee4929675c5f0c8548f" PRIMARY KEY ("id"))`,
@@ -286,25 +286,31 @@ export class UpdateKycEncryptionSchema1774292331248 implements MigrationInterfac
       `CREATE UNIQUE INDEX "IDX_ad1289fcba7affeae8811e9d46" ON "rent_obligation_nfts" ("agreement_id") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "supported_currencies" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "code" character varying(10) NOT NULL, "name" character varying NOT NULL, "is_active" boolean NOT NULL DEFAULT true, "anchor_url" character varying NOT NULL, "stellar_asset_code" character varying, "stellar_asset_issuer" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_5b111a336124791be4ea65d7ce4" UNIQUE ("code"), CONSTRAINT "PK_4a0f5678891aabf8e8a795f9603" PRIMARY KEY ("id"))`,
+      `CREATE TABLE IF NOT EXISTS "supported_currencies" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "code" character varying(10) NOT NULL, "name" character varying NOT NULL, "is_active" boolean NOT NULL DEFAULT true, "anchor_url" character varying NOT NULL, "stellar_asset_code" character varying, "stellar_asset_issuer" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_5b111a336124791be4ea65d7ce4" UNIQUE ("code"), CONSTRAINT "PK_4a0f5678891aabf8e8a795f9603" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(`
+      DO $$ BEGIN
+        CREATE TYPE "public"."anchor_transactions_type_enum" AS ENUM('deposit', 'withdrawal');
+      EXCEPTION WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    await queryRunner.query(`
+      DO $$ BEGIN
+        CREATE TYPE "public"."anchor_transactions_status_enum" AS ENUM('pending', 'processing', 'completed', 'failed', 'refunded');
+      EXCEPTION WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    await queryRunner.query(
+      `CREATE TABLE IF NOT EXISTS "anchor_transactions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "anchor_transaction_id" character varying, "type" "public"."anchor_transactions_type_enum" NOT NULL, "status" "public"."anchor_transactions_status_enum" NOT NULL DEFAULT 'pending', "amount" numeric(20,7) NOT NULL, "currency" character varying(10) NOT NULL, "wallet_address" character varying NOT NULL, "payment_method" character varying, "destination" text, "stellar_transaction_id" character varying, "memo" text, "metadata" jsonb, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_42277c4fd78c33b85a580a692b9" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."anchor_transactions_type_enum" AS ENUM('deposit', 'withdrawal')`,
+      `CREATE INDEX IF NOT EXISTS "IDX_290ac1d9ac5dced160a9b7a14e" ON "anchor_transactions" ("stellar_transaction_id") `,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."anchor_transactions_status_enum" AS ENUM('pending', 'processing', 'completed', 'failed', 'refunded')`,
+      `CREATE INDEX IF NOT EXISTS "IDX_78cea1f8ea6b9682f55f66002f" ON "anchor_transactions" ("anchor_transaction_id") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "anchor_transactions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "anchor_transaction_id" character varying, "type" "public"."anchor_transactions_type_enum" NOT NULL, "status" "public"."anchor_transactions_status_enum" NOT NULL DEFAULT 'pending', "amount" numeric(20,7) NOT NULL, "currency" character varying(10) NOT NULL, "wallet_address" character varying NOT NULL, "payment_method" character varying, "destination" text, "stellar_transaction_id" character varying, "memo" text, "metadata" jsonb, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_42277c4fd78c33b85a580a692b9" PRIMARY KEY ("id"))`,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_290ac1d9ac5dced160a9b7a14e" ON "anchor_transactions" ("stellar_transaction_id") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_78cea1f8ea6b9682f55f66002f" ON "anchor_transactions" ("anchor_transaction_id") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_3ac985fe8543e61149ca6f1b80" ON "anchor_transactions" ("wallet_address", "status") `,
+      `CREATE INDEX IF NOT EXISTS "IDX_3ac985fe8543e61149ca6f1b80" ON "anchor_transactions" ("wallet_address", "status") `,
     );
     await queryRunner.query(
       `CREATE TABLE "role_permissions" ("role_id" uuid NOT NULL, "permission_id" uuid NOT NULL, CONSTRAINT "PK_25d24010f53bb80b78e412c9656" PRIMARY KEY ("role_id", "permission_id"))`,
@@ -380,11 +386,14 @@ export class UpdateKycEncryptionSchema1774292331248 implements MigrationInterfac
     await queryRunner.query(
       `ALTER TABLE "file_metadata" ADD "updated_at" TIMESTAMP NOT NULL DEFAULT now()`,
     );
+    await queryRunner.query(`
+      DO $$ BEGIN
+        CREATE TYPE "public"."users_kyc_status_enum" AS ENUM('PENDING', 'APPROVED', 'REJECTED', 'NEEDS_INFO');
+      EXCEPTION WHEN duplicate_object THEN null;
+      END $$;
+    `);
     await queryRunner.query(
-      `CREATE TYPE "public"."users_kyc_status_enum" AS ENUM('PENDING', 'APPROVED', 'REJECTED', 'NEEDS_INFO')`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "users" ADD "kyc_status" "public"."users_kyc_status_enum" NOT NULL DEFAULT 'PENDING'`,
+      `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "kyc_status" "public"."users_kyc_status_enum" NOT NULL DEFAULT 'PENDING'`,
     );
     await queryRunner.query(
       `ALTER TABLE "users" ADD "wallet_address" character varying`,
@@ -398,7 +407,9 @@ export class UpdateKycEncryptionSchema1774292331248 implements MigrationInterfac
     await queryRunner.query(
       `ALTER TABLE "users" ADD "auth_method" "public"."users_auth_method_enum" NOT NULL DEFAULT 'password'`,
     );
-    await queryRunner.query(`ALTER TABLE "users" ADD "deleted_at" TIMESTAMP`);
+    await queryRunner.query(
+      `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
+    );
     await queryRunner.query(
       `ALTER TABLE "stellar_escrows" ADD "blockchain_escrow_id" character varying(64)`,
     );
