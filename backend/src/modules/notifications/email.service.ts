@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { Retry } from '../../common/decorators/retry.decorator';
 
 @Injectable()
 export class EmailService {
@@ -23,6 +24,7 @@ export class EmailService {
     this.logger.log(`Email service configured with ${service}`);
   }
 
+  @Retry({ maxAttempts: 3, delay: 1000, backoff: 'exponential', backoffMultiplier: 2 })
   async sendVerificationEmail(email: string, token: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
@@ -50,6 +52,7 @@ export class EmailService {
     }
   }
 
+  @Retry({ maxAttempts: 3, delay: 1000, backoff: 'exponential', backoffMultiplier: 2 })
   async sendPasswordResetEmail(email: string, token: string): Promise<void> {
     const resetUrl =
       this.configService.get<string>('PASSWORD_RESET_URL') ||
