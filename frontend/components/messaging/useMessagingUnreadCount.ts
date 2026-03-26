@@ -26,6 +26,9 @@ export function useMessagingUnreadCount() {
     if (isViewingMessages) {
       return 0;
     }
-    return (data ?? []).reduce((sum: number, room: ChatRoom) => sum + (room.unreadCount ?? 0), 0);
+    return (data ?? []).reduce(
+      (sum: number, room: ChatRoom) => sum + (room.unreadCount ?? 0),
+      0,
+    );
   }, [data, isViewingMessages]);
 }
