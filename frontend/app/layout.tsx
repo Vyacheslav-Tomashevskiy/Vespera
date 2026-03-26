@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/lib/query/provider';
 import { StoreHydrator } from '@/store/StoreHydrator';
 import { Toaster } from 'react-hot-toast';
 import ErrorMonitoringProvider from '@/components/error/ErrorMonitoringProvider';
 import NetworkStatusBanner from '@/components/error/NetworkStatusBanner';
+import MobileEnhancementsProvider from '@/components/mobile/MobileEnhancementsProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -92,9 +93,24 @@ export const metadata: Metadata = {
     ],
   },
   category: 'technology',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Chioma',
+  },
   alternates: {
     canonical: '/',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1d4ed8',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -108,6 +124,7 @@ export default function RootLayout({
         <QueryProvider>
           <StoreHydrator />
           <ErrorMonitoringProvider />
+          <MobileEnhancementsProvider />
           <NetworkStatusBanner />
           {children}
           <Toaster

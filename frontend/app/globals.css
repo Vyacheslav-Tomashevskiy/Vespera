@@ -111,6 +111,29 @@ body {
   font-family: var(--font-sans);
   @apply antialiased;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Mobile-first UX helpers */
+* {
+  -webkit-touch-callout: none;
+}
+
+img,
+video {
+  content-visibility: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Leaflet Popup Styling */
