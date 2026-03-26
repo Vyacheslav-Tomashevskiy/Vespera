@@ -14,7 +14,7 @@ export default function UserDetailPage() {
 
   // We could fetch the specific user, but for now we'll just get the list and find them, 
   // or just use generic data if the user endpoint isn't fully set up for detail
-  const { data: usersData, isLoading: isUserLoading } = useAdminUsers({ limit: 100 });
+  const { data: usersData } = useAdminUsers({ limit: 100 });
   const user = usersData?.data?.find(u => u.id === userId);
 
   return (
@@ -44,6 +44,7 @@ export default function UserDetailPage() {
             <div className="flex flex-col items-center justify-center text-center space-y-4">
               <div className="w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center overflow-hidden">
                 {user?.avatar ? (
+                   /* eslint-disable-next-line @next/next/no-img-element */
                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <User size={40} className="text-slate-500" />

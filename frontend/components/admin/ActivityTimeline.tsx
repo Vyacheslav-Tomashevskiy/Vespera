@@ -112,7 +112,7 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
               </div>
             ))
           ) : data?.data && data.data.length > 0 ? (
-            data.data.map((activity, idx) => (
+            data.data.map((activity) => (
               <div
                 key={activity.id}
                 className="relative flex flex-col md:flex-row gap-4 md:items-start group transition-all"

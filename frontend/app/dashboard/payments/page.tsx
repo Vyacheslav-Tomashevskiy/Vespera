@@ -630,7 +630,7 @@ export default function PaymentMonitoring() {
     [filters.startDate, filters.endDate],
   );
 
-  const metrics = useMemo(() => generateMockMetrics(), [dateRange]);
+  const metrics = useMemo(() => generateMockMetrics(), []);
   const allFailedPayments = useMemo(() => generateMockFailedPayments(20), []);
   const pendingRefunds = useMemo(() => generateMockPendingRefunds(), []);
   const dailyVolumeData = useMemo(() => generateDailyVolumeData(), []);

@@ -31,7 +31,7 @@ export function useUserActivities(userId: string, filters: UserActivityFilters =
           `/admin/users/${userId}/activities${buildQueryString(filters)}`
         );
         return data;
-      } catch (error: any) {
+      } catch {
         // Provide mock fallback data if the endpoint is not yet implemented
         return getMockActivities(userId, filters);
       }
