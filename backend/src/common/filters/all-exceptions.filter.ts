@@ -38,7 +38,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      if (status === 429) {
         const message =
           typeof exceptionResponse === 'string'
             ? exceptionResponse

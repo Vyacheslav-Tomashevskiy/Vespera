@@ -38,6 +38,10 @@ import {
   isTransientStellarError,
 } from './stellar-transaction-resilience';
 
+type SubmitTransactionResponse = Awaited<
+  ReturnType<StellarSdk.Horizon.Server['submitTransaction']>
+>;
+
 @Injectable()
 export class StellarService {
   private readonly logger = new Logger(StellarService.name);
@@ -985,7 +989,7 @@ export class StellarService {
     sourcePublicKey: string;
     sourceKeypair: StellarSdk.Keypair;
     rebuildAndResign: () => Promise<StellarSdk.Transaction>;
-  }): Promise<StellarSdk.Horizon.Api.SubmitTransactionResponse> {
+  }): Promise<SubmitTransactionResponse> {
     let currentTx = params.transaction;
     let delayMs = 500;
 
@@ -1024,7 +1028,9 @@ export class StellarService {
     );
   }
 
-  private async submitWithTimeout(transaction: StellarSdk.Transaction) {
+  private async submitWithTimeout(
+    transaction: StellarSdk.Transaction,
+  ): Promise<SubmitTransactionResponse> {
     return Promise.race([
       this.horizon.submitTransaction(transaction),
       new Promise<never>((_, reject) =>

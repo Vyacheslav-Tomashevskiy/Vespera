@@ -200,7 +200,8 @@ const MOCK_TENANTS: Tenant[] = [
   },
 ];
 
-const tenantSeedData = process.env.NODE_ENV === 'production' ? [] : MOCK_TENANTS;
+const tenantSeedData =
+  process.env.NODE_ENV === 'production' ? [] : MOCK_TENANTS;
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 

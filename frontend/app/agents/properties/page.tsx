@@ -143,7 +143,9 @@ const AgentPropertiesPage = () => {
       await new Promise((resolve) => setTimeout(resolve, 800));
       const propertiesFromApi = seedProperties();
       setProperties(propertiesFromApi);
-      setTotalPages(Math.max(1, Math.ceil(propertiesFromApi.length / itemsPerPage)));
+      setTotalPages(
+        Math.max(1, Math.ceil(propertiesFromApi.length / itemsPerPage)),
+      );
       setIsLoading(false);
     };
 

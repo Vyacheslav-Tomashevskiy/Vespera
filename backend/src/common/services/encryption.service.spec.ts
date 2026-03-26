@@ -100,7 +100,6 @@ describe('EncryptionService', () => {
       const newKeyB64 = newKey.toString('base64');
       service.rotateKey(newKeyB64);
 
-      // @ts-ignore
       expect(service['keys'][0].toString('hex')).toBe(newKeyHex);
     });
 

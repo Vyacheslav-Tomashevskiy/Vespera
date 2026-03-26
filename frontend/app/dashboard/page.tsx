@@ -27,8 +27,7 @@ const mockAgreements = [
   },
 ];
 
-const agreements =
-  process.env.NODE_ENV === 'production' ? [] : mockAgreements;
+const agreements = process.env.NODE_ENV === 'production' ? [] : mockAgreements;
 
 export default function TenantDashboardOverview() {
   return (

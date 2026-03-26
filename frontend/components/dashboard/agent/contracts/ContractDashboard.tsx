@@ -19,7 +19,8 @@ const FILTER_TABS: {
   { key: 'EXPIRED', label: 'Expired', icon: XCircle },
 ];
 
-const seedContracts = process.env.NODE_ENV === 'production' ? [] : mockContracts;
+const seedContracts =
+  process.env.NODE_ENV === 'production' ? [] : mockContracts;
 
 export function ContractDashboard() {
   const [activeTab, setActiveTab] = useState<ContractFilterTab>('ALL');

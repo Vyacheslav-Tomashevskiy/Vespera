@@ -2,7 +2,10 @@
 
 import { create } from 'zustand';
 import { withMiddleware } from './middleware';
-import type { Notification } from '@/components/notifications/types';
+import type {
+  Notification,
+  NotificationType,
+} from '@/components/notifications/types';
 import { apiClient } from '@/lib/api-client';
 
 type BackendNotification = {
@@ -36,6 +39,14 @@ interface NotificationActions {
 
 export type NotificationStore = NotificationState & NotificationActions;
 
+const normalizeNotificationType = (type?: string | null): NotificationType => {
+  if (type === 'maintenance' || type === 'payment') {
+    return type;
+  }
+
+  return 'message';
+};
+
 // ─── Derived selectors ──────────────────────────────────────────────────────
 
 export const selectUnreadCount = (state: NotificationStore) =>
@@ -53,17 +64,12 @@ export const useNotificationStore = create<NotificationStore>()(
       // — actions
       fetchNotifications: async () => {
         try {
-          const { data } = await apiClient.get<BackendNotification[]>(
-            '/notifications',
-          );
-          const sorted = data
+          const { data } =
+            await apiClient.get<BackendNotification[]>('/notifications');
+          const sorted: Notification[] = data
             .map((notification) => ({
               id: notification.id,
-              type:
-                notification.type === 'maintenance' ||
-                notification.type === 'payment'
-                  ? notification.type
-                  : 'message',
+              type: normalizeNotificationType(notification.type),
               title: notification.title,
               body: notification.message,
               read: notification.isRead,
