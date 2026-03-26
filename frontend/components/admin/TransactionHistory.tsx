@@ -185,7 +185,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           {transactions?.total !== undefined && (
             <span>
               {' '}
-              - <span className="text-white font-bold">{transactions.total}</span> total
+              -{' '}
+              <span className="text-white font-bold">
+                {transactions.total}
+              </span>{' '}
+              total
             </span>
           )}
         </p>

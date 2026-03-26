@@ -108,7 +108,8 @@ export const BulkUserOperations: React.FC<BulkUserOperationsProps> = ({
 
   const data = users?.data ?? [];
   const totalPages = users?.totalPages ?? 1;
-  const allSelected = data.length > 0 && data.every((u) => selectedIds.has(u.id));
+  const allSelected =
+    data.length > 0 && data.every((u) => selectedIds.has(u.id));
 
   const toggleAll = () => {
     if (allSelected) {
@@ -309,8 +310,9 @@ export const BulkUserOperations: React.FC<BulkUserOperationsProps> = ({
             {users?.total !== undefined && (
               <span>
                 {' '}
-                -{' '}
-                <span className="text-white font-bold">{users.total}</span>{' '}
+                - <span className="text-white font-bold">
+                  {users.total}
+                </span>{' '}
                 total
               </span>
             )}

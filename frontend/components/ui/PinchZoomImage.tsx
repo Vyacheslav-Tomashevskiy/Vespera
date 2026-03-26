@@ -49,7 +49,10 @@ export function PinchZoomImage({
       const dist = getDistance(pointers[0], pointers[1]);
       if (lastDist.current !== null) {
         const delta = dist / lastDist.current;
-        const next = Math.min(maxScale, Math.max(minScale, scale.get() * delta));
+        const next = Math.min(
+          maxScale,
+          Math.max(minScale, scale.get() * delta),
+        );
         scale.set(next);
       }
       lastDist.current = dist;

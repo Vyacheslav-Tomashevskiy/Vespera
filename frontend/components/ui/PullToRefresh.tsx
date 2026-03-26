@@ -50,7 +50,9 @@ export function PullToRefresh({
         style={{ opacity: indicatorOpacity, scale: indicatorScale }}
         className="absolute top-0 left-0 right-0 flex items-center justify-center py-3 pointer-events-none z-10"
       >
-        <motion.div style={{ rotate: refreshing ? undefined : indicatorRotate }}>
+        <motion.div
+          style={{ rotate: refreshing ? undefined : indicatorRotate }}
+        >
           <RefreshCw
             size={20}
             className={`text-blue-400 ${refreshing ? 'animate-spin' : ''}`}

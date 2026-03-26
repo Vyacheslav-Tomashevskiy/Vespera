@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  animate,
+} from 'framer-motion';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -30,7 +35,10 @@ export function BottomSheet({
     if (isOpen) y.set(0);
   }, [isOpen, y]);
 
-  const handleDragEnd = (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
+  const handleDragEnd = (
+    _: unknown,
+    info: { offset: { y: number }; velocity: { y: number } },
+  ) => {
     if (info.offset.y > 120 || info.velocity.y > 500) {
       animate(y, 600, { duration: 0.2 }).then(onClose);
     } else {

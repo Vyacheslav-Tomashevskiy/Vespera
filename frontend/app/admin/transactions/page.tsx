@@ -63,7 +63,16 @@ export default function TransactionsPage() {
       return;
     }
 
-    const headers = ['ID', 'Type', 'Description', 'Amount', 'Currency', 'Status', 'Blockchain Tx', 'Date'];
+    const headers = [
+      'ID',
+      'Type',
+      'Description',
+      'Amount',
+      'Currency',
+      'Status',
+      'Blockchain Tx',
+      'Date',
+    ];
     const csvContent = [
       headers.join(','),
       ...transactions.data.map((tx: Transaction) =>
@@ -95,9 +104,15 @@ export default function TransactionsPage() {
     toast.success('Transactions exported successfully');
   };
 
-  const completed = transactions?.data?.filter((t: Transaction) => t.status === 'completed').length ?? 0;
-  const failed = transactions?.data?.filter((t: Transaction) => t.status === 'failed').length ?? 0;
-  const pending = transactions?.data?.filter((t: Transaction) => t.status === 'pending').length ?? 0;
+  const completed =
+    transactions?.data?.filter((t: Transaction) => t.status === 'completed')
+      .length ?? 0;
+  const failed =
+    transactions?.data?.filter((t: Transaction) => t.status === 'failed')
+      .length ?? 0;
+  const pending =
+    transactions?.data?.filter((t: Transaction) => t.status === 'pending')
+      .length ?? 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-4 sm:p-6 lg:p-8 space-y-8">
@@ -207,11 +222,21 @@ export default function TransactionsPage() {
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:bg-white/10 focus:border-blue-500 appearance-none transition-all"
           >
-            <option value="" className="bg-slate-900">All Types</option>
-            <option value="payment" className="bg-slate-900">Payment</option>
-            <option value="refund" className="bg-slate-900">Refund</option>
-            <option value="deposit" className="bg-slate-900">Deposit</option>
-            <option value="withdrawal" className="bg-slate-900">Withdrawal</option>
+            <option value="" className="bg-slate-900">
+              All Types
+            </option>
+            <option value="payment" className="bg-slate-900">
+              Payment
+            </option>
+            <option value="refund" className="bg-slate-900">
+              Refund
+            </option>
+            <option value="deposit" className="bg-slate-900">
+              Deposit
+            </option>
+            <option value="withdrawal" className="bg-slate-900">
+              Withdrawal
+            </option>
           </select>
           <select
             name="status"
@@ -219,10 +244,18 @@ export default function TransactionsPage() {
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:bg-white/10 focus:border-blue-500 appearance-none transition-all"
           >
-            <option value="" className="bg-slate-900">All Statuses</option>
-            <option value="completed" className="bg-slate-900">Completed</option>
-            <option value="pending" className="bg-slate-900">Pending</option>
-            <option value="failed" className="bg-slate-900">Failed</option>
+            <option value="" className="bg-slate-900">
+              All Statuses
+            </option>
+            <option value="completed" className="bg-slate-900">
+              Completed
+            </option>
+            <option value="pending" className="bg-slate-900">
+              Pending
+            </option>
+            <option value="failed" className="bg-slate-900">
+              Failed
+            </option>
           </select>
           <div className="relative group">
             <Calendar

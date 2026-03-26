@@ -24,7 +24,11 @@ export function SwipeContainer({
   className,
 }: SwipeContainerProps) {
   const x = useMotionValue(0);
-  const opacity = useTransform(x, [-threshold * 2, 0, threshold * 2], [0.4, 1, 0.4]);
+  const opacity = useTransform(
+    x,
+    [-threshold * 2, 0, threshold * 2],
+    [0.4, 1, 0.4],
+  );
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     const { x: dx } = info.offset;

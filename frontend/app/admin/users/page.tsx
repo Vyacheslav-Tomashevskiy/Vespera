@@ -49,8 +49,7 @@ export default function AdminUsersPage() {
 
   const handleClearFilters = () => setFilters(DEFAULT_FILTERS);
 
-  const hasFilters =
-    filters.search !== '' || filters.role !== '';
+  const hasFilters = filters.search !== '' || filters.role !== '';
 
   const handleBulkSuspend = async (ids: string[]) => {
     const results = await Promise.allSettled(
@@ -58,7 +57,9 @@ export default function AdminUsersPage() {
     );
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed === 0) {
-      toast.success(`Suspended ${ids.length} user${ids.length !== 1 ? 's' : ''}`);
+      toast.success(
+        `Suspended ${ids.length} user${ids.length !== 1 ? 's' : ''}`,
+      );
     } else {
       toast.error(`${failed} suspension${failed !== 1 ? 's' : ''} failed`);
     }
@@ -70,7 +71,9 @@ export default function AdminUsersPage() {
     );
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed === 0) {
-      toast.success(`Activated ${ids.length} user${ids.length !== 1 ? 's' : ''}`);
+      toast.success(
+        `Activated ${ids.length} user${ids.length !== 1 ? 's' : ''}`,
+      );
     } else {
       toast.error(`${failed} activation${failed !== 1 ? 's' : ''} failed`);
     }
@@ -198,11 +201,21 @@ export default function AdminUsersPage() {
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:bg-white/10 focus:border-blue-500 appearance-none transition-all"
           >
-            <option value="" className="bg-slate-900">All Roles</option>
-            <option value="admin" className="bg-slate-900">Admin</option>
-            <option value="landlord" className="bg-slate-900">Landlord</option>
-            <option value="tenant" className="bg-slate-900">Tenant</option>
-            <option value="agent" className="bg-slate-900">Agent</option>
+            <option value="" className="bg-slate-900">
+              All Roles
+            </option>
+            <option value="admin" className="bg-slate-900">
+              Admin
+            </option>
+            <option value="landlord" className="bg-slate-900">
+              Landlord
+            </option>
+            <option value="tenant" className="bg-slate-900">
+              Tenant
+            </option>
+            <option value="agent" className="bg-slate-900">
+              Agent
+            </option>
           </select>
         </div>
       </div>
