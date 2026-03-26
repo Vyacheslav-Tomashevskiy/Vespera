@@ -53,7 +53,7 @@ export default function LandlordsAuditLogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AuditRow | null>(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [, setTotalPages] = useState(1);
   const [filters, setFilters] = useState(defaultFilters);
 
   const queryString = useMemo(() => {

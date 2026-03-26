@@ -9,10 +9,18 @@ import PwaController from '@/components/pwa/PwaController';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { ModalManager } from '@/components/modals';
 import { OfflineIndicator } from '@/components/offline';
+import { Inter } from 'next/font/google';
+
 export const viewport: Viewport = {
   themeColor: '#1d4ed8',
   colorScheme: 'dark',
 };
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -118,8 +126,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
+    <html lang="en" className={`${inter.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
+      <body className="antialiased font-sans bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
         <QueryProvider>
           <ModalProvider>
             <StoreHydrator />

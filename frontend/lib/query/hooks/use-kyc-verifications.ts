@@ -44,6 +44,20 @@ export function usePendingKycVerifications(
   });
 }
 
+export function useRejectedKycVerifications(
+  params: KycVerificationListParams = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.kyc.list({ ...params, status: 'REJECTED' }),
+    queryFn: async () => {
+      const { data } = await apiClient.get<PaginatedResponse<KycVerification>>(
+        `/admin/kyc/rejected${buildQueryString(params)}`,
+      );
+      return data;
+    },
+  });
+}
+
 export function useApproveKycVerification() {
   const queryClient = useQueryClient();
   return useMutation({
