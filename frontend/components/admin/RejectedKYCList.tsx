@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { AlertCircle, Eye, FileText, RefreshCw, Search, X } from 'lucide-react';
 import type { KycVerification, PaginatedResponse } from '@/types';
+import Image from 'next/image';
 
 interface RejectedKYCListProps {
   data?: PaginatedResponse<KycVerification>;
@@ -264,12 +265,15 @@ export function RejectedKYCList({
             </div>
             <div className="p-4 max-h-[80vh] overflow-auto">
               {/\.(png|jpg|jpeg|gif|webp)$/i.test(selectedDocUrl) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={selectedDocUrl}
-                  alt={selectedDocName}
-                  className="w-full h-auto rounded-xl border border-white/10"
-                />
+                <div className="relative w-full h-[70vh] rounded-xl border border-white/10 overflow-hidden bg-black/20">
+                  <Image
+                    src={selectedDocUrl}
+                    alt={selectedDocName}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <iframe
                   title={selectedDocName}
