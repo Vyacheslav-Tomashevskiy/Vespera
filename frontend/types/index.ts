@@ -168,6 +168,41 @@ export interface Transaction {
   createdAt: string;
 }
 
+// KYC Types (Admin)
+export type KycStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
+
+export interface KycDocument {
+  id: string;
+  type: string;
+  url: string;
+  filename?: string;
+}
+
+export interface KycVerification {
+  id: string;
+  userId: string;
+  status: KycStatus;
+  reason?: string;
+  providerReference?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name?: string;
+    email: string;
+    phone?: string;
+    role?: User['role'];
+  };
+  kycData?: {
+    first_name?: string;
+    last_name?: string;
+    dob?: string;
+    country?: string;
+    [key: string]: unknown;
+  };
+  documents?: KycDocument[];
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data: T;
