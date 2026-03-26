@@ -16,15 +16,19 @@ function isIosInstallable() {
 
   const ua = window.navigator.userAgent.toLowerCase();
   const isIos = /iphone|ipad|ipod/.test(ua);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+      true;
 
   return isIos && !isStandalone;
 }
 
 export default function PwaController() {
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [updateReady, setUpdateReady] = useState<ServiceWorkerRegistration | null>(null);
+  const [installEvent, setInstallEvent] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [updateReady, setUpdateReady] =
+    useState<ServiceWorkerRegistration | null>(null);
   const [dismissedIosPrompt, setDismissedIosPrompt] = useState(false);
   const [requestingInstall, setRequestingInstall] = useState(false);
   const [requestingNotifications, setRequestingNotifications] = useState(false);
@@ -67,8 +71,8 @@ export default function PwaController() {
 
             installingWorker.addEventListener('statechange', () => {
               if (
-                installingWorker.state === 'installed'
-                && navigator.serviceWorker.controller
+                installingWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
               ) {
                 setUpdateReady(registration);
               }
@@ -221,9 +225,12 @@ export default function PwaController() {
   if (showIosPrompt) {
     return (
       <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-amber-500/30 bg-slate-950/95 p-4 text-white shadow-2xl backdrop-blur">
-        <p className="text-sm font-semibold text-amber-300">Install on iPhone or iPad</p>
+        <p className="text-sm font-semibold text-amber-300">
+          Install on iPhone or iPad
+        </p>
         <p className="mt-1 text-sm text-slate-200">
-          Open the Share menu in Safari, then choose <span className="font-semibold">Add to Home Screen</span>.
+          Open the Share menu in Safari, then choose{' '}
+          <span className="font-semibold">Add to Home Screen</span>.
         </p>
         <div className="mt-4">
           <button

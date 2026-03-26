@@ -30,7 +30,9 @@ function buildQueryString(params: KycVerificationListParams): string {
   return str ? `?${str}` : '';
 }
 
-export function usePendingKycVerifications(params: KycVerificationListParams = {}) {
+export function usePendingKycVerifications(
+  params: KycVerificationListParams = {},
+) {
   return useQuery({
     queryKey: queryKeys.kyc.list(params),
     queryFn: async () => {
@@ -45,7 +47,10 @@ export function usePendingKycVerifications(params: KycVerificationListParams = {
 export function useApproveKycVerification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ verificationId, reason }: UpdateKycDecisionPayload) => {
+    mutationFn: async ({
+      verificationId,
+      reason,
+    }: UpdateKycDecisionPayload) => {
       await apiClient.post(`/admin/kyc/${verificationId}/approve`, {
         reason,
       });
@@ -60,7 +65,10 @@ export function useApproveKycVerification() {
 export function useRejectKycVerification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ verificationId, reason }: UpdateKycDecisionPayload) => {
+    mutationFn: async ({
+      verificationId,
+      reason,
+    }: UpdateKycDecisionPayload) => {
       await apiClient.post(`/admin/kyc/${verificationId}/reject`, {
         reason,
       });

@@ -10,10 +10,12 @@ export default function OfflinePage() {
         <div className="inline-flex rounded-2xl bg-blue-500/10 p-4 text-blue-300">
           <WifiOff className="h-8 w-8" />
         </div>
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight">You&rsquo;re offline</h1>
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight">
+          You&rsquo;re offline
+        </h1>
         <p className="mt-3 text-sm leading-6 text-slate-300">
-          Chioma cached this screen so you can still open the app shell. Reconnect to
-          refresh listings, leases, messages, and payments.
+          Chioma cached this screen so you can still open the app shell.
+          Reconnect to refresh listings, leases, messages, and payments.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <button

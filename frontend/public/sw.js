@@ -66,11 +66,12 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline', offline: true }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      fetch(request).catch(
+        () =>
+          new Response(JSON.stringify({ error: 'Offline', offline: true }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     return;
@@ -81,7 +82,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (['style', 'script', 'image', 'font', 'worker'].includes(request.destination)) {
+  if (
+    ['style', 'script', 'image', 'font', 'worker'].includes(request.destination)
+  ) {
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
@@ -130,19 +133,21 @@ self.addEventListener('notificationclick', (event) => {
   const targetUrl = event.notification.data?.url || '/';
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ('focus' in client && client.url === targetUrl) {
-          return client.focus();
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if ('focus' in client && client.url === targetUrl) {
+            return client.focus();
+          }
         }
-      }
 
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
-      }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
 
-      return undefined;
-    }),
+        return undefined;
+      }),
   );
 });
 
