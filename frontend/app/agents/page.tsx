@@ -7,21 +7,14 @@ import WalletCard from '@/components/dashboard/agent/WalletCard';
 import RecentPayouts from '@/components/dashboard/agent/RecentPayouts';
 import NewLeads from '@/components/dashboard/agent/NewLeads';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-  defaultAgentOnboardingData,
   loadAgentOnboardingData,
   type AgentOnboardingData,
 } from '@/lib/agent-onboarding';
 
 export default function AgentDashboardPage() {
-  const [onboarding, setOnboarding] = useState<AgentOnboardingData>(
-    defaultAgentOnboardingData,
-  );
-
-  useEffect(() => {
-    setOnboarding(loadAgentOnboardingData());
-  }, []);
+  const [onboarding] = useState<AgentOnboardingData>(loadAgentOnboardingData);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">

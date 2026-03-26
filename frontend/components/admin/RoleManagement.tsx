@@ -18,7 +18,7 @@ import {
   useUpdateRolePermissions,
 } from '@/lib/query/hooks/use-admin-roles';
 import { useAdminUsers } from '@/lib/query/hooks/use-admin-users';
-import type { Permission, Role, User } from '@/types';
+import type { Permission, User } from '@/types';
 
 const USER_FETCH_LIMIT = 100;
 
@@ -65,7 +65,7 @@ export function RoleManagement() {
   const assignRoleMutation = useAssignUserRole();
   const updateRolePermissionsMutation = useUpdateRolePermissions();
 
-  const users = usersResponse?.data ?? [];
+  const users = useMemo(() => usersResponse?.data ?? [], [usersResponse?.data]);
 
   const roleOptions = useMemo(
     () =>

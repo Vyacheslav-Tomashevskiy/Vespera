@@ -13,7 +13,6 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import {
-  defaultAgentOnboardingData,
   loadAgentOnboardingData,
   saveAgentOnboardingData,
   type AgentOnboardingData,

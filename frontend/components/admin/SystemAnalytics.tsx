@@ -68,9 +68,18 @@ export function SystemAnalytics() {
   const propertiesQuery = useProperties({ page: 1, limit: 1000 });
   const transactionsQuery = useTransactions({ page: 1, limit: 1000 });
 
-  const allUsers = usersQuery.data?.data ?? [];
-  const allProperties = propertiesQuery.data?.data ?? [];
-  const allTransactions = transactionsQuery.data?.data ?? [];
+  const allUsers = useMemo(
+    () => usersQuery.data?.data ?? [],
+    [usersQuery.data?.data],
+  );
+  const allProperties = useMemo(
+    () => propertiesQuery.data?.data ?? [],
+    [propertiesQuery.data?.data],
+  );
+  const allTransactions = useMemo(
+    () => transactionsQuery.data?.data ?? [],
+    [transactionsQuery.data?.data],
+  );
 
   const isLoading =
     usersQuery.isLoading ||
