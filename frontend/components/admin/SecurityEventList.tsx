@@ -72,7 +72,8 @@ export function SecurityEventList({
                 No matching signals
               </p>
               <p className="text-sm text-blue-200/55">
-                Adjust the filters or broaden the time range to inspect more activity.
+                Adjust the filters or broaden the time range to inspect more
+                activity.
               </p>
             </div>
           </div>

@@ -177,7 +177,9 @@ export function SecurityEventStats({
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">Top Signal Types</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Top Signal Types
+              </h3>
               <p className="text-sm text-blue-200/55">
                 Most frequent activity patterns in the current window.
               </p>

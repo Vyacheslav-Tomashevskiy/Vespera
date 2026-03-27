@@ -2,13 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Activity,
-  RefreshCw,
-  Search,
-  Shield,
-  Siren,
-} from 'lucide-react';
+import { Activity, RefreshCw, Search, Shield, Siren } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/store/authStore';
 import { SecurityEventList } from '@/components/admin/SecurityEventList';
@@ -55,7 +49,10 @@ export default function SecurityDashboardPage() {
   const [kind, setKind] = useState<KindFilter>('all');
   const [onlyActionable, setOnlyActionable] = useState(false);
   const [selected, setSelected] = useState<SecurityFeedItem | null>(null);
-  const [incidentReport, setIncidentReport] = useState<Record<string, unknown> | null>(null);
+  const [incidentReport, setIncidentReport] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [responseLog, setResponseLog] = useState<ResponseLogMap>({});
   const [reportLoading, setReportLoading] = useState(false);
 
@@ -94,10 +91,7 @@ export default function SecurityDashboardPage() {
       return;
     }
 
-    localStorage.setItem(
-      RESPONSE_LOG_STORAGE_KEY,
-      JSON.stringify(responseLog),
-    );
+    localStorage.setItem(RESPONSE_LOG_STORAGE_KEY, JSON.stringify(responseLog));
   }, [responseLog]);
 
   const feed = useMemo(() => {
@@ -139,7 +133,7 @@ export default function SecurityDashboardPage() {
   }, [filteredFeed, incidentMetricsQuery.data, threatStatsQuery.data]);
 
   const currentEntries = selected
-    ? responseLog[getResponseLogKey(selected)] ?? []
+    ? (responseLog[getResponseLogKey(selected)] ?? [])
     : [];
 
   const lastUpdatedAt = useMemo(() => {
@@ -294,7 +288,8 @@ export default function SecurityDashboardPage() {
                 Security Events Dashboard
               </h1>
               <p className="text-sm text-blue-200/60">
-                Monitor threat signals, incident response, and event activity in near real time.
+                Monitor threat signals, incident response, and event activity in
+                near real time.
               </p>
             </div>
           </div>
@@ -302,7 +297,11 @@ export default function SecurityDashboardPage() {
             <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-200">
               Live polling every 15s
             </span>
-            {lastUpdatedAt && <span>Last update {new Date(lastUpdatedAt).toLocaleString()}</span>}
+            {lastUpdatedAt && (
+              <span>
+                Last update {new Date(lastUpdatedAt).toLocaleString()}
+              </span>
+            )}
           </div>
         </div>
 
@@ -340,7 +339,9 @@ export default function SecurityDashboardPage() {
         <select
           className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none"
           value={severity}
-          onChange={(event) => setSeverity(event.target.value as SeverityFilter)}
+          onChange={(event) =>
+            setSeverity(event.target.value as SeverityFilter)
+          }
         >
           <option value="all">All severities</option>
           <option value="critical">Critical</option>
@@ -352,9 +353,7 @@ export default function SecurityDashboardPage() {
         <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3">
           <div className="space-y-1">
             <p className="text-sm font-medium text-white">Actionable only</p>
-            <p className="text-xs text-blue-200/45">
-              Hide informational items
-            </p>
+            <p className="text-xs text-blue-200/45">Hide informational items</p>
           </div>
           <input
             type="checkbox"
@@ -366,12 +365,14 @@ export default function SecurityDashboardPage() {
 
         <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 xl:col-span-4">
           <div className="flex flex-wrap items-center gap-2">
-            {([
-              { label: 'All signals', value: 'all' },
-              { label: 'Events', value: 'event' },
-              { label: 'Threats', value: 'threat' },
-              { label: 'Incidents', value: 'incident' },
-            ] as Array<{ label: string; value: KindFilter }>).map((option) => (
+            {(
+              [
+                { label: 'All signals', value: 'all' },
+                { label: 'Events', value: 'event' },
+                { label: 'Threats', value: 'threat' },
+                { label: 'Incidents', value: 'incident' },
+              ] as Array<{ label: string; value: KindFilter }>
+            ).map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -391,7 +392,8 @@ export default function SecurityDashboardPage() {
 
       {combinedError && (
         <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-          Failed to load one or more security feeds. The dashboard is showing whatever data could still be fetched.
+          Failed to load one or more security feeds. The dashboard is showing
+          whatever data could still be fetched.
         </div>
       )}
 

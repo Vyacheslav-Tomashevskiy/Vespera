@@ -134,7 +134,9 @@ function humanizeEnum(value: string): string {
     .join(' ');
 }
 
-function mapIncidentSeverity(value: SecurityIncidentRecord['severity']): DashboardSeverity {
+function mapIncidentSeverity(
+  value: SecurityIncidentRecord['severity'],
+): DashboardSeverity {
   switch (value) {
     case 'P1':
       return 'critical';
@@ -185,7 +187,9 @@ export function normalizeSecurityFeed(
     const description =
       event.errorMessage ||
       (typeof details?.reason === 'string' ? details.reason : null) ||
-      (event.success ? 'Security event recorded successfully.' : 'Security event failed.');
+      (event.success
+        ? 'Security event recorded successfully.'
+        : 'Security event failed.');
 
     return {
       id: event.id,
@@ -256,7 +260,8 @@ export function normalizeSecurityFeed(
     severity: mapIncidentSeverity(incident.severity),
     timestamp: incident.createdAt,
     title: incident.title,
-    description: incident.description || 'Security incident under investigation.',
+    description:
+      incident.description || 'Security incident under investigation.',
     status: incident.status,
     sourceType: incident.severity,
     category: 'incident',
@@ -284,9 +289,7 @@ export function normalizeSecurityFeed(
   }));
 
   return [...incidentItems, ...threatItems, ...eventItems].sort((a, b) => {
-    return (
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
 }
 
@@ -337,7 +340,10 @@ export function buildSecurityDashboardSummary(
 
   for (const item of items) {
     severityCounts[item.severity] += 1;
-    typeCounter.set(item.sourceType, (typeCounter.get(item.sourceType) ?? 0) + 1);
+    typeCounter.set(
+      item.sourceType,
+      (typeCounter.get(item.sourceType) ?? 0) + 1,
+    );
   }
 
   const typeCounts = Array.from(typeCounter.entries())

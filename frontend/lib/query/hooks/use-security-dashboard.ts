@@ -13,7 +13,9 @@ import type {
 
 const LIVE_REFRESH_MS = 15_000;
 
-function buildQueryString(params: Record<string, string | number | undefined>): string {
+function buildQueryString(
+  params: Record<string, string | number | undefined>,
+): string {
   const qs = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -26,7 +28,9 @@ function buildQueryString(params: Record<string, string | number | undefined>): 
   return str ? `?${str}` : '';
 }
 
-export function useSecurityEvents(params: { hours?: number; limit?: number } = {}) {
+export function useSecurityEvents(
+  params: { hours?: number; limit?: number } = {},
+) {
   const normalized = {
     hours: params.hours ?? 72,
     limit: params.limit ?? 150,
@@ -114,7 +118,9 @@ export function useMarkThreatFalsePositive() {
 
   return useMutation({
     mutationFn: async (threatId: string) => {
-      await apiClient.patch<void>(`/security/threats/${threatId}/false-positive`);
+      await apiClient.patch<void>(
+        `/security/threats/${threatId}/false-positive`,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.security.all });

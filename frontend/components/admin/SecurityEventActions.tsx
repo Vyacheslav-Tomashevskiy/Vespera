@@ -45,8 +45,11 @@ export function SecurityEventActions({
   onGenerateReport,
   isMutating,
 }: SecurityEventActionsProps) {
-  const [resolution, setResolution] = useState('Resolved from security dashboard');
-  const canResolveIncident = item.kind === 'incident' && item.status !== 'resolved';
+  const [resolution, setResolution] = useState(
+    'Resolved from security dashboard',
+  );
+  const canResolveIncident =
+    item.kind === 'incident' && item.status !== 'resolved';
   const canMarkFalsePositive =
     item.kind === 'threat' &&
     item.status !== 'false_positive' &&
@@ -133,7 +136,9 @@ export function SecurityEventActions({
           <h5 className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-200/50">
             Response Tracking
           </h5>
-          <span className="text-xs text-blue-200/45">{entries.length} logged</span>
+          <span className="text-xs text-blue-200/45">
+            {entries.length} logged
+          </span>
         </div>
 
         {entries.length === 0 ? (
@@ -148,7 +153,9 @@ export function SecurityEventActions({
                 className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-white">{entry.label}</p>
+                  <p className="text-sm font-medium text-white">
+                    {entry.label}
+                  </p>
                   <span className="text-xs text-blue-200/45">
                     {new Date(entry.timestamp).toLocaleString()}
                   </span>

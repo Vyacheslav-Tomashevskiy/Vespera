@@ -59,13 +59,17 @@ export function SecurityEventTimeline({
               onClick={() => onSelect(item)}
             >
               <div className="relative flex justify-center">
-                <span className={`mt-1 h-3 w-3 rounded-full ${getDotTone(item.severity)}`} />
+                <span
+                  className={`mt-1 h-3 w-3 rounded-full ${getDotTone(item.severity)}`}
+                />
                 <span className="absolute top-4 bottom-[-1rem] w-px bg-white/10" />
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition hover:bg-black/30">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-sm font-semibold text-white">
+                    {item.title}
+                  </p>
                   <span className="text-xs text-blue-200/45">
                     {formatSecurityTimestamp(item.timestamp)}
                   </span>

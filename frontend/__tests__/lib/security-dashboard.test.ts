@@ -122,20 +122,24 @@ describe('security dashboard helpers', () => {
 
   it('builds a summary with severity and type counts', () => {
     const feed = normalizeSecurityFeed(securityEvents, threats, incidents);
-    const summary = buildSecurityDashboardSummary(feed, {
-      total: 1,
-      byCritical: 1,
-      byHigh: 0,
-      byType: { brute_force: 1 },
-      blocked: 1,
-      autoMitigated: 1,
-    }, {
-      openIncidents: 1,
-      p1Count: 1,
-      p2Count: 0,
-      avgResolutionMinutes: 14,
-      slaCompliance: 92,
-    });
+    const summary = buildSecurityDashboardSummary(
+      feed,
+      {
+        total: 1,
+        byCritical: 1,
+        byHigh: 0,
+        byType: { brute_force: 1 },
+        blocked: 1,
+        autoMitigated: 1,
+      },
+      {
+        openIncidents: 1,
+        p1Count: 1,
+        p2Count: 0,
+        avgResolutionMinutes: 14,
+        slaCompliance: 92,
+      },
+    );
 
     expect(summary.totalSignals).toBe(3);
     expect(summary.criticalSignals).toBe(3);

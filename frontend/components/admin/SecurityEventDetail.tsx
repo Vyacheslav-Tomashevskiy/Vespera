@@ -128,7 +128,9 @@ export function SecurityEventDetail({
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <h4 className="text-base font-semibold text-white">Signal Detail</h4>
+              <h4 className="text-base font-semibold text-white">
+                Signal Detail
+              </h4>
               <pre className="mt-4 max-h-[18rem] overflow-auto rounded-2xl bg-black/30 p-4 text-xs text-blue-100/85">
                 {JSON.stringify(item.raw, null, 2)}
               </pre>
