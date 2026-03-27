@@ -10,7 +10,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'tenant' | 'landlord' | 'agent' | 'admin';
+  role: 'tenant' | 'landlord' | 'agent' | 'admin' | 'support' | 'auditor';
 }
 
 interface AuthState {
@@ -199,11 +199,15 @@ export const useAuthStore = create<AuthStore>()(
         const normalizedEmail = (email || 'dev@chioma.local').toLowerCase();
         const inferredRole: User['role'] = normalizedEmail.includes('admin')
           ? 'admin'
-          : normalizedEmail.includes('agent')
-            ? 'agent'
-            : normalizedEmail.includes('tenant')
-              ? 'tenant'
-              : 'landlord';
+          : normalizedEmail.includes('auditor')
+            ? 'auditor'
+            : normalizedEmail.includes('support')
+              ? 'support'
+              : normalizedEmail.includes('agent')
+                ? 'agent'
+                : normalizedEmail.includes('tenant')
+                  ? 'tenant'
+                  : 'landlord';
 
         get().setTokens('mock-access-token', 'mock-refresh-token', {
           id: 'dev-123',

@@ -11,7 +11,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
-  role: 'tenant' | 'landlord' | 'agent' | 'admin';
+  role: 'tenant' | 'landlord' | 'agent' | 'admin' | 'support' | 'auditor';
   phone?: string;
   avatar?: string;
   isVerified: boolean;
