@@ -47,9 +47,7 @@ export function WebhookList({
       (webhook) =>
         normalizedSearch.length === 0 ||
         webhook.url.toLowerCase().includes(normalizedSearch) ||
-        webhook.events.some((e) =>
-          e.toLowerCase().includes(normalizedSearch),
-        ),
+        webhook.events.some((e) => e.toLowerCase().includes(normalizedSearch)),
     );
   }, [search, webhooks]);
 
@@ -114,7 +112,8 @@ export function WebhookList({
                           : webhook.url}
                       </p>
                       <p className="text-xs text-blue-200/60 mt-1">
-                        {webhook.events.length} event{webhook.events.length !== 1 ? 's' : ''}
+                        {webhook.events.length} event
+                        {webhook.events.length !== 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>

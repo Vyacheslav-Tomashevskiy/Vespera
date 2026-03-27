@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Plus,
-  RotateCcw,
-  Webhook,
-} from 'lucide-react';
+import { Plus, Webhook } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { WebhookList } from './WebhookList';
 import { WebhookForm } from './WebhookForm';
@@ -25,9 +21,16 @@ interface Webhook {
   secret?: string;
 }
 
+type WebhookFormValues = {
+  url: string;
+  events: string[];
+};
+
 export function WebhookManagement() {
   const [showForm, setShowForm] = useState(false);
-  const [selectedWebhookId, setSelectedWebhookId] = useState<string | null>(null);
+  const [selectedWebhookId, setSelectedWebhookId] = useState<string | null>(
+    null,
+  );
   const [editingWebhook, setEditingWebhook] = useState<string | null>(null);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
@@ -36,7 +39,7 @@ export function WebhookManagement() {
     [webhooks, selectedWebhookId],
   );
 
-  const handleCreateWebhook = async (data: any) => {
+  const handleCreateWebhook = async (data: WebhookFormValues) => {
     try {
       // In a real implementation, this would call an API
       const newWebhook: Webhook = {
@@ -56,7 +59,10 @@ export function WebhookManagement() {
     }
   };
 
-  const handleUpdateWebhook = async (id: string, data: any) => {
+  const handleUpdateWebhook = async (
+    id: string,
+    data: Partial<WebhookFormValues>,
+  ) => {
     try {
       setWebhooks(webhooks.map((w) => (w.id === id ? { ...w, ...data } : w)));
       toast.success('Webhook updated successfully');
@@ -80,9 +86,7 @@ export function WebhookManagement() {
   const handleToggleWebhook = async (id: string) => {
     try {
       setWebhooks(
-        webhooks.map((w) =>
-          w.id === id ? { ...w, enabled: !w.enabled } : w,
-        ),
+        webhooks.map((w) => (w.id === id ? { ...w, enabled: !w.enabled } : w)),
       );
       toast.success('Webhook updated successfully');
     } catch {
@@ -123,7 +127,11 @@ export function WebhookManagement() {
       {showForm && (
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
           <WebhookForm
-            webhook={editingWebhook ? webhooks.find((w) => w.id === editingWebhook) : undefined}
+            webhook={
+              editingWebhook
+                ? webhooks.find((w) => w.id === editingWebhook)
+                : undefined
+            }
             onSubmit={(data) => {
               if (editingWebhook) {
                 handleUpdateWebhook(editingWebhook, data);
@@ -156,13 +164,12 @@ export function WebhookManagement() {
 
         <div className="lg:col-span-2">
           {selectedWebhook ? (
-            <WebhookDetail 
-              webhook={selectedWebhook}
-              onUpdate={(data) => handleUpdateWebhook(selectedWebhook.id, data)}
-            />
+            <WebhookDetail webhook={selectedWebhook} />
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 flex items-center justify-center min-h-[400px]">
-              <p className="text-blue-200/60">Select a webhook to view details</p>
+              <p className="text-blue-200/60">
+                Select a webhook to view details
+              </p>
             </div>
           )}
         </div>

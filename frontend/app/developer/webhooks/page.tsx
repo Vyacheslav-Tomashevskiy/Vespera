@@ -6,11 +6,10 @@ import { WebhookManagement } from '@/components/webhooks/WebhookManagement';
 export default function WebhooksPage() {
   const { user } = useAuth();
 
-  // Allow developers and admins to access webhooks
-  if (!user || (user.role !== 'developer' && user.role !== 'admin' && user.role !== 'agent')) {
+  if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
     return (
       <div className="rounded-3xl border border-amber-300/20 bg-amber-500/10 p-6 text-amber-100">
-        Only developers can access webhook management.
+        Only admins and agents can access webhook management.
       </div>
     );
   }

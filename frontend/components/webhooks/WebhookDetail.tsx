@@ -1,15 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Edit2,
-  Trash2,
-  TestTube,
-  Copy,
-  Eye,
-  EyeOff,
-  BarChart3,
-} from 'lucide-react';
+import { TestTube, Copy, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Webhook {
@@ -28,10 +20,9 @@ interface Webhook {
 
 interface WebhookDetailProps {
   webhook: Webhook;
-  onUpdate: (data: any) => void;
 }
 
-export function WebhookDetail({ webhook, onUpdate }: WebhookDetailProps) {
+export function WebhookDetail({ webhook }: WebhookDetailProps) {
   const [showSecret, setShowSecret] = useState(false);
   const [showTestForm, setShowTestForm] = useState(false);
   const [testPayload, setTestPayload] = useState('{}');
@@ -70,7 +61,8 @@ export function WebhookDetail({ webhook, onUpdate }: WebhookDetailProps) {
             {webhook.url}
           </h2>
           <p className="text-blue-200/60 mt-1">
-            {webhook.enabled ? 'Active' : 'Inactive'} • {webhook.events.length} events
+            {webhook.enabled ? 'Active' : 'Inactive'} • {webhook.events.length}{' '}
+            events
           </p>
         </div>
       </div>
@@ -96,12 +88,20 @@ export function WebhookDetail({ webhook, onUpdate }: WebhookDetailProps) {
           <p className="text-xs text-blue-200/60 uppercase tracking-wide">
             Status
           </p>
-          <p className={`text-sm font-semibold mt-1 ${
-            webhook.status === 'active' ? 'text-emerald-400' : 
-            webhook.status === 'failed' ? 'text-rose-400' : 'text-amber-400'
-          }`}>
-            {webhook.status === 'active' ? 'Active' : 
-             webhook.status === 'failed' ? 'Failed' : 'Inactive'}
+          <p
+            className={`text-sm font-semibold mt-1 ${
+              webhook.status === 'active'
+                ? 'text-emerald-400'
+                : webhook.status === 'failed'
+                  ? 'text-rose-400'
+                  : 'text-amber-400'
+            }`}
+          >
+            {webhook.status === 'active'
+              ? 'Active'
+              : webhook.status === 'failed'
+                ? 'Failed'
+                : 'Inactive'}
           </p>
         </div>
       </div>
@@ -156,16 +156,12 @@ export function WebhookDetail({ webhook, onUpdate }: WebhookDetailProps) {
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <p className="text-blue-200/60">Created</p>
-          <p className="text-white mt-1">
-            {createdDate.toLocaleString()}
-          </p>
+          <p className="text-white mt-1">{createdDate.toLocaleString()}</p>
         </div>
         <div>
           <p className="text-blue-200/60">Last Triggered</p>
           <p className="text-white mt-1">
-            {lastTriggeredDate
-              ? lastTriggeredDate.toLocaleString()
-              : 'Never'}
+            {lastTriggeredDate ? lastTriggeredDate.toLocaleString() : 'Never'}
           </p>
         </div>
       </div>

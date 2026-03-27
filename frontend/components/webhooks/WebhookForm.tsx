@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+
+type WebhookFormValues = {
+  url: string;
+  events: string[];
+};
 
 interface Webhook {
   id: string;
@@ -14,7 +18,7 @@ interface Webhook {
 
 interface WebhookFormProps {
   webhook?: Webhook;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: WebhookFormValues) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -42,21 +46,21 @@ export function WebhookForm({
   onCancel,
   isLoading = false,
 }: WebhookFormProps) {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
-    defaultValues: webhook ? {
-      url: webhook.url,
-      events: webhook.events,
-    } : {
-      url: '',
-      events: [],
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<WebhookFormValues>({
+    defaultValues: webhook
+      ? {
+          url: webhook.url,
+          events: webhook.events,
+        }
+      : {
+          url: '',
+          events: [],
+        },
   });
-
-  const selectedEvents = watch('events');
-
-  const handleEventToggle = (event: string) => {
-    // This is a simplified version - in a real app, you'd use react-hook-form proper handling
-  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
