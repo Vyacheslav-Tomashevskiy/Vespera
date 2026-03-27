@@ -33,14 +33,18 @@ export function ProfileMetadataPreview({
       {publicFields.length === 0 ? (
         <div className="text-center py-8 bg-white/5 border border-white/10 rounded-xl">
           <p className="text-blue-200/60">
-            No public fields. Add fields and make them public to create your profile.
+            No public fields. Add fields and make them public to create your
+            profile.
           </p>
         </div>
       ) : (
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700">
           <div className="space-y-4">
             {publicFields.map((field) => (
-              <div key={field.id} className="border-b border-slate-700 pb-4 last:border-0">
+              <div
+                key={field.id}
+                className="border-b border-slate-700 pb-4 last:border-0"
+              >
                 <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">
                   {field.label}
                 </p>
@@ -72,7 +76,8 @@ export function ProfileMetadataPreview({
       )}
 
       <p className="text-xs text-blue-200/60">
-        Fields marked as "Private" are only visible to you and won't appear on your public profile.
+        Fields marked as &quot;Private&quot; are only visible to you and
+        won&apos;t appear on your public profile.
       </p>
     </div>
   );

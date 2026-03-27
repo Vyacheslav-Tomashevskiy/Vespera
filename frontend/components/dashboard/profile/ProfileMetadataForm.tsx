@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+
+export type ProfileMetadataFormValues = {
+  key: string;
+  label: string;
+  value: string;
+  type: 'text' | 'url' | 'email' | 'phone' | 'select';
+  isPublic: boolean;
+};
 
 interface MetadataField {
   id: string;
@@ -16,7 +23,7 @@ interface MetadataField {
 
 interface ProfileMetadataFormProps {
   field?: MetadataField;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: ProfileMetadataFormValues) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -27,20 +34,26 @@ export function ProfileMetadataForm({
   onCancel,
   isLoading = false,
 }: ProfileMetadataFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: field ? {
-      key: field.key,
-      label: field.label,
-      value: field.value,
-      type: field.type,
-      isPublic: field.isPublic,
-    } : {
-      key: '',
-      label: '',
-      value: '',
-      type: 'text',
-      isPublic: true,
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileMetadataFormValues>({
+    defaultValues: field
+      ? {
+          key: field.key,
+          label: field.label,
+          value: field.value,
+          type: field.type,
+          isPublic: field.isPublic,
+        }
+      : {
+          key: '',
+          label: '',
+          value: '',
+          type: 'text',
+          isPublic: true,
+        },
   });
 
   const FIELD_TYPES = [

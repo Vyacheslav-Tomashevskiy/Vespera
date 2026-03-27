@@ -14,19 +14,19 @@ export function ProfileMetadataHistory({
     {
       id: '1',
       value: 'Updated value',
-      changedAt: new Date(Date.now() - 86400000).toISOString(),
+      changedAt: '2026-03-26T00:00:00.000Z',
       changedBy: 'You',
     },
     {
       id: '2',
       value: 'Previous value',
-      changedAt: new Date(Date.now() - 172800000).toISOString(),
+      changedAt: '2026-03-25T00:00:00.000Z',
       changedBy: 'You',
     },
     {
       id: '3',
       value: 'Initial value',
-      changedAt: new Date(Date.now() - 259200000).toISOString(),
+      changedAt: '2026-03-24T00:00:00.000Z',
       changedBy: 'You',
     },
   ];
@@ -37,6 +37,7 @@ export function ProfileMetadataHistory({
         <History size={20} className="text-teal-400" />
         <h3 className="text-lg font-bold text-white">Change History</h3>
       </div>
+      <p className="text-xs text-blue-200/60">Field ID: {fieldId}</p>
 
       <div className="space-y-3">
         {history.length === 0 ? (
@@ -53,9 +54,7 @@ export function ProfileMetadataHistory({
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white break-all">
-                    {entry.value}
-                  </p>
+                  <p className="text-sm text-white break-all">{entry.value}</p>
                   <p className="text-xs text-blue-200/60 mt-1">
                     {changedDate.toLocaleString()}
                   </p>

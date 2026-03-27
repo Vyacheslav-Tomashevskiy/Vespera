@@ -1,16 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Plus,
-  RotateCcw,
-  User,
-  Download,
-  Upload,
-} from 'lucide-react';
+import { Plus, User, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProfileMetadataList } from './ProfileMetadataList';
-import { ProfileMetadataForm } from './ProfileMetadataForm';
+import {
+  ProfileMetadataForm,
+  type ProfileMetadataFormValues,
+} from './ProfileMetadataForm';
 import { ProfileMetadataDetail } from './ProfileMetadataDetail';
 import { ProfileMetadataHistory } from './ProfileMetadataHistory';
 import { ProfileMetadataPreview } from './ProfileMetadataPreview';
@@ -94,7 +91,9 @@ const DEFAULT_FIELDS: MetadataField[] = [
   },
 ];
 
-export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementProps) {
+export function ProfileMetadataManagement({
+  userId,
+}: ProfileMetadataManagementProps) {
   const [metadata, setMetadata] = useState<MetadataField[]>(DEFAULT_FIELDS);
   const [showForm, setShowForm] = useState(false);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -116,7 +115,7 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
     [metadata],
   );
 
-  const handleAddField = async (data: any) => {
+  const handleAddField = async (data: ProfileMetadataFormValues) => {
     try {
       const newField: MetadataField = {
         id: `field_${Date.now()}`,
@@ -132,11 +131,16 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
     }
   };
 
-  const handleUpdateField = async (id: string, data: any) => {
+  const handleUpdateField = async (
+    id: string,
+    data: Partial<ProfileMetadataFormValues>,
+  ) => {
     try {
       setMetadata(
         metadata.map((f) =>
-          f.id === id ? { ...f, ...data, updatedAt: new Date().toISOString() } : f,
+          f.id === id
+            ? { ...f, ...data, updatedAt: new Date().toISOString() }
+            : f,
         ),
       );
       toast.success('Field updated successfully');
@@ -187,7 +191,7 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const data = JSON.parse(content);
+        JSON.parse(content);
         // In a real app, you'd merge/update the metadata
         toast.success('Metadata imported successfully');
       } catch {
@@ -227,7 +231,11 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
       {showForm && (
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
           <ProfileMetadataForm
-            field={editingFieldId ? metadata.find((f) => f.id === editingFieldId) : undefined}
+            field={
+              editingFieldId
+                ? metadata.find((f) => f.id === editingFieldId)
+                : undefined
+            }
             onSubmit={(data) => {
               if (editingFieldId) {
                 handleUpdateField(editingFieldId, data);
@@ -248,19 +256,25 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
           <p className="text-xs text-blue-200/60 uppercase tracking-wider">
             Total Fields
           </p>
-          <h3 className="text-2xl font-bold text-white mt-1">{metadata.length}</h3>
+          <h3 className="text-2xl font-bold text-white mt-1">
+            {metadata.length}
+          </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
           <p className="text-xs text-blue-200/60 uppercase tracking-wider">
             Public Fields
           </p>
-          <h3 className="text-2xl font-bold text-white mt-1">{publicFields.length}</h3>
+          <h3 className="text-2xl font-bold text-white mt-1">
+            {publicFields.length}
+          </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
           <p className="text-xs text-blue-200/60 uppercase tracking-wider">
             Custom Fields
           </p>
-          <h3 className="text-2xl font-bold text-white mt-1">{customFields.length}</h3>
+          <h3 className="text-2xl font-bold text-white mt-1">
+            {customFields.length}
+          </h3>
         </div>
       </div>
 
@@ -319,13 +333,13 @@ export function ProfileMetadataManagement({ userId }: ProfileMetadataManagementP
               >
                 {showHistory ? 'Hide History' : 'View History'}
               </button>
-              {showHistory && <ProfileMetadataHistory fieldId={selectedField.id} />}
+              {showHistory && (
+                <ProfileMetadataHistory fieldId={selectedField.id} />
+              )}
             </>
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 flex items-center justify-center min-h-[400px]">
-              <p className="text-blue-200/60">
-                Select a field to view details
-              </p>
+              <p className="text-blue-200/60">Select a field to view details</p>
             </div>
           )}
         </div>

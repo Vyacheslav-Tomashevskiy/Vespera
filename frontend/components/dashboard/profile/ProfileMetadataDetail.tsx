@@ -16,7 +16,7 @@ interface MetadataField {
 
 interface ProfileMetadataDetailProps {
   field: MetadataField;
-  onUpdate: (data: any) => void;
+  onUpdate: (data: Partial<Pick<MetadataField, 'value' | 'isPublic'>>) => void;
 }
 
 export function ProfileMetadataDetail({
@@ -104,7 +104,9 @@ export function ProfileMetadataDetail({
         ) : (
           <>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 break-all">
-              <p className="text-white text-sm">{field.value || 'No value set'}</p>
+              <p className="text-white text-sm">
+                {field.value || 'No value set'}
+              </p>
             </div>
             <div className="flex gap-2">
               <button

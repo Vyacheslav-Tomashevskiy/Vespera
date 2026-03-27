@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Search,
-  Edit2,
-  Trash2,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { Search, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface MetadataField {
   id: string;
