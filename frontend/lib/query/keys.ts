@@ -2,16 +2,10 @@
  * Query key factory for React Query.
  *
  * Structured keys enable granular cache invalidation. Each domain exposes
- * an `all` key (for broad invalidation) plus narrower keys for lists,
- * details, and filtered views.
- *
- * @example
- *   queryClient.invalidateQueries({ queryKey: queryKeys.properties.all });
- *   queryClient.invalidateQueries({ queryKey: queryKeys.properties.detail('abc') });
+ * an `all` key plus narrower keys for lists, details, and filtered views.
  */
 
 export const queryKeys = {
-  // ── Properties ───────────────────────────────────────────────────────────
   properties: {
     all: ['properties'] as const,
     lists: () => [...queryKeys.properties.all, 'list'] as const,
@@ -21,7 +15,6 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.properties.details(), id] as const,
   },
 
-  // ── Payments ─────────────────────────────────────────────────────────────
   payments: {
     all: ['payments'] as const,
     lists: () => [...queryKeys.payments.all, 'list'] as const,
@@ -32,7 +25,6 @@ export const queryKeys = {
       [...queryKeys.payments.all, 'agreement', agreementId] as const,
   },
 
-  // ── Agreements ───────────────────────────────────────────────────────────
   agreements: {
     all: ['agreements'] as const,
     lists: () => [...queryKeys.agreements.all, 'list'] as const,
@@ -42,7 +34,6 @@ export const queryKeys = {
       [...queryKeys.agreements.all, 'detail', id] as const,
   },
 
-  // ── Notifications ────────────────────────────────────────────────────────
   notifications: {
     all: ['notifications'] as const,
     list: (filters?: object) =>
@@ -51,7 +42,6 @@ export const queryKeys = {
       [...queryKeys.notifications.all, 'unread-count'] as const,
   },
 
-  // ── Maintenance ──────────────────────────────────────────────────────────
   maintenance: {
     all: ['maintenance'] as const,
     lists: () => [...queryKeys.maintenance.all, 'list'] as const,
@@ -61,14 +51,12 @@ export const queryKeys = {
       [...queryKeys.maintenance.all, 'detail', id] as const,
   },
 
-  // ── User / Profile ──────────────────────────────────────────────────────
   user: {
     all: ['user'] as const,
     profile: () => [...queryKeys.user.all, 'profile'] as const,
     preferences: () => [...queryKeys.user.all, 'preferences'] as const,
   },
 
-  // ── Audit Logs ───────────────────────────────────────────────────────────
   audit: {
     all: ['audit'] as const,
     lists: () => [...queryKeys.audit.all, 'list'] as const,
@@ -77,7 +65,6 @@ export const queryKeys = {
     stats: () => [...queryKeys.audit.all, 'stats'] as const,
   },
 
-  // ── Transactions ─────────────────────────────────────────────────────────
   transactions: {
     all: ['transactions'] as const,
     lists: () => [...queryKeys.transactions.all, 'list'] as const,
@@ -89,7 +76,17 @@ export const queryKeys = {
       [...queryKeys.transactions.all, 'user', userId] as const,
   },
 
-  // ── Users (Admin) ─────────────────────────────────────────────────────────
+  anchorTransactions: {
+    all: ['anchor-transactions'] as const,
+    lists: () => [...queryKeys.anchorTransactions.all, 'list'] as const,
+    list: (filters: object) =>
+      [...queryKeys.anchorTransactions.lists(), filters] as const,
+    details: () => [...queryKeys.anchorTransactions.all, 'detail'] as const,
+    detail: (id: string) =>
+      [...queryKeys.anchorTransactions.details(), id] as const,
+    stats: () => [...queryKeys.anchorTransactions.all, 'stats'] as const,
+  },
+
   users: {
     all: ['users'] as const,
     lists: () => [...queryKeys.users.all, 'list'] as const,
@@ -106,7 +103,6 @@ export const queryKeys = {
     permissions: () => [...queryKeys.roles.all, 'permissions'] as const,
   },
 
-  // ── KYC Verifications (Admin) ────────────────────────────────────────────
   kyc: {
     all: ['kyc'] as const,
     lists: () => [...queryKeys.kyc.all, 'list'] as const,

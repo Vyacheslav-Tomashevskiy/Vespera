@@ -29,6 +29,12 @@ export {
 } from './use-transactions';
 
 export {
+  useAnchorTransactions,
+  useAnchorTransaction,
+  useAnchorTransactionStats,
+} from './use-anchor-transactions';
+
+export {
   useAdminUsers,
   useSuspendUser,
   useActivateUser,

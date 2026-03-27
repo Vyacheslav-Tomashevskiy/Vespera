@@ -1,27 +1,32 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Param,
-  UseGuards,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { AnchorService } from '../services/anchor.service';
-import { DepositRequestDto } from '../dto/deposit-request.dto';
-import { WithdrawRequestDto } from '../dto/withdraw-request.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
-import { WebhookSignatureGuard } from '../../webhooks/guards/webhook-signature.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { UserRole } from '../../users/entities/user.entity';
 import { WebhookSecret } from '../../webhooks/decorators/webhook-secret.decorator';
+import { WebhookSignatureGuard } from '../../webhooks/guards/webhook-signature.guard';
+import { DepositRequestDto } from '../dto/deposit-request.dto';
+import { QueryAnchorTransactionsDto } from '../dto/query-anchor-transactions.dto';
+import { WithdrawRequestDto } from '../dto/withdraw-request.dto';
+import { AnchorService } from '../services/anchor.service';
 
 @ApiTags('Anchor')
 @ApiBearerAuth('JWT-auth')
@@ -54,6 +59,26 @@ export class AnchorController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async withdraw(@Body() dto: WithdrawRequestDto) {
     return this.anchorService.initiateWithdrawal(dto);
+  }
+
+  @Get('transactions')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] List anchor transactions' })
+  @ApiResponse({ status: 200, description: 'Paginated anchor transactions' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async listTransactions(@Query() query: QueryAnchorTransactionsDto) {
+    return this.anchorService.listTransactions(query);
+  }
+
+  @Get('transactions/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Get anchor transaction statistics' })
+  @ApiResponse({ status: 200, description: 'Anchor transaction statistics' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async getTransactionStats() {
+    return this.anchorService.getTransactionStats();
   }
 
   @Get('transactions/:id')

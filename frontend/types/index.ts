@@ -187,6 +187,42 @@ export interface Transaction {
   createdAt: string;
 }
 
+export type AnchorTransactionType = 'deposit' | 'withdrawal';
+export type AnchorTransactionStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded';
+
+export interface AnchorTransaction {
+  id: string;
+  anchorTransactionId?: string | null;
+  type: AnchorTransactionType;
+  status: AnchorTransactionStatus;
+  amount: number | string;
+  currency: string;
+  walletAddress: string;
+  paymentMethod?: string | null;
+  destination?: string | null;
+  stellarTransactionId?: string | null;
+  memo?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnchorTransactionStats {
+  total: number;
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  refunded: number;
+  verified: number;
+  averageTimeToAnchorSeconds: number;
+}
+
 export interface AgentTransaction {
   transactionId: string;
   agentAddress: string;
