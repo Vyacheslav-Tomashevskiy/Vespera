@@ -4,13 +4,13 @@ import React from 'react';
 import {
   AlertCircle,
   CheckCircle2,
+  CircleDollarSign,
   Clock,
   FileStack,
+  FileUp,
   MessageSquareText,
   Scale,
   XCircle,
-  CircleDollarSign,
-  FileUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { BaseModal } from './BaseModal';
@@ -36,7 +36,8 @@ const statusConfig: Record<
 > = {
   OPEN: {
     label: 'Open',
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
+    color:
+      'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
     icon: <AlertCircle size={14} />,
   },
   UNDER_REVIEW: {
@@ -46,7 +47,8 @@ const statusConfig: Record<
   },
   RESOLVED: {
     label: 'Resolved',
-    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
+    color:
+      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
     icon: <CheckCircle2 size={14} />,
   },
   REJECTED: {
@@ -56,7 +58,8 @@ const statusConfig: Record<
   },
   WITHDRAWN: {
     label: 'Withdrawn',
-    color: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+    color:
+      'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
     icon: <XCircle size={14} />,
   },
 };
@@ -76,7 +79,8 @@ function buildTimeline(dispute: DashboardDispute): TimelineEvent[] {
       label: 'Under review',
       date: dispute.updatedAt,
       icon: <Clock size={14} />,
-      color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+      color:
+        'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
     });
   }
 
@@ -85,7 +89,8 @@ function buildTimeline(dispute: DashboardDispute): TimelineEvent[] {
       label: 'Dispute resolved',
       date: dispute.updatedAt,
       icon: <CheckCircle2 size={14} />,
-      color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+      color:
+        'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
     });
   }
 
@@ -103,7 +108,8 @@ function buildTimeline(dispute: DashboardDispute): TimelineEvent[] {
       label: 'Dispute withdrawn',
       date: dispute.updatedAt,
       icon: <XCircle size={14} />,
-      color: 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400',
+      color:
+        'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400',
     });
   }
 
@@ -213,7 +219,10 @@ export const DisputeDetailModal: React.FC<DisputeDetailModalProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 py-3">
             <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-              <FileStack size={16} className="text-amber-600 dark:text-amber-400" />
+              <FileStack
+                size={16}
+                className="text-amber-600 dark:text-amber-400"
+              />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
@@ -227,7 +236,10 @@ export const DisputeDetailModal: React.FC<DisputeDetailModalProps> = ({
 
           <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 py-3">
             <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-              <MessageSquareText size={16} className="text-blue-600 dark:text-blue-400" />
+              <MessageSquareText
+                size={16}
+                className="text-blue-600 dark:text-blue-400"
+              />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
@@ -244,7 +256,10 @@ export const DisputeDetailModal: React.FC<DisputeDetailModalProps> = ({
         {dispute.resolution && (
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2
+                size={16}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
               <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
                 Resolution
               </p>

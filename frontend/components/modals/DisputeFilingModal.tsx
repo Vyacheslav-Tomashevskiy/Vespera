@@ -231,7 +231,9 @@ export const DisputeFilingModal: React.FC<DisputeFilingModalProps> = ({
           />
           <div className="flex items-center justify-between mt-1">
             {errors.description ? (
-              <p className="text-xs text-red-500">{errors.description.message}</p>
+              <p className="text-xs text-red-500">
+                {errors.description.message}
+              </p>
             ) : (
               <span />
             )}

@@ -94,7 +94,11 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title="Upload Evidence"
-      subtitle={disputeTitle ? `For: ${disputeTitle}` : `Dispute #${disputeId.slice(0, 8)}`}
+      subtitle={
+        disputeTitle
+          ? `For: ${disputeTitle}`
+          : `Dispute #${disputeId.slice(0, 8)}`
+      }
       size="md"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
@@ -173,7 +177,9 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
           />
           <div className="flex items-center justify-between mt-1">
             {errors.description ? (
-              <p className="text-xs text-red-500">{errors.description.message}</p>
+              <p className="text-xs text-red-500">
+                {errors.description.message}
+              </p>
             ) : (
               <span />
             )}
