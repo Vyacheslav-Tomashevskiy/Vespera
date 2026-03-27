@@ -1,8 +1,18 @@
 'use client';
 
 export type PropertyType = 'apartment' | 'house' | 'studio' | 'condo' | 'any';
-export type BudgetRange = 'under-500' | '500-1000' | '1000-2000' | '2000-3500' | 'over-3500';
-export type MoveInTimeline = 'asap' | '1-month' | '3-months' | '6-months' | 'flexible';
+export type BudgetRange =
+  | 'under-500'
+  | '500-1000'
+  | '1000-2000'
+  | '2000-3500'
+  | 'over-3500';
+export type MoveInTimeline =
+  | 'asap'
+  | '1-month'
+  | '3-months'
+  | '6-months'
+  | 'flexible';
 
 export interface TenantOnboardingData {
   profile: {
@@ -73,10 +83,22 @@ export function loadTenantOnboardingData(): TenantOnboardingData {
     return {
       ...defaultTenantOnboardingData,
       ...parsed,
-      profile: { ...defaultTenantOnboardingData.profile, ...(parsed.profile ?? {}) },
-      preferences: { ...defaultTenantOnboardingData.preferences, ...(parsed.preferences ?? {}) },
-      search: { ...defaultTenantOnboardingData.search, ...(parsed.search ?? {}) },
-      discovery: { ...defaultTenantOnboardingData.discovery, ...(parsed.discovery ?? {}) },
+      profile: {
+        ...defaultTenantOnboardingData.profile,
+        ...(parsed.profile ?? {}),
+      },
+      preferences: {
+        ...defaultTenantOnboardingData.preferences,
+        ...(parsed.preferences ?? {}),
+      },
+      search: {
+        ...defaultTenantOnboardingData.search,
+        ...(parsed.search ?? {}),
+      },
+      discovery: {
+        ...defaultTenantOnboardingData.discovery,
+        ...(parsed.discovery ?? {}),
+      },
       skippedSteps: parsed.skippedSteps ?? [],
     };
   } catch {
@@ -89,12 +111,17 @@ export function saveTenantOnboardingData(data: TenantOnboardingData) {
   localStorage.setItem(TENANT_ONBOARDING_STORAGE_KEY, JSON.stringify(data));
 }
 
-export function getTenantOnboardingProgress(data: TenantOnboardingData): number {
+export function getTenantOnboardingProgress(
+  data: TenantOnboardingData,
+): number {
   const steps = [
     data.profile.phone.trim() !== '' || data.profile.location.trim() !== '',
-    data.preferences.propertyType !== 'any' || data.preferences.budgetRange !== '1000-2000',
+    data.preferences.propertyType !== 'any' ||
+      data.preferences.budgetRange !== '1000-2000',
     data.search.savedSearchCity.trim() !== '',
-    data.discovery.paymentsAcknowledged && data.discovery.disputesAcknowledged && data.discovery.blockchainAcknowledged,
+    data.discovery.paymentsAcknowledged &&
+      data.discovery.disputesAcknowledged &&
+      data.discovery.blockchainAcknowledged,
   ];
   const completed = steps.filter(Boolean).length;
   return Math.round((completed / steps.length) * 100);

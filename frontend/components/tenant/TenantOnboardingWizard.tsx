@@ -30,10 +30,26 @@ import {
 const TOTAL_STEPS = 4;
 
 const STEP_META = [
-  { title: 'Your Profile', icon: User, description: 'Help landlords know who you are' },
-  { title: 'Rental Preferences', icon: Home, description: 'Tell us what you\'re looking for' },
-  { title: 'Property Search', icon: Search, description: 'Set up your search alerts' },
-  { title: 'Feature Discovery', icon: Zap, description: 'Learn what Chioma offers' },
+  {
+    title: 'Your Profile',
+    icon: User,
+    description: 'Help landlords know who you are',
+  },
+  {
+    title: 'Rental Preferences',
+    icon: Home,
+    description: "Tell us what you're looking for",
+  },
+  {
+    title: 'Property Search',
+    icon: Search,
+    description: 'Set up your search alerts',
+  },
+  {
+    title: 'Feature Discovery',
+    icon: Zap,
+    description: 'Learn what Chioma offers',
+  },
 ];
 
 // ─── Step Components ──────────────────────────────────────────────────────────
@@ -45,8 +61,10 @@ function ProfileStep({
   data: TenantOnboardingData;
   onChange: (d: TenantOnboardingData) => void;
 }) {
-  const update = (field: keyof TenantOnboardingData['profile'], value: string) =>
-    onChange({ ...data, profile: { ...data.profile, [field]: value } });
+  const update = (
+    field: keyof TenantOnboardingData['profile'],
+    value: string,
+  ) => onChange({ ...data, profile: { ...data.profile, [field]: value } });
 
   return (
     <div className="space-y-5">
@@ -88,7 +106,8 @@ function PreferencesStep({
   const update = <K extends keyof TenantOnboardingData['preferences']>(
     field: K,
     value: TenantOnboardingData['preferences'][K],
-  ) => onChange({ ...data, preferences: { ...data.preferences, [field]: value } });
+  ) =>
+    onChange({ ...data, preferences: { ...data.preferences, [field]: value } });
 
   const propertyTypes: { value: PropertyType; label: string }[] = [
     { value: 'any', label: 'Any' },
@@ -166,7 +185,9 @@ function PreferencesStep({
           >
             {['Studio', '1', '2', '3', '4', '5+'].map((v) => (
               <option key={v} value={v} className="bg-slate-800">
-                {v === 'Studio' ? 'Studio' : `${v} Bedroom${v === '1' ? '' : 's'}`}
+                {v === 'Studio'
+                  ? 'Studio'
+                  : `${v} Bedroom${v === '1' ? '' : 's'}`}
               </option>
             ))}
           </select>
@@ -178,7 +199,9 @@ function PreferencesStep({
           </label>
           <select
             value={data.preferences.moveInTimeline}
-            onChange={(e) => update('moveInTimeline', e.target.value as MoveInTimeline)}
+            onChange={(e) =>
+              update('moveInTimeline', e.target.value as MoveInTimeline)
+            }
             className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           >
             {timelines.map(({ value, label }) => (
@@ -257,7 +280,9 @@ function SearchStep({
           </p>
         </div>
         <button
-          onClick={() => update('notificationsEnabled', !data.search.notificationsEnabled)}
+          onClick={() =>
+            update('notificationsEnabled', !data.search.notificationsEnabled)
+          }
           className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
             data.search.notificationsEnabled ? 'bg-blue-600' : 'bg-white/20'
           }`}
@@ -266,7 +291,9 @@ function SearchStep({
         >
           <span
             className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
-              data.search.notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+              data.search.notificationsEnabled
+                ? 'translate-x-5'
+                : 'translate-x-0'
             }`}
           />
         </button>
@@ -292,7 +319,8 @@ function DiscoveryStep({
       key: 'paymentsAcknowledged' as const,
       icon: CreditCard,
       title: 'Instant Rent Payments',
-      description: 'Pay rent directly on-chain via Stellar. Instant, transparent, and fee-minimal.',
+      description:
+        'Pay rent directly on-chain via Stellar. Instant, transparent, and fee-minimal.',
       color: 'text-emerald-400',
       bg: 'bg-emerald-500/10',
     },
@@ -300,7 +328,8 @@ function DiscoveryStep({
       key: 'disputesAcknowledged' as const,
       icon: Shield,
       title: 'Dispute Resolution',
-      description: 'Raise and track disputes with evidence uploads and structured resolution flows.',
+      description:
+        'Raise and track disputes with evidence uploads and structured resolution flows.',
       color: 'text-amber-400',
       bg: 'bg-amber-500/10',
     },
@@ -308,7 +337,8 @@ function DiscoveryStep({
       key: 'blockchainAcknowledged' as const,
       icon: Link,
       title: 'Blockchain Lease Agreements',
-      description: 'Your lease is recorded on the Stellar blockchain — immutable and verifiable.',
+      description:
+        'Your lease is recorded on the Stellar blockchain — immutable and verifiable.',
       color: 'text-blue-400',
       bg: 'bg-blue-500/10',
     },
@@ -317,7 +347,8 @@ function DiscoveryStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-blue-200/70">
-        Tap each feature to acknowledge you&apos;ve seen it. You can explore them anytime from your dashboard.
+        Tap each feature to acknowledge you&apos;ve seen it. You can explore
+        them anytime from your dashboard.
       </p>
       {features.map(({ key, icon: Icon, title, description, color, bg }) => (
         <button
@@ -329,7 +360,9 @@ function DiscoveryStep({
               : 'border-white/10 bg-white/5 hover:bg-white/10'
           }`}
         >
-          <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
+          <div
+            className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0`}
+          >
             <Icon size={20} className={color} />
           </div>
           <div className="flex-1 min-w-0">
@@ -338,7 +371,9 @@ function DiscoveryStep({
           </div>
           <div
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-              data.discovery[key] ? 'bg-blue-600 border-blue-600' : 'border-white/30'
+              data.discovery[key]
+                ? 'bg-blue-600 border-blue-600'
+                : 'border-white/30'
             }`}
           >
             {data.discovery[key] && <Check size={12} className="text-white" />}
@@ -351,11 +386,19 @@ function DiscoveryStep({
 
 // ─── Shared UI Primitives ─────────────────────────────────────────────────────
 
-function SectionTitle({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+function SectionTitle({
+  icon: Icon,
+  label,
+}: {
+  icon: React.ElementType;
+  label: string;
+}) {
   return (
     <div className="flex items-center gap-2 mb-1">
       <Icon size={16} className="text-blue-400" />
-      <span className="text-xs font-semibold text-blue-200/70 uppercase tracking-wider">{label}</span>
+      <span className="text-xs font-semibold text-blue-200/70 uppercase tracking-wider">
+        {label}
+      </span>
     </div>
   );
 }
@@ -382,7 +425,10 @@ function TextField({
       </label>
       <div className="relative">
         {Icon && (
-          <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/50" />
+          <Icon
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/50"
+          />
         )}
         <input
           type={type}
@@ -459,7 +505,15 @@ function ToggleChip({
 
 // ─── Step Dots ────────────────────────────────────────────────────────────────
 
-function StepDots({ current, total, skipped }: { current: number; total: number; skipped: number[] }) {
+function StepDots({
+  current,
+  total,
+  skipped,
+}: {
+  current: number;
+  total: number;
+  skipped: number[];
+}) {
   return (
     <div className="flex items-center gap-2">
       {Array.from({ length: total }).map((_, i) => (
@@ -469,10 +523,10 @@ function StepDots({ current, total, skipped }: { current: number; total: number;
             i === current
               ? 'w-6 h-2 bg-blue-500'
               : skipped.includes(i)
-              ? 'w-2 h-2 bg-white/20'
-              : i < current
-              ? 'w-2 h-2 bg-blue-400'
-              : 'w-2 h-2 bg-white/20'
+                ? 'w-2 h-2 bg-white/20'
+                : i < current
+                  ? 'w-2 h-2 bg-blue-400'
+                  : 'w-2 h-2 bg-white/20'
           }`}
         />
       ))}
@@ -485,7 +539,9 @@ function StepDots({ current, total, skipped }: { current: number; total: number;
 export function TenantOnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<TenantOnboardingData>(() => loadTenantOnboardingData());
+  const [data, setData] = useState<TenantOnboardingData>(() =>
+    loadTenantOnboardingData(),
+  );
 
   const progressPercent = Math.round(((step + 1) / TOTAL_STEPS) * 100);
   const currentMeta = STEP_META[step];
@@ -560,13 +616,17 @@ export function TenantOnboardingWizard() {
             <h1 className="text-xl font-bold text-white tracking-tight">
               {currentMeta.title}
             </h1>
-            <p className="text-sm text-blue-200/60">{currentMeta.description}</p>
+            <p className="text-sm text-blue-200/60">
+              {currentMeta.description}
+            </p>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-blue-200/60">
-            <span>Step {step + 1} of {TOTAL_STEPS}</span>
+            <span>
+              Step {step + 1} of {TOTAL_STEPS}
+            </span>
             <span>{progressPercent}% complete</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/10">
@@ -575,16 +635,24 @@ export function TenantOnboardingWizard() {
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <StepDots current={step} total={TOTAL_STEPS} skipped={data.skippedSteps} />
+          <StepDots
+            current={step}
+            total={TOTAL_STEPS}
+            skipped={data.skippedSteps}
+          />
         </div>
       </header>
 
       {/* Step Content */}
       <section className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
         {step === 0 && <ProfileStep data={data} onChange={updateAndPersist} />}
-        {step === 1 && <PreferencesStep data={data} onChange={updateAndPersist} />}
+        {step === 1 && (
+          <PreferencesStep data={data} onChange={updateAndPersist} />
+        )}
         {step === 2 && <SearchStep data={data} onChange={updateAndPersist} />}
-        {step === 3 && <DiscoveryStep data={data} onChange={updateAndPersist} />}
+        {step === 3 && (
+          <DiscoveryStep data={data} onChange={updateAndPersist} />
+        )}
       </section>
 
       {/* Navigation */}

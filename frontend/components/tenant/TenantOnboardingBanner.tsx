@@ -16,7 +16,8 @@ export function TenantOnboardingBanner() {
 
   useEffect(() => {
     const data = loadTenantOnboardingData();
-    const shouldShow = !data.completed && !sessionStorage.getItem(DISMISSED_KEY);
+    const shouldShow =
+      !data.completed && !sessionStorage.getItem(DISMISSED_KEY);
     if (shouldShow) {
       const p = getTenantOnboardingProgress(data);
       // Batch both state updates in a single scheduler tick via a timeout
@@ -53,7 +54,9 @@ export function TenantOnboardingBanner() {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-xs text-blue-200/60 shrink-0">{progress}% done</span>
+          <span className="text-xs text-blue-200/60 shrink-0">
+            {progress}% done
+          </span>
         </div>
       </div>
 
