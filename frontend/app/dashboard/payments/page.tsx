@@ -13,7 +13,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
 } from 'lucide-react';
 import {
   BarChart,
@@ -80,8 +79,15 @@ const DEFAULT_FILTERS: PaymentFilters = {
   endDate: '',
 };
 
+function getDateRangeFromFilters(filters: PaymentFilters): DateRange {
+  return {
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+  };
+}
+
 // Mock data generators
-const generateMockMetrics = (dateRange: DateRange): PaymentMetrics => {
+const generateMockMetrics = (): PaymentMetrics => {
   const baseVolume = 125000 + Math.random() * 50000;
   const basePayments = 180 + Math.floor(Math.random() * 50);
   return {
@@ -153,7 +159,7 @@ const generateDailyVolumeData = () => {
 
 const generateMonthlyTrendsData = () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map((month, i) => ({
+  return months.map((month) => ({
     month,
     volume: Math.floor(Math.random() * 100000) + 50000,
     count: Math.floor(Math.random() * 300) + 100,
@@ -622,13 +628,7 @@ export default function PaymentMonitoring() {
   const [filters, setFilters] = useState<PaymentFilters>(DEFAULT_FILTERS);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Generate mock data based on filters
-  const dateRange: DateRange = {
-    startDate: filters.startDate,
-    endDate: filters.endDate,
-  };
-
-  const metrics = useMemo(() => generateMockMetrics(dateRange), [dateRange]);
+  const metrics = useMemo(() => generateMockMetrics(), []);
   const allFailedPayments = useMemo(() => generateMockFailedPayments(20), []);
   const pendingRefunds = useMemo(() => generateMockPendingRefunds(), []);
   const dailyVolumeData = useMemo(() => generateDailyVolumeData(), []);
@@ -666,7 +666,7 @@ export default function PaymentMonitoring() {
       pendingRefunds,
       dailyVolume: dailyVolumeData,
       monthlyTrends: monthlyTrendsData,
-      filters: dateRange,
+      filters: getDateRangeFromFilters(filters),
       exportedAt: new Date().toISOString(),
     };
 
@@ -737,7 +737,7 @@ export default function PaymentMonitoring() {
       }
 
       toast.success(`Payments exported as ${format.toUpperCase()}`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to export data');
     } finally {
       setIsExporting(false);

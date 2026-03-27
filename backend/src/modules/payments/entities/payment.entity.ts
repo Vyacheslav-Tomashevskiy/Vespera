@@ -13,6 +13,15 @@ import { PaymentMethod } from './payment-method.entity';
 export type PaymentMetadata = {
   chargeId?: string;
   refundId?: string;
+  gateway?: string;
+  flow?: string;
+  transactionHash?: string;
+  escrowId?: number;
+  escrowStatus?: string;
+  reconciledAt?: string;
+  retryAttempts?: number;
+  webhookEventType?: string;
+  error?: string;
 } & Record<string, unknown>;
 
 export enum PaymentStatus {

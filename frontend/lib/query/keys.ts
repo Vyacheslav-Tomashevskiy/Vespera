@@ -92,6 +92,15 @@ export const queryKeys = {
     lists: () => [...queryKeys.users.all, 'list'] as const,
     list: (filters: object) => [...queryKeys.users.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.users.all, 'detail', id] as const,
+    activities: (id: string, filters?: object) =>
+      [...queryKeys.users.detail(id), 'activities', filters ?? {}] as const,
+  },
+
+  // ── Roles / Permissions (Admin) ───────────────────────────────────────────
+  roles: {
+    all: ['roles'] as const,
+    list: () => [...queryKeys.roles.all, 'list'] as const,
+    permissions: () => [...queryKeys.roles.all, 'permissions'] as const,
   },
 
   kyc: {

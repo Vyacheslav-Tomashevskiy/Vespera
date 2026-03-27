@@ -8,9 +8,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { User } from './entities/user.entity';
-import { KycStatus } from '../kyc/kyc.entity'; // ✅ moved here with the other imports
 import {
   UpdateUserProfileDto,
   ChangeEmailDto,
@@ -41,7 +40,11 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailHash = this.hashLookupValue(normalizedEmail);
+    return this.userRepository.findOne({
+      where: [{ email: normalizedEmail }, { emailHash }],
+    });
   }
 
   async updateProfile(
@@ -50,6 +53,11 @@ export class UsersService {
   ): Promise<User> {
     const user = await this.findById(userId);
     Object.assign(user, updateProfileDto);
+    if (updateProfileDto.phoneNumber !== undefined) {
+      user.phoneNumberHash = updateProfileDto.phoneNumber
+        ? this.hashLookupValue(updateProfileDto.phoneNumber)
+        : null;
+    }
     const updatedUser = await this.userRepository.save(user);
     this.logger.log(`Profile updated for user: ${user.email}`);
     return updatedUser;
@@ -78,6 +86,7 @@ export class UsersService {
 
     await this.userRepository.update(userId, {
       email: changeEmailDto.newEmail,
+      emailHash: this.hashLookupValue(changeEmailDto.newEmail),
       emailVerified: false,
       verificationToken,
     });
@@ -150,7 +159,10 @@ export class UsersService {
     const { email, password } = userRestoreDto;
 
     const user = await this.userRepository.findOne({
-      where: { email: email.toLowerCase() },
+      where: [
+        { email: email.toLowerCase() },
+        { emailHash: this.hashLookupValue(email.toLowerCase()) },
+      ],
       withDeleted: true,
     });
 
@@ -187,9 +199,12 @@ export class UsersService {
     };
   }
 
-  // ✅ moved inside the class
   async setKycStatus(userId: string, status: KycStatus): Promise<void> {
     await this.userRepository.update(userId, { kycStatus: status });
     this.logger.log(`KYC status updated for user ${userId}: ${status}`);
+  }
+
+  private hashLookupValue(value: string): string {
+    return createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
   }
 }

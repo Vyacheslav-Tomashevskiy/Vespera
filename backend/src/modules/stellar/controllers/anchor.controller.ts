@@ -1,29 +1,32 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Param,
-  Query,
-  UseGuards,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { AnchorService } from '../services/anchor.service';
-import { DepositRequestDto } from '../dto/deposit-request.dto';
-import { WithdrawRequestDto } from '../dto/withdraw-request.dto';
-import { QueryAnchorTransactionsDto } from '../dto/query-anchor-transactions.dto';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '../../users/entities/user.entity';
+import { WebhookSecret } from '../../webhooks/decorators/webhook-secret.decorator';
+import { WebhookSignatureGuard } from '../../webhooks/guards/webhook-signature.guard';
+import { DepositRequestDto } from '../dto/deposit-request.dto';
+import { QueryAnchorTransactionsDto } from '../dto/query-anchor-transactions.dto';
+import { WithdrawRequestDto } from '../dto/withdraw-request.dto';
+import { AnchorService } from '../services/anchor.service';
 
 @ApiTags('Anchor')
 @ApiBearerAuth('JWT-auth')
@@ -89,6 +92,9 @@ export class AnchorController {
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
+  @Public()
+  @UseGuards(WebhookSignatureGuard)
+  @WebhookSecret('ANCHOR_WEBHOOK_SECRET')
   @ApiOperation({
     summary: 'Anchor webhook',
     description: 'Called by anchor to notify status. Not for client use.',

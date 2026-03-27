@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Bell, X, Check, CheckCheck } from 'lucide-react';
 import { notificationService } from '@/lib/services/notification.service';
 import type { Notification } from '@/types/notification';
+import { VirtualList } from '@/components/ui/VirtualList';
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -192,55 +193,61 @@ export default function NotificationCenter() {
                   <p>No notifications</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 hover:bg-gray-50 transition ${
-                        !notification.isRead ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div className="shrink-0 mt-1">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h4 className="text-sm font-semibold text-gray-900">
-                              {notification.title}
-                            </h4>
-                            {!notification.isRead && (
-                              <div className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-1" />
-                            )}
+                <div className="divide-y divide-gray-100 h-full">
+                  <VirtualList
+                    items={notifications}
+                    itemHeight={96}
+                    containerHeight={400}
+                    className="h-full"
+                    renderItem={(notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-gray-50 transition border-b border-gray-100 ${
+                          !notification.isRead ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <div className="shrink-0 mt-1">
+                            {getNotificationIcon(notification.type)}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {notification.message}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-gray-400">
-                              {formatTime(notification.createdAt)}
-                            </span>
-                            {!notification.isRead && (
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="text-sm font-semibold text-gray-900">
+                                {notification.title}
+                              </h4>
+                              {!notification.isRead && (
+                                <div className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-1" />
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 truncate">
+                              {notification.message}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-xs text-gray-400">
+                                {formatTime(notification.createdAt)}
+                              </span>
+                              {!notification.isRead && (
+                                <button
+                                  onClick={() =>
+                                    handleMarkAsRead(notification.id)
+                                  }
+                                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                >
+                                  Mark as read
+                                </button>
+                              )}
                               <button
-                                onClick={() =>
-                                  handleMarkAsRead(notification.id)
-                                }
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                onClick={() => handleDelete(notification.id)}
+                                className="text-xs text-red-600 hover:text-red-700 font-medium ml-auto"
                               >
-                                Mark as read
+                                Delete
                               </button>
-                            )}
-                            <button
-                              onClick={() => handleDelete(notification.id)}
-                              className="text-xs text-red-600 hover:text-red-700 font-medium ml-auto"
-                            >
-                              Delete
-                            </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  />
                 </div>
               )}
             </div>

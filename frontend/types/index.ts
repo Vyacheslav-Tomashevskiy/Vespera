@@ -16,6 +16,25 @@ export interface User {
   updatedAt: string;
 }
 
+// User Activity Types
+export type ActivityType =
+  | 'login'
+  | 'property_view'
+  | 'system_event'
+  | 'profile_update'
+  | 'kyc_submission';
+
+export interface UserActivity {
+  id: string;
+  userId: string;
+  type: ActivityType;
+  description: string;
+  metadata?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
 // Property Types
 export interface Property {
   id: string;
@@ -204,6 +223,16 @@ export interface AnchorTransactionStats {
   averageTimeToAnchorSeconds: number;
 }
 
+export interface AgentTransaction {
+  transactionId: string;
+  agentAddress: string;
+  parties: string[];
+  completed: boolean;
+  blockchainHash: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // KYC Types (Admin)
 export type KycStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
 
@@ -237,6 +266,29 @@ export interface KycVerification {
     [key: string]: unknown;
   };
   documents?: KycDocument[];
+}
+
+// RBAC Types (Admin)
+export interface Permission {
+  id: string;
+  name: string;
+  description?: string | null;
+  resource: string;
+  action: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string | null;
+  systemRole?: string | null;
+  isActive: boolean;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 // API Response Types

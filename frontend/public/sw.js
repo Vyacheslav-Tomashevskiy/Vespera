@@ -1,111 +1,121 @@
 /**
- * Service Worker for offline support and background sync.
+ * Service Worker for offline support, install prompts, and background sync.
  */
 
-const CACHE_NAME = 'chioma-v1';
-const RUNTIME_CACHE = 'chioma-runtime';
+const VERSION = 'chioma-pwa-v2';
+const STATIC_CACHE = `${VERSION}-static`;
+const RUNTIME_CACHE = `${VERSION}-runtime`;
+const OFFLINE_URL = '/offline';
+const PRECACHE_URLS = [
+  '/',
+  '/login',
+  '/signup',
+  OFFLINE_URL,
+  '/manifest.webmanifest',
+  '/manifest.json',
+  '/android_192.png',
+  '/android_512.png',
+  '/apple_touch_180.png',
+  '/favicon_32.png',
+];
 
-// Assets to cache on install
-const PRECACHE_ASSETS = ['/', '/login', '/signup', '/offline'];
-
-// Install event - cache critical assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
-    }),
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting()),
   );
-  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
-          .map((name) => caches.delete(name)),
-      );
-    }),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE)
+            .map((key) => caches.delete(key)),
+        ),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
-
-  // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
 
-  // Skip chrome extensions and non-http(s) requests
+  const url = new URL(request.url);
   if (!url.protocol.startsWith('http')) {
     return;
   }
 
-  // API requests - network only
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() => {
-        return new Response(
-          JSON.stringify({ error: 'Offline', offline: true }),
-          {
+      fetch(request).catch(
+        () =>
+          new Response(JSON.stringify({ error: 'Offline', offline: true }), {
             status: 503,
             headers: { 'Content-Type': 'application/json' },
-          },
-        );
-      }),
+          }),
+      ),
     );
     return;
   }
 
-  // Static assets - cache first
+  if (request.mode === 'navigate') {
+    event.respondWith(navigationFallback(request));
+    return;
+  }
+
   if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot)$/)
+    ['style', 'script', 'image', 'font', 'worker'].includes(request.destination)
   ) {
-    event.respondWith(
-      caches.match(request).then((response) => {
-        return (
-          response ||
-          fetch(request).then((fetchResponse) => {
-            return caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, fetchResponse.clone());
-              return fetchResponse;
-            });
-          })
-        );
-      }),
-    );
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
-  // HTML pages - network first, fallback to cache
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        const responseClone = response.clone();
-        caches.open(RUNTIME_CACHE).then((cache) => {
-          cache.put(request, responseClone);
-        });
-        return response;
-      })
-      .catch(() => {
-        return caches.match(request).then((response) => {
-          return response || caches.match('/offline');
-        });
-      }),
-  );
+  event.respondWith(networkFirst(request));
 });
 
-// Background sync event
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  const title = payload.title || 'Chioma update';
+  const options = {
+    body: payload.body || 'A new update is available.',
+    icon: '/android_192.png',
+    badge: '/favicon_32.png',
+    data: {
+      url: payload.url || '/',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener('sync', (event) => {
   if (event.tag === 'chioma-offline-sync') {
     event.waitUntil(
-      // Notify clients to trigger sync
       self.clients.matchAll().then((clients) => {
         clients.forEach((client) => {
           client.postMessage({
@@ -118,29 +128,68 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Push notification event (for future use)
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Chioma';
-  const options = {
-    body: data.body || 'New notification',
-    icon: '/icon-192x192.png',
-    badge: '/icon-96x96.png',
-    data: data.data || {},
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-
-// Notification click event
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clientList) => {
-      if (clientList.length > 0) {
-        return clientList[0].focus();
-      }
-      return self.clients.openWindow('/');
-    }),
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if ('focus' in client && client.url === targetUrl) {
+            return client.focus();
+          }
+        }
+
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+
+        return undefined;
+      }),
   );
 });
+
+async function navigationFallback(request) {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(RUNTIME_CACHE);
+    cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cachedPage = await caches.match(request);
+    if (cachedPage) {
+      return cachedPage;
+    }
+
+    const offlinePage = await caches.match(OFFLINE_URL);
+    return offlinePage || Response.error();
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then((response) => {
+      cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => cached);
+
+  return cached || networkPromise;
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+
+  try {
+    const response = await fetch(request);
+    cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    return cached || Response.error();
+  }
+}

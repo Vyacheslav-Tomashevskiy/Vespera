@@ -47,13 +47,14 @@ const defaultFilters = {
 export default function LandlordsAuditLogsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const canAccessAudit = ['admin', 'auditor'].includes(user?.role ?? '');
 
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AuditRow | null>(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [, setTotalPages] = useState(1);
   const [filters, setFilters] = useState(defaultFilters);
 
   const queryString = useMemo(() => {
@@ -71,13 +72,13 @@ export default function LandlordsAuditLogsPage() {
   }, [filters, page]);
 
   useEffect(() => {
-    if (!authLoading && user?.role !== 'admin') {
-      router.replace('/landlords');
+    if (!authLoading && !canAccessAudit) {
+      router.replace('/admin');
     }
-  }, [authLoading, user?.role, router]);
+  }, [authLoading, canAccessAudit, router]);
 
   useEffect(() => {
-    if (authLoading || user?.role !== 'admin') {
+    if (authLoading || !canAccessAudit) {
       return;
     }
 
@@ -113,7 +114,7 @@ export default function LandlordsAuditLogsPage() {
     return () => {
       cancelled = true;
     };
-  }, [queryString, authLoading, user?.role]);
+  }, [queryString, authLoading, canAccessAudit]);
 
   if (authLoading) {
     return (
@@ -128,7 +129,7 @@ export default function LandlordsAuditLogsPage() {
     );
   }
 
-  if (user?.role !== 'admin') {
+  if (!canAccessAudit) {
     return null;
   }
 
