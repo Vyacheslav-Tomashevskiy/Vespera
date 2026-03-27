@@ -628,8 +628,6 @@ export default function PaymentMonitoring() {
   const [filters, setFilters] = useState<PaymentFilters>(DEFAULT_FILTERS);
   const [isExporting, setIsExporting] = useState(false);
 
-
-
   const metrics = useMemo(() => generateMockMetrics(), []);
   const allFailedPayments = useMemo(() => generateMockFailedPayments(20), []);
   const pendingRefunds = useMemo(() => generateMockPendingRefunds(), []);
