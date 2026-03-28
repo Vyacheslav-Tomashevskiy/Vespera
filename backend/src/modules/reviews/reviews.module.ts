@@ -1,17 +1,16 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Review } from './review.entity';
 import { ReviewsService } from './reviews.service';
 import { ReviewsController } from './reviews.controller';
 import { ReviewPromptService } from '../reviews/review-prompt.service';
-import { AgreementsModule } from '../agreements/agreements.module';
-import { MaintenanceModule } from '../maintenance/maintenance.module';
+import { GuestReview } from './entities/guest-review.entity';
+import { HostReview } from './entities/host-review.entity';
+import { RentAgreement } from '../rent/entities/rent-contract.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Review]),
-    forwardRef(() => AgreementsModule),
-    forwardRef(() => MaintenanceModule),
+    TypeOrmModule.forFeature([Review, GuestReview, HostReview, RentAgreement]),
   ],
   providers: [ReviewsService, ReviewPromptService],
   controllers: [ReviewsController],

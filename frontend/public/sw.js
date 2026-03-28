@@ -1,19 +1,31 @@
-const APP_CACHE = 'chioma-app-v1';
-const STATIC_CACHE = 'chioma-static-v1';
-const API_CACHE = 'chioma-api-v1';
+/**
+ * Service Worker for offline support, install prompts, and background sync.
+ */
 
-const APP_SHELL = [
+const VERSION = 'chioma-pwa-v2';
+const STATIC_CACHE = `${VERSION}-static`;
+const RUNTIME_CACHE = `${VERSION}-runtime`;
+const OFFLINE_URL = '/offline';
+const PRECACHE_URLS = [
   '/',
-  '/offline',
+  '/login',
+  '/signup',
+  OFFLINE_URL,
   '/manifest.webmanifest',
-  '/favicon.ico',
+  '/manifest.json',
+  '/android_192.png',
+  '/android_512.png',
+  '/apple_touch_180.png',
+  '/favicon_32.png',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(APP_CACHE).then((cache) => cache.addAll(APP_SHELL)).catch(() => {}),
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting()),
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -23,10 +35,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter(
-              (key) =>
-                key !== APP_CACHE && key !== STATIC_CACHE && key !== API_CACHE,
-            )
+            .filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE)
             .map((key) => caches.delete(key)),
         ),
       )
@@ -34,59 +43,153 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
-  const request = event.request;
+  const { request } = event;
+  if (request.method !== 'GET') {
+    return;
+  }
+
   const url = new URL(request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
 
-  // Network-first for API; fallback to cache.
-  if (url.pathname.startsWith('/api/') || url.origin.includes('localhost:3001')) {
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(API_CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match(request)),
+      fetch(request).catch(
+        () =>
+          new Response(JSON.stringify({ error: 'Offline', offline: true }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
     );
     return;
   }
 
-  // Stale-while-revalidate for static assets.
-  if (
-    request.destination === 'script' ||
-    request.destination === 'style' ||
-    request.destination === 'image' ||
-    request.destination === 'font'
-  ) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const networkFetch = fetch(request)
-          .then((response) => {
-            const copy = response.clone();
-            caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
-            return response;
-          })
-          .catch(() => cached);
-        return cached || networkFetch;
-      }),
-    );
-    return;
-  }
-
-  // Navigation: network first with offline fallback.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(APP_CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          return cached || (await caches.match('/offline'));
-        }),
+    event.respondWith(navigationFallback(request));
+    return;
+  }
+
+  if (
+    ['style', 'script', 'image', 'font', 'worker'].includes(request.destination)
+  ) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
+  event.respondWith(networkFirst(request));
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  const title = payload.title || 'Chioma update';
+  const options = {
+    body: payload.body || 'A new update is available.',
+    icon: '/android_192.png',
+    badge: '/favicon_32.png',
+    data: {
+      url: payload.url || '/',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'chioma-offline-sync') {
+    event.waitUntil(
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'BACKGROUND_SYNC',
+            tag: event.tag,
+          });
+        });
+      }),
     );
   }
 });
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if ('focus' in client && client.url === targetUrl) {
+            return client.focus();
+          }
+        }
+
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+
+        return undefined;
+      }),
+  );
+});
+
+async function navigationFallback(request) {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(RUNTIME_CACHE);
+    cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cachedPage = await caches.match(request);
+    if (cachedPage) {
+      return cachedPage;
+    }
+
+    const offlinePage = await caches.match(OFFLINE_URL);
+    return offlinePage || Response.error();
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then((response) => {
+      cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => cached);
+
+  return cached || networkPromise;
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+
+  try {
+    const response = await fetch(request);
+    cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    return cached || Response.error();
+  }
+}

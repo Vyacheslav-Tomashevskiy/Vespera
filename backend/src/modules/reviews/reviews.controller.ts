@@ -1,11 +1,27 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { Review } from './review.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PostGuestReviewDto } from './dto/post-guest-review.dto';
+import { PostHostReviewDto } from './dto/post-host-review.dto';
+import { UpdateReviewDto } from './dto/update-review.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
+@UseGuards(JwtAuthGuard)
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
@@ -62,5 +78,69 @@ export class ReviewsController {
   ): Promise<{ success: boolean }> {
     await this.reviewsService.reportReview(reviewId);
     return { success: true };
+  }
+
+  @Post('guest')
+  async postGuestReview(
+    @Body() dto: PostGuestReviewDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.reviewsService.postGuestReview(dto, req.user?.id ?? '');
+  }
+
+  @Post('host')
+  async postHostReview(
+    @Body() dto: PostHostReviewDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.reviewsService.postHostReview(dto, req.user?.id ?? '');
+  }
+
+  @Get('guest/:userId')
+  async getGuestReviews(
+    @Param('userId') userId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.reviewsService.getGuestReviews(
+      userId,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Get('host/:userId')
+  async getHostReviews(
+    @Param('userId') userId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.reviewsService.getHostReviews(
+      userId,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Get('reputation/:userId')
+  async getReputation(@Param('userId') userId: string) {
+    return this.reviewsService.getReputation(userId);
+  }
+
+  @Patch(':id')
+  async updateReview(
+    @Param('id') id: string,
+    @Body() dto: UpdateReviewDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.reviewsService.updateReview(id, dto, req.user?.id ?? '');
+  }
+
+  @Delete(':id')
+  async deleteReview(
+    @Param('id') id: string,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.reviewsService.deleteReview(id, req.user?.id ?? '');
   }
 }

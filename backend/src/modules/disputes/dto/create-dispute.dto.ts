@@ -42,4 +42,9 @@ export class CreateDisputeDto {
   @IsString()
   @MaxLength(1000)
   metadata?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  idempotencyKey?: string;
 }

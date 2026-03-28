@@ -25,24 +25,28 @@ Use these credentials to test the platform:
 ## Role Capabilities
 
 ### 👨‍💼 Admin
+
 - Full system access
 - User management
 - Platform configuration
 - Analytics and reporting
 
 ### 🏢 Agent
+
 - Property listings management
 - Client communication
 - Agreement management
 - Commission tracking
 
 ### 🏠 Landlord
+
 - Property listings creation
 - Tenant management
 - Rent collection
 - Property maintenance
 
 ### 👤 Tenant
+
 - Property search and browsing
 - Rental applications
 - Payment processing

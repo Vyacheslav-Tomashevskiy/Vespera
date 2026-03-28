@@ -305,3 +305,23 @@ pub struct AgreementInput {
     pub metadata_uri: String,
     pub attributes: Vec<Attribute>,
 }
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum VersionStatus {
+    Active,
+    Deprecated,
+    Archived,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractVersion {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+    pub label: String,
+    pub status: VersionStatus,
+    pub hash: Bytes,
+    pub updated_at: u64,
+}

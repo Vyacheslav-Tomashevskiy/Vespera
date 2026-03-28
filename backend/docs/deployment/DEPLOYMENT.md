@@ -78,6 +78,7 @@ If health checks fail during deployment, automatic rollback occurs.
 ### Automated Backups
 
 Backups run daily via cron:
+
 ```bash
 0 2 * * * /path/to/backup-db.sh
 ```
@@ -214,5 +215,6 @@ tail -f /var/log/nginx/chioma-error.log
 ## Support
 
 For deployment issues, contact:
+
 - DevOps Team: devops@chioma.app
 - On-call: +1-XXX-XXX-XXXX

@@ -15,6 +15,7 @@ This produces `openapi.json` in the backend root. Use it to generate client SDKs
 Install [OpenAPI Generator](https://openapi-generator.tech/docs/installation) (Docker or CLI), then for example:
 
 **JavaScript (axios):**
+
 ```bash
 npx @openapitools/openapi-generator-cli generate \
   -i backend/openapi.json \
@@ -23,6 +24,7 @@ npx @openapitools/openapi-generator-cli generate \
 ```
 
 **TypeScript (fetch):**
+
 ```bash
 npx @openapitools/openapi-generator-cli generate \
   -i backend/openapi.json \
@@ -31,6 +33,7 @@ npx @openapitools/openapi-generator-cli generate \
 ```
 
 **Python:**
+
 ```bash
 npx @openapitools/openapi-generator-cli generate \
   -i backend/openapi.json \

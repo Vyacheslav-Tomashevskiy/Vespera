@@ -591,3 +591,21 @@ pub(crate) fn timelock_action_executed(env: &Env, action_id: String) {
 pub(crate) fn timelock_action_cancelled(env: &Env, action_id: String) {
     TimelockActionCancelled { action_id }.publish(env);
 }
+
+// ─── Versioning Events ────────────────────────────────────────────────────────
+
+#[contractevent(topics = ["version_updated"])]
+pub struct VersionUpdated {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+}
+
+pub(crate) fn version_updated(env: &Env, major: u32, minor: u32, patch: u32) {
+    VersionUpdated {
+        major,
+        minor,
+        patch,
+    }
+    .publish(env);
+}

@@ -214,6 +214,12 @@ export default function AdminUsersPage() {
             <option value="admin" className="bg-slate-900">
               Admin
             </option>
+            <option value="auditor" className="bg-slate-900">
+              Auditor
+            </option>
+            <option value="support" className="bg-slate-900">
+              Support
+            </option>
             <option value="landlord" className="bg-slate-900">
               Landlord
             </option>

@@ -16,6 +16,7 @@ The database connection is failing due to authentication issues. Here's how to g
 4. Copy the full connection string
 
 The connection string should look like:
+
 ```
 postgresql://[user]:[password]@[host]/[database]?sslmode=require
 ```
@@ -55,6 +56,7 @@ node test-db-connection.js
 ```
 
 If successful, you'll see:
+
 ```
 ✅ Connected successfully!
 ✅ Query executed: { now: '2024-03-22T...' }
@@ -82,7 +84,7 @@ pnpm migration:run
 If your password contains special characters like `@`, `#`, `$`, etc., you need to URL-encode them:
 
 | Character | Encoded |
-|-----------|---------|
+| --------- | ------- |
 | @         | %40     |
 | #         | %23     |
 | $         | %24     |
@@ -94,6 +96,7 @@ If your password contains special characters like `@`, `#`, `$`, etc., you need 
 | ?         | %3F     |
 
 Example:
+
 - Password: `my$ecret@123`
 - Encoded: `my%24ecret%40123`
 
@@ -112,7 +115,6 @@ Neon offers two connection types:
 
 1. **Pooled** (recommended): Uses connection pooling, better for serverless
    - Format: `@[project]-pooler.region.aws.neon.tech`
-   
 2. **Direct**: Direct connection to database
    - Format: `@[project].region.aws.neon.tech`
 
@@ -121,11 +123,13 @@ Try both if one doesn't work.
 ## Alternative: Use Neon CLI
 
 Install Neon CLI:
+
 ```bash
 npm install -g neonctl
 ```
 
 Get connection string:
+
 ```bash
 neonctl connection-string --project-id your-project-id
 ```
@@ -140,6 +144,7 @@ neonctl connection-string --project-id your-project-id
 ---
 
 Once you have the correct credentials, update the files and run:
+
 ```bash
 ./setup-production.sh
 ```

@@ -3,17 +3,39 @@
  * Matches backend entity structures
  */
 
+// Security Types
+export * from './security';
+
 // User Types
 export interface User {
   id: string;
   email: string;
   name?: string;
-  role: 'tenant' | 'landlord' | 'agent' | 'admin';
+  role: 'tenant' | 'landlord' | 'agent' | 'admin' | 'support' | 'auditor';
   phone?: string;
   avatar?: string;
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// User Activity Types
+export type ActivityType =
+  | 'login'
+  | 'property_view'
+  | 'system_event'
+  | 'profile_update'
+  | 'kyc_submission';
+
+export interface UserActivity {
+  id: string;
+  userId: string;
+  type: ActivityType;
+  description: string;
+  metadata?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
 }
 
 // Property Types
@@ -37,6 +59,17 @@ export interface Property {
   landlord?: User;
   createdAt: string;
   updatedAt: string;
+  /** API-aligned optional fields (Nest/TypeORM property listing) */
+  viewCount?: number;
+  favoriteCount?: number;
+  lastViewedAt?: string | null;
+  verificationStatus?: string | null;
+  virtualTourUrl?: string | null;
+  videoUrl?: string | null;
+  floorPlanUrl?: string | null;
+  energyRating?: string | null;
+  petPolicy?: string | null;
+  parkingSpaces?: number | null;
 }
 
 export interface PropertyImage {
@@ -70,6 +103,15 @@ export interface RentalAgreement {
   blockchainTxHash?: string;
   createdAt: string;
   updatedAt: string;
+  renewalOption?: boolean | null;
+  renewalNoticeDate?: string | null;
+  moveInDate?: string | null;
+  moveOutDate?: string | null;
+  utilitiesIncluded?: boolean | null;
+  maintenanceResponsibility?: string | null;
+  earlyTerminationFee?: number | null;
+  lateFeePercentage?: number | null;
+  gracePeriodDays?: number | null;
 }
 
 // Payment Types
@@ -137,16 +179,20 @@ export interface DisputeEvidence {
 
 // Audit Types
 export interface AuditLog {
-  id: string;
-  userId: string;
+  id: number;
+  performedBy?: string;
   user?: User;
   action: string;
-  entity: string;
-  entityId: string;
-  changes?: Record<string, unknown>;
+  entityType?: string;
+  entityId?: string;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  status?: 'SUCCESS' | 'FAILURE';
+  level?: 'INFO' | 'WARN' | 'ERROR' | 'SECURITY';
   ipAddress?: string;
   userAgent?: string;
-  createdAt: string;
+  performedAt: string;
 }
 
 // Transaction Types
@@ -162,6 +208,52 @@ export interface Transaction {
   metadata?: Record<string, unknown>;
   blockchainTxHash?: string;
   createdAt: string;
+}
+
+export type AnchorTransactionType = 'deposit' | 'withdrawal';
+export type AnchorTransactionStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded';
+
+export interface AnchorTransaction {
+  id: string;
+  anchorTransactionId?: string | null;
+  type: AnchorTransactionType;
+  status: AnchorTransactionStatus;
+  amount: number | string;
+  currency: string;
+  walletAddress: string;
+  paymentMethod?: string | null;
+  destination?: string | null;
+  stellarTransactionId?: string | null;
+  memo?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnchorTransactionStats {
+  total: number;
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  refunded: number;
+  verified: number;
+  averageTimeToAnchorSeconds: number;
+}
+
+export interface AgentTransaction {
+  transactionId: string;
+  agentAddress: string;
+  parties: string[];
+  completed: boolean;
+  blockchainHash: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // KYC Types (Admin)
@@ -199,6 +291,29 @@ export interface KycVerification {
   documents?: KycDocument[];
 }
 
+// RBAC Types (Admin)
+export interface Permission {
+  id: string;
+  name: string;
+  description?: string | null;
+  resource: string;
+  action: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string | null;
+  systemRole?: string | null;
+  isActive: boolean;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data: T;
@@ -218,4 +333,28 @@ export interface ApiError {
   message: string;
   statusCode: number;
   error?: string;
+}
+
+// Document Types
+export type DocumentType = 'pdf' | 'image' | 'docx' | 'xlsx' | 'txt';
+export type DocumentCategory =
+  | 'lease'
+  | 'identity'
+  | 'payment'
+  | 'maintenance'
+  | 'inspection'
+  | 'other';
+
+export interface Document {
+  id: string;
+  name: string;
+  type: DocumentType;
+  url: string;
+  size: number;
+  uploadedBy: string;
+  uploadedByName?: string;
+  uploadedAt: string;
+  category?: DocumentCategory;
+  description?: string;
+  thumbnailUrl?: string;
 }

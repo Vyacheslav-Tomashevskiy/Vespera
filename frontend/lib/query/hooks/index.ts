@@ -29,9 +29,16 @@ export {
 } from './use-transactions';
 
 export {
+  useAnchorTransactions,
+  useAnchorTransaction,
+  useAnchorTransactionStats,
+} from './use-anchor-transactions';
+
+export {
   useAdminUsers,
   useSuspendUser,
   useActivateUser,
+  useVerifyUser,
 } from './use-admin-users';
 
 export {
@@ -39,3 +46,35 @@ export {
   useApproveKycVerification,
   useRejectKycVerification,
 } from './use-kyc-verifications';
+
+export {
+  useAdminRoles,
+  useAdminPermissions,
+  useAssignUserRole,
+  useUpdateRolePermissions,
+} from './use-admin-roles';
+
+export {
+  useSecurityEvents,
+  useThreats,
+  useThreatStats,
+  useSecurityIncidents,
+  useIncidentMetrics,
+  useMarkThreatFalsePositive,
+  useResolveSecurityIncident,
+} from './use-security-dashboard';
+
+export { useOptimisticUpdate } from './use-optimistic-update';
+export type {
+  UseOptimisticUpdateOptions,
+  UseOptimisticUpdateResult,
+} from './use-optimistic-update';
+
+export {
+  useCacheInvalidation,
+  invalidationDependencies,
+} from './use-cache-invalidation';
+export type {
+  CacheInvalidationConfig,
+  UseCacheInvalidationResult,
+} from './use-cache-invalidation';

@@ -423,3 +423,145 @@ fn test_verified_at_timestamp() {
     let property = client.get_property(&property_id).unwrap();
     assert_eq!(property.verified_at, Some(2000));
 }
+
+// ─── Issue #649: Property Registration & Verification Tests ───────────────────
+
+#[test]
+fn test_register_property_with_various_types() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_types = [
+        ("APARTMENT-001", "QmApartment001"),
+        ("HOUSE-001", "QmHouse001"),
+        ("COMMERCIAL-001", "QmCommercial001"),
+    ];
+
+    for (prop_id, metadata) in property_types.iter() {
+        let property_id = String::from_str(&env, prop_id);
+        let metadata_hash = String::from_str(&env, metadata);
+
+        let result = client.try_register_property(&landlord, &property_id, &metadata_hash);
+        assert!(result.is_ok());
+
+        let property = client.get_property(&property_id).unwrap();
+        assert_eq!(property.property_id, property_id);
+        assert!(!property.verified);
+    }
+
+    assert_eq!(client.get_property_count(), 3);
+}
+
+#[test]
+fn test_verify_property_updates_status() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-VERIFY-TEST");
+    let metadata_hash = String::from_str(&env, "QmVerifyTest");
+
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    let property_before = client.get_property(&property_id).unwrap();
+    assert!(!property_before.verified);
+    assert!(property_before.verified_at.is_none());
+
+    client.verify_property(&admin, &property_id);
+
+    let property_after = client.get_property(&property_id).unwrap();
+    assert!(property_after.verified);
+    assert!(property_after.verified_at.is_some());
+}
+
+#[test]
+fn test_get_property_returns_all_fields() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    env.ledger().with_mut(|li| li.timestamp = 1);
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-FIELDS-TEST");
+    let metadata_hash = String::from_str(&env, "QmFieldsTest");
+
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.property_id, property_id);
+    assert_eq!(property.landlord, landlord);
+    assert_eq!(property.metadata_hash, metadata_hash);
+    assert!(!property.verified);
+    assert!(property.registered_at > 0);
+    assert!(property.verified_at.is_none());
+}
+
+#[test]
+fn test_get_property_nonexistent_returns_none() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let nonexistent_id = String::from_str(&env, "NONEXISTENT-PROP");
+    let result = client.get_property(&nonexistent_id);
+    assert!(result.is_none());
+}
+
+#[test]
+fn test_property_count_accuracy() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    assert_eq!(client.get_property_count(), 0);
+
+    for i in 0..5 {
+        let property_id = match i {
+            0 => String::from_str(&env, "PROP-0"),
+            1 => String::from_str(&env, "PROP-1"),
+            2 => String::from_str(&env, "PROP-2"),
+            3 => String::from_str(&env, "PROP-3"),
+            4 => String::from_str(&env, "PROP-4"),
+            _ => String::from_str(&env, "PROP-5"),
+        };
+        let metadata_hash = match i {
+            0 => String::from_str(&env, "QmMetadata0"),
+            1 => String::from_str(&env, "QmMetadata1"),
+            2 => String::from_str(&env, "QmMetadata2"),
+            3 => String::from_str(&env, "QmMetadata3"),
+            4 => String::from_str(&env, "QmMetadata4"),
+            _ => String::from_str(&env, "QmMetadata5"),
+        };
+        client.register_property(&landlord, &property_id, &metadata_hash);
+        assert_eq!(client.get_property_count(), (i + 1) as u32);
+    }
+}

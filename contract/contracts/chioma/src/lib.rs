@@ -6,7 +6,7 @@
 //! @title Chioma
 //! @notice On-chain rental agreement lifecycle: create, sign, submit, cancel, and query agreements.
 
-use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String, Vec};
 
 mod agreement;
 mod deposit_interest;
@@ -28,6 +28,9 @@ mod tests_multi_token;
 
 #[cfg(test)]
 mod tests_deposit_interest;
+
+#[cfg(test)]
+mod tests_multisig_governance;
 
 #[cfg(test)]
 mod tests_errors;
@@ -58,10 +61,11 @@ pub use multi_token::{
 pub use storage::DataKey;
 pub use types::{
     ActionType, AdminProposal, AgreementInput, AgreementStatus, AgreementTerms, AgreementWithToken,
-    Attribute, CompoundingFrequency, Config, ContractState, DepositInterest, DepositInterestConfig,
-    ErrorContext, InterestAccrual, InterestRecipient, MultiSigConfig, PauseState, PaymentSplit,
-    RateLimitConfig, RateLimitReason, RentAgreement, RoyaltyConfig, RoyaltyPayment, SupportedToken,
-    TimelockAction, TimelockActionType, TokenExchangeRate, UserCallCount,
+    Attribute, CompoundingFrequency, Config, ContractState, ContractVersion, DepositInterest,
+    DepositInterestConfig, ErrorContext, InterestAccrual, InterestRecipient, MultiSigConfig,
+    PauseState, PaymentSplit, RateLimitConfig, RateLimitReason, RentAgreement, RoyaltyConfig,
+    RoyaltyPayment, SupportedToken, TimelockAction, TimelockActionType, TokenExchangeRate,
+    UserCallCount, VersionStatus,
 };
 
 /// Chioma rental agreement contract.
@@ -73,6 +77,102 @@ pub struct Contract;
 #[allow(clippy::too_many_arguments)]
 #[contractimpl]
 impl Contract {
+    // --- Versioning Functions ---
+
+    /// Get the current contract version.
+    pub fn get_version(env: Env) -> ContractVersion {
+        env.storage()
+            .instance()
+            .get(&DataKey::CurrentVersion)
+            .unwrap_or(ContractVersion {
+                major: 0,
+                minor: 1,
+                patch: 0,
+                label: String::from_str(&env, "initial"),
+                status: VersionStatus::Active,
+                hash: Bytes::new(&env),
+                updated_at: env.ledger().timestamp(),
+            })
+    }
+
+    /// Record a new contract version (admin only).
+    pub fn record_version(env: Env, version: ContractVersion) -> Result<(), RentalError> {
+        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        state.admin.require_auth();
+
+        env.storage()
+            .instance()
+            .set(&DataKey::CurrentVersion, &version);
+
+        let mut history: Vec<ContractVersion> = env
+            .storage()
+            .instance()
+            .get(&DataKey::VersionHistory)
+            .unwrap_or(Vec::new(&env));
+
+        history.push_back(version.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::VersionHistory, &history);
+        env.storage().instance().extend_ttl(500000, 500000);
+
+        events::version_updated(&env, version.major, version.minor, version.patch);
+
+        Ok(())
+    }
+
+    /// Update the status of an existing version (admin only).
+    pub fn update_version_status(
+        env: Env,
+        major: u32,
+        minor: u32,
+        patch: u32,
+        status: VersionStatus,
+    ) -> Result<(), RentalError> {
+        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        state.admin.require_auth();
+
+        let mut history: Vec<ContractVersion> = env
+            .storage()
+            .instance()
+            .get(&DataKey::VersionHistory)
+            .ok_or(RentalError::InvalidState)?;
+
+        let mut found = false;
+        for i in 0..history.len() {
+            let mut v = history.get(i).unwrap();
+            if v.major == major && v.minor == minor && v.patch == patch {
+                v.status = status.clone();
+                history.set(i, v.clone());
+
+                // If this is the current version, update it too
+                let current = Self::get_version(env.clone());
+                if current.major == major && current.minor == minor && current.patch == patch {
+                    env.storage().instance().set(&DataKey::CurrentVersion, &v);
+                }
+
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            return Err(RentalError::InvalidState); // Version not found
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::VersionHistory, &history);
+        Ok(())
+    }
+
+    /// Get the deployment history of the contract.
+    pub fn get_version_history(env: Env) -> Vec<ContractVersion> {
+        env.storage()
+            .instance()
+            .get(&DataKey::VersionHistory)
+            .unwrap_or(Vec::new(&env))
+    }
     /// Initialize the contract with an admin and configuration.
     ///
     /// @notice One-time setup: sets admin and config. Callable only once.

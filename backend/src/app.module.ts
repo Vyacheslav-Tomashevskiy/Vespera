@@ -19,11 +19,10 @@ import { PropertiesModule } from './modules/properties/properties.module';
 import { StellarModule } from './modules/stellar/stellar.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
-import { ThrottlerExceptionFilter } from './common/filters/throttler-exception.filter';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PaymentModule } from './modules/payments/payment.module';
 import { ProfileModule } from './modules/profile/profile.module';
-import { StellarPayment } from './modules/stellar/entities/stellar-payment.entity';
 import { SecurityModule } from './modules/security/security.module';
 import { AuthRateLimitMiddleware } from './modules/auth/middleware/rate-limit.middleware';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -50,6 +49,11 @@ import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { AiModule } from './modules/ai/ai.module';
 import { LoggerModule } from './common/services/logger.module';
 import { QueuesModule } from './modules/queues/queues.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { ScreeningModule } from './modules/screening/screening.module';
+import { ReferralModule } from './modules/referral/referral.module';
+import { LockModule } from './common/lock';
+import { IdempotencyModule } from './common/idempotency';
 
 const appLogger = new Logger('AppModule');
 
@@ -60,67 +64,69 @@ const appLogger = new Logger('AppModule');
       isGlobal: true,
     }),
     LoggerModule,
+    LockModule,
+    IdempotencyModule,
     require('./common/services/encryption.module').EncryptionModule,
     process.env.NODE_ENV === 'test'
       ? CacheModule.register({
-        isGlobal: true,
-        ttl: 600,
-        max: 100,
-      })
+          isGlobal: true,
+          ttl: 600,
+          max: 100,
+        })
       : CacheModule.registerAsync({
-        isGlobal: true,
-        inject: [],
-        useFactory: async () => {
-          // Use Upstash REST API if URL is provided (better for serverless/Render)
-          if (process.env.REDIS_URL && process.env.REDIS_TOKEN) {
-            appLogger.log('[Redis] Using Upstash REST API');
+          isGlobal: true,
+          inject: [],
+          useFactory: async () => {
+            // Use Upstash REST API if URL is provided (better for serverless/Render)
+            if (process.env.REDIS_URL && process.env.REDIS_TOKEN) {
+              appLogger.log('[Redis] Using Upstash REST API');
+
+              return {
+                store: upstashStore({
+                  url: process.env.REDIS_URL,
+                  token: process.env.REDIS_TOKEN,
+                  ttl: 600,
+                }),
+              };
+            }
+
+            // Fallback to ioredis for traditional Redis connections
+            const Redis = require('ioredis');
+
+            const redisConfig: any = {
+              host: process.env.REDIS_HOST || 'localhost',
+              port: parseInt(process.env.REDIS_PORT || '6379'),
+              password: process.env.REDIS_PASSWORD || undefined,
+              maxRetriesPerRequest: 3,
+              retryStrategy(times: number) {
+                const delay = Math.min(times * 50, 2000);
+                return delay;
+              },
+              connectTimeout: 10000,
+            };
+
+            // Enable TLS for production Redis (e.g., Upstash)
+            if (process.env.REDIS_TLS === 'true') {
+              redisConfig.tls = {
+                rejectUnauthorized: true,
+              };
+            }
+
+            // Add username if provided (for Redis 6+ ACL)
+            if (process.env.REDIS_USERNAME) {
+              redisConfig.username = process.env.REDIS_USERNAME;
+            }
+
+            appLogger.log('[Redis] Using ioredis with TLS');
+
+            const client = new Redis(redisConfig);
 
             return {
-              store: upstashStore({
-                url: process.env.REDIS_URL,
-                token: process.env.REDIS_TOKEN,
-                ttl: 600,
-              }),
+              store: await redisStore(client),
+              ttl: 600,
             };
-          }
-
-          // Fallback to ioredis for traditional Redis connections
-          const Redis = require('ioredis');
-
-          const redisConfig: any = {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379'),
-            password: process.env.REDIS_PASSWORD || undefined,
-            maxRetriesPerRequest: 3,
-            retryStrategy(times: number) {
-              const delay = Math.min(times * 50, 2000);
-              return delay;
-            },
-            connectTimeout: 10000,
-          };
-
-          // Enable TLS for production Redis (e.g., Upstash)
-          if (process.env.REDIS_TLS === 'true') {
-            redisConfig.tls = {
-              rejectUnauthorized: true,
-            };
-          }
-
-          // Add username if provided (for Redis 6+ ACL)
-          if (process.env.REDIS_USERNAME) {
-            redisConfig.username = process.env.REDIS_USERNAME;
-          }
-
-          appLogger.log('[Redis] Using ioredis with TLS');
-
-          const client = new Redis(redisConfig);
-
-          return {
-            store: await redisStore(client),
-            ttl: 600,
-          };
-        },
-      }),
+          },
+        }),
     AppCacheModule,
     ThrottlerModule.forRoot([
       {
@@ -215,6 +221,9 @@ const appLogger = new Logger('AppModule');
     SearchModule,
     CleanupModule,
     AiModule,
+    WebhooksModule,
+    ScreeningModule,
+    ReferralModule,
     ...(process.env.OPENAPI_GENERATE !== 'true' ? [RateLimitingModule] : []),
     // Maintenance module
     require('./modules/maintenance/maintenance.module').MaintenanceModule,
@@ -237,7 +246,7 @@ const appLogger = new Logger('AppModule');
     },
     {
       provide: APP_FILTER,
-      useClass: ThrottlerExceptionFilter,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

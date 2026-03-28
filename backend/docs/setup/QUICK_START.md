@@ -10,6 +10,7 @@ chmod +x setup-production.sh
 ```
 
 This will:
+
 - ✅ Install dependencies
 - ✅ Run database migrations
 - ✅ Seed demo users for all roles
@@ -27,12 +28,14 @@ Tenant:   tenant@chioma.demo   / Tenant@Demo2024!
 ## Start the Application
 
 ### Backend
+
 ```bash
 cd backend
 pnpm start:prod
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run dev
@@ -69,17 +72,21 @@ pnpm migration:run
 ## Troubleshooting
 
 ### SSL Connection Error
+
 - Ensure `DATABASE_URL` includes `?sslmode=require`
 - Set `DB_SSL=true` in environment
 
 ### Migration Errors
+
 ```bash
 cd backend
 pnpm typeorm migration:show
 ```
 
 ### Seed Errors
+
 Use `--force` flag to update existing users:
+
 ```bash
 pnpm seed:admin:prod
 ```
@@ -87,6 +94,7 @@ pnpm seed:admin:prod
 ## Need Help?
 
 Check the detailed guides:
+
 1. [PRODUCTION_SETUP.md](backend/PRODUCTION_SETUP.md) for step-by-step instructions
 2. [SETUP_COMPLETE.md](SETUP_COMPLETE.md) for what was fixed
 3. Application logs for runtime errors

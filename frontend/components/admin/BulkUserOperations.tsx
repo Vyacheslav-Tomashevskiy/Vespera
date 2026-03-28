@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import {
   ChevronLeft,
@@ -89,6 +90,8 @@ function getRoleBadge(role: User['role']): string {
     landlord: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     tenant: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     agent: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    support: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    auditor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
   };
   return colors[role] ?? 'bg-white/5 text-blue-300/40 border-white/10';
 }
@@ -259,9 +262,12 @@ export const BulkUserOperations: React.FC<BulkUserOperationsProps> = ({
                           {(user.name ?? user.email).charAt(0)}
                         </div>
                         <div>
-                          <span className="text-white font-medium block">
+                          <Link
+                            href={`/admin/users/${user.id}`}
+                            className="text-white font-medium block hover:text-blue-400 transition-colors"
+                          >
                             {user.name ?? 'Unknown'}
-                          </span>
+                          </Link>
                           <span className="text-[10px] text-blue-300/40 font-mono">
                             {user.email}
                           </span>

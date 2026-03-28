@@ -30,7 +30,9 @@ function buildQueryString(params: KycVerificationListParams): string {
   return str ? `?${str}` : '';
 }
 
-export function usePendingKycVerifications(params: KycVerificationListParams = {}) {
+export function usePendingKycVerifications(
+  params: KycVerificationListParams = {},
+) {
   return useQuery({
     queryKey: queryKeys.kyc.list(params),
     queryFn: async () => {
@@ -42,10 +44,68 @@ export function usePendingKycVerifications(params: KycVerificationListParams = {
   });
 }
 
+export function useRejectedKycVerifications(
+  params: KycVerificationListParams = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.kyc.list({ ...params, status: 'REJECTED' }),
+    queryFn: async () => {
+      const { data } = await apiClient.get<PaginatedResponse<KycVerification>>(
+        `/admin/kyc/rejected${buildQueryString(params)}`,
+      );
+      return data;
+    },
+  });
+}
+
+export function useKycVerificationDetail(verificationId?: string) {
+  return useQuery({
+    queryKey: verificationId
+      ? queryKeys.kyc.detail(verificationId)
+      : [...queryKeys.kyc.all, 'detail', 'missing-id'],
+    enabled: Boolean(verificationId),
+    queryFn: async () => {
+      if (!verificationId) {
+        throw new Error('KYC verification ID is required');
+      }
+
+      try {
+        const { data } = await apiClient.get<KycVerification>(
+          `/admin/kyc/${verificationId}`,
+        );
+        return data;
+      } catch {
+        const candidateEndpoints = [
+          `/admin/kyc/pending?limit=100&search=${encodeURIComponent(verificationId)}`,
+          `/admin/kyc/rejected?limit=100&search=${encodeURIComponent(verificationId)}`,
+        ];
+
+        for (const endpoint of candidateEndpoints) {
+          try {
+            const { data } =
+              await apiClient.get<PaginatedResponse<KycVerification>>(endpoint);
+            const match = data.data.find((item) => item.id === verificationId);
+            if (match) {
+              return match;
+            }
+          } catch {
+            continue;
+          }
+        }
+
+        throw new Error('KYC verification not found');
+      }
+    },
+  });
+}
+
 export function useApproveKycVerification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ verificationId, reason }: UpdateKycDecisionPayload) => {
+    mutationFn: async ({
+      verificationId,
+      reason,
+    }: UpdateKycDecisionPayload) => {
       await apiClient.post(`/admin/kyc/${verificationId}/approve`, {
         reason,
       });
@@ -60,7 +120,10 @@ export function useApproveKycVerification() {
 export function useRejectKycVerification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ verificationId, reason }: UpdateKycDecisionPayload) => {
+    mutationFn: async ({
+      verificationId,
+      reason,
+    }: UpdateKycDecisionPayload) => {
       await apiClient.post(`/admin/kyc/${verificationId}/reject`, {
         reason,
       });

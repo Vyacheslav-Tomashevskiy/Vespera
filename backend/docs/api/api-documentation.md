@@ -16,11 +16,13 @@ Production: https://api.chioma.com/api
 The API supports two authentication methods:
 
 ### 1. JWT Bearer Token (Email/Password)
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### 2. Stellar Wallet Authentication (SEP-0010)
+
 Follow the [Stellar Authentication Flow](./stellar-auth.md) for detailed implementation.
 
 ## API Endpoints
@@ -28,6 +30,7 @@ Follow the [Stellar Authentication Flow](./stellar-auth.md) for detailed impleme
 ### Authentication
 
 #### Register User
+
 ```http
 POST /auth/register
 Content-Type: application/json
@@ -42,6 +45,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -59,6 +63,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /auth/login
 Content-Type: application/json
@@ -70,6 +75,7 @@ Content-Type: application/json
 ```
 
 #### Stellar Authentication
+
 ```http
 POST /auth/stellar/challenge
 Content-Type: application/json
@@ -93,12 +99,14 @@ Content-Type: application/json
 ### Users
 
 #### Get Current User Profile
+
 ```http
 GET /users/me
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid-string",
@@ -113,6 +121,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 #### Update User Profile
+
 ```http
 PUT /users/me
 Authorization: Bearer <jwt_token>
@@ -128,6 +137,7 @@ Content-Type: application/json
 ### Rent Agreements
 
 #### Create Agreement
+
 ```http
 POST /agreements
 Authorization: Bearer <jwt_token>
@@ -151,6 +161,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "agreement-uuid",
@@ -160,8 +171,8 @@ Content-Type: application/json
   "agentId": "agent-uuid",
   "landlordStellarPubKey": "GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q",
   "tenantStellarPubKey": "GD7J3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q",
-  "monthlyRent": 1500.00,
-  "securityDeposit": 3000.00,
+  "monthlyRent": 1500.0,
+  "securityDeposit": 3000.0,
   "agentCommissionRate": 5.0,
   "startDate": "2024-02-01",
   "endDate": "2025-01-31",
@@ -173,12 +184,14 @@ Content-Type: application/json
 ```
 
 #### List Agreements
+
 ```http
 GET /agreements?page=1&limit=10&status=ACTIVE&landlordId=landlord-uuid
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -187,7 +200,7 @@ Authorization: Bearer <jwt_token>
       "propertyId": "property-uuid",
       "landlordId": "landlord-uuid",
       "tenantId": "tenant-uuid",
-      "monthlyRent": 1500.00,
+      "monthlyRent": 1500.0,
       "status": "ACTIVE",
       "startDate": "2024-02-01",
       "endDate": "2025-01-31",
@@ -204,12 +217,14 @@ Authorization: Bearer <jwt_token>
 ```
 
 #### Get Specific Agreement
+
 ```http
 GET /agreements/{agreementId}
 Authorization: Bearer <jwt_token>
 ```
 
 #### Update Agreement
+
 ```http
 PUT /agreements/{agreementId}
 Authorization: Bearer <jwt_token>
@@ -222,6 +237,7 @@ Content-Type: application/json
 ```
 
 #### Terminate Agreement
+
 ```http
 DELETE /agreements/{agreementId}
 Authorization: Bearer <jwt_token>
@@ -234,6 +250,7 @@ Content-Type: application/json
 ```
 
 #### Record Payment
+
 ```http
 POST /agreements/{agreementId}/pay
 Authorization: Bearer <jwt_token>
@@ -249,11 +266,12 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "payment-uuid",
   "agreementId": "agreement-uuid",
-  "amount": 1500.00,
+  "amount": 1500.0,
   "paymentDate": "2024-01-26",
   "paymentMethod": "Stellar Transfer",
   "referenceNumber": "stellar-tx-hash-123",
@@ -264,19 +282,21 @@ Content-Type: application/json
 ```
 
 #### Get Payment History
+
 ```http
 GET /agreements/{agreementId}/payments?page=1&limit=10&status=COMPLETED
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
   "data": [
     {
       "id": "payment-uuid",
       "agreementId": "agreement-uuid",
-      "amount": 1500.00,
+      "amount": 1500.0,
       "paymentDate": "2024-01-26",
       "paymentMethod": "Stellar Transfer",
       "referenceNumber": "stellar-tx-hash-123",
@@ -297,18 +317,21 @@ Authorization: Bearer <jwt_token>
 ## Data Models
 
 ### User Roles
+
 - `tenant` - Property renter
 - `landlord` - Property owner
 - `agent` - Real estate agent
 - `admin` - System administrator
 
 ### Agreement Status
+
 - `DRAFT` - Agreement created but not activated
 - `ACTIVE` - Currently active rental agreement
 - `TERMINATED` - Agreement ended before end date
 - `EXPIRED` - Agreement reached natural end date
 
 ### Payment Status
+
 - `PENDING` - Payment initiated but not confirmed
 - `COMPLETED` - Payment successfully processed
 - `FAILED` - Payment failed or rejected
@@ -316,6 +339,7 @@ Authorization: Bearer <jwt_token>
 ## Error Handling
 
 ### Standard Error Response Format
+
 ```json
 {
   "message": "Error description",
@@ -327,6 +351,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### Common HTTP Status Codes
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request (validation errors)
@@ -345,6 +370,7 @@ Authorization: Bearer <jwt_token>
 ## Pagination
 
 List endpoints support pagination with these query parameters:
+
 - `page` - Page number (default: 1)
 - `limit` - Items per page (default: 10, max: 100)
 - `sortBy` - Field to sort by (default: createdAt)
@@ -353,11 +379,12 @@ List endpoints support pagination with these query parameters:
 ## SDK Examples
 
 ### JavaScript/TypeScript
+
 ```typescript
 // Initialize API client
 const api = new ChiomaAPI({
   baseURL: 'http://localhost:3000/api',
-  apiKey: 'your-jwt-token'
+  apiKey: 'your-jwt-token',
 });
 
 // Create agreement
@@ -365,24 +392,26 @@ const agreement = await api.agreements.create({
   propertyId: 'property-uuid',
   landlordId: 'landlord-uuid',
   tenantId: 'tenant-uuid',
-  landlordStellarPubKey: 'GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q',
+  landlordStellarPubKey:
+    'GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q',
   tenantStellarPubKey: 'GD7J3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q',
-  monthlyRent: 1500.00,
-  securityDeposit: 3000.00,
+  monthlyRent: 1500.0,
+  securityDeposit: 3000.0,
   startDate: '2024-02-01',
-  endDate: '2025-01-31'
+  endDate: '2025-01-31',
 });
 
 // Record payment
 const payment = await api.agreements.recordPayment(agreement.id, {
-  amount: 1500.00,
+  amount: 1500.0,
   paymentDate: '2024-01-26',
   paymentMethod: 'Stellar Transfer',
-  referenceNumber: 'stellar-tx-hash'
+  referenceNumber: 'stellar-tx-hash',
 });
 ```
 
 ### Python
+
 ```python
 from chioma_sdk import ChiomaAPI
 
@@ -410,12 +439,14 @@ agreement = api.agreements.create({
 Chioma supports webhooks for real-time notifications:
 
 ### Supported Events
+
 - `agreement.created` - New agreement created
 - `agreement.terminated` - Agreement terminated
 - `payment.completed` - Payment processed
 - `payment.failed` - Payment failed
 
 ### Webhook Configuration
+
 ```json
 {
   "url": "https://your-app.com/webhooks/chioma",
@@ -425,13 +456,14 @@ Chioma supports webhooks for real-time notifications:
 ```
 
 ### Webhook Payload Example
+
 ```json
 {
   "event": "payment.completed",
   "data": {
     "paymentId": "payment-uuid",
     "agreementId": "agreement-uuid",
-    "amount": 1500.00,
+    "amount": 1500.0,
     "timestamp": "2024-01-26T18:00:00.000Z"
   },
   "signature": "sha256=webhook-signature"
@@ -441,11 +473,13 @@ Chioma supports webhooks for real-time notifications:
 ## Testing
 
 ### Test Environment
+
 - URL: `http://localhost:3000/api`
 - Test Stellar Network: Testnet
 - Test Accounts: Available in development environment
 
 ### Test Data
+
 ```bash
 # Create test user
 curl -X POST http://localhost:3000/api/auth/register \
@@ -462,6 +496,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ## Support
 
 For API support:
+
 - Documentation: Available at `/api/docs` (Swagger UI)
 - Issues: Create GitHub issue
 - Email: api-support@chioma.com
@@ -480,11 +515,13 @@ API keys provide programmatic access to the Chioma API. All API key endpoints re
 ### Key Rotation
 
 API keys can be rotated to maintain security. When rotating:
+
 - A new key is generated while the old key remains active for a transition period
 - The old key is marked as expired
 - A rotation history record is created for audit purposes
 
 #### Create API Key
+
 ```http
 POST /developer/api-keys
 Authorization: Bearer <jwt_token>
@@ -496,6 +533,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid-string",
@@ -506,12 +544,14 @@ Content-Type: application/json
 ```
 
 #### List API Keys
+
 ```http
 GET /developer/api-keys
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -530,6 +570,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 #### Rotate API Key
+
 ```http
 POST /developer/api-keys/:id/rotate
 Authorization: Bearer <jwt_token>
@@ -541,6 +582,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "new-uuid-string",
@@ -551,12 +593,14 @@ Content-Type: application/json
 ```
 
 #### Get Rotation History
+
 ```http
 GET /developer/api-keys/:id/rotation-history
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -569,6 +613,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 #### Update API Key
+
 ```http
 PATCH /developer/api-keys/:id
 Authorization: Bearer <jwt_token>
@@ -581,12 +626,14 @@ Content-Type: application/json
 ```
 
 #### Revoke API Key
+
 ```http
 DELETE /developer/api-keys/:id
 Authorization: Bearer <jwt_token>
 ```
 
 #### Get Keys Expiring Soon
+
 ```http
 GET /developer/api-keys/expiring-soon
 Authorization: Bearer <jwt_token>
@@ -595,6 +642,7 @@ Authorization: Bearer <jwt_token>
 ### Using API Keys
 
 Include the API key in the `X-API-Key` header:
+
 ```http
 X-API-Key: chioma_sk_xxxxxxxxxxxxxxxxxxxx
 ```
@@ -602,6 +650,7 @@ X-API-Key: chioma_sk_xxxxxxxxxxxxxxxxxxxx
 ## Changelog
 
 ### v1.0.0 (Current)
+
 - Basic CRUD operations for agreements
 - JWT and Stellar authentication
 - Payment recording and history
@@ -609,6 +658,7 @@ X-API-Key: chioma_sk_xxxxxxxxxxxxxxxxxxxx
 - Webhook support
 
 ### Upcoming Features
+
 - Property management endpoints
 - Advanced search and filtering
 - Multi-currency support

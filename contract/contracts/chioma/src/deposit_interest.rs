@@ -18,7 +18,7 @@ fn period_seconds(freq: &CompoundingFrequency) -> u64 {
         CompoundingFrequency::Daily => SECONDS_PER_DAY,
         CompoundingFrequency::Weekly => SECONDS_PER_DAY * 7,
         CompoundingFrequency::Monthly => SECONDS_PER_DAY * 30,
-        CompoundingFrequency::Quarterly => SECONDS_PER_DAY * 91,
+        CompoundingFrequency::Quarterly => SECONDS_PER_DAY * 90,
         CompoundingFrequency::Annually => SECONDS_PER_DAY * 365,
     }
 }
@@ -161,10 +161,11 @@ fn compute_interest(
     let n_per_year = periods_per_year(&config.compounding_frequency) as i128;
     let rate_bps = config.annual_rate as i128;
 
-    balance
-        .saturating_mul(rate_bps)
-        .saturating_mul(elapsed_periods as i128)
-        / (n_per_year.saturating_mul(10_000))
+    let mut result = balance;
+    for _ in 0..elapsed_periods {
+        result = result.saturating_add(result.saturating_mul(rate_bps) / (n_per_year * 10_000));
+    }
+    result.saturating_sub(balance)
 }
 
 // ─── Accrual ─────────────────────────────────────────────────────────────────

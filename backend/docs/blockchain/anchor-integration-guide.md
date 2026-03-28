@@ -26,7 +26,7 @@ This creates the `anchor_transactions` and `supported_currencies` tables.
 
 ```sql
 INSERT INTO supported_currencies (code, name, anchor_url, stellar_asset_code, stellar_asset_issuer, is_active)
-VALUES 
+VALUES
   ('USD', 'US Dollar', 'https://api.anchor-provider.com', 'USDC', 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', true),
   ('EUR', 'Euro', 'https://api.anchor-provider.com', 'USDC', 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', true),
   ('GBP', 'British Pound', 'https://api.anchor-provider.com', 'USDC', 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', true),
@@ -104,6 +104,7 @@ POST https://your-domain.com/api/v1/anchor/webhook
 ```
 
 Webhook events to subscribe to:
+
 - Transaction status updates
 - Deposit confirmations
 - Withdrawal completions
@@ -141,6 +142,7 @@ json-server --watch anchor-mock.json --port 4000
 ```
 
 Update `.env`:
+
 ```
 ANCHOR_API_URL=http://localhost:4000
 ```
@@ -150,20 +152,25 @@ ANCHOR_API_URL=http://localhost:4000
 ### Common Issues
 
 **Issue:** "Currency not supported"
+
 - **Solution:** Add currency to `SUPPORTED_FIAT_CURRENCIES` in `.env`
 
 **Issue:** "Currency not configured"
+
 - **Solution:** Insert currency into `supported_currencies` table
 
 **Issue:** "Failed to initiate deposit"
+
 - **Solution:** Check anchor API credentials and network connectivity
 
 **Issue:** "Transaction not found"
+
 - **Solution:** Verify transaction ID is correct
 
 ### Retry Logic
 
 The service includes automatic retry logic for:
+
 - Network timeouts (3 retries)
 - 5xx server errors (3 retries)
 - Rate limiting (exponential backoff)
@@ -175,8 +182,9 @@ The service includes automatic retry logic for:
 Monitor these metrics in production:
 
 1. **Transaction Success Rate**
+
    ```sql
-   SELECT 
+   SELECT
      status,
      COUNT(*) as count,
      COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
@@ -185,8 +193,9 @@ Monitor these metrics in production:
    ```
 
 2. **Average Completion Time**
+
    ```sql
-   SELECT 
+   SELECT
      AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) as avg_seconds
    FROM anchor_transactions
    WHERE status = 'completed';
@@ -204,6 +213,7 @@ Monitor these metrics in production:
 ### Logging
 
 The service logs:
+
 - All deposit/withdrawal initiations
 - Transaction status updates
 - Webhook receipts
@@ -250,6 +260,7 @@ Log level can be configured via `LOG_LEVEL` environment variable.
 ## Support
 
 For issues or questions:
+
 - GitHub Issues: https://github.com/chioma/chioma/issues
 - Telegram: https://t.me/chiomagroup
 - Documentation: See `/docs/anchor-integration.md`

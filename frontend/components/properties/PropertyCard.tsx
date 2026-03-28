@@ -17,19 +17,33 @@ interface PropertyCardProps {
     image: string;
     verified: boolean;
   };
+  variant?: 'grid' | 'list';
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({
+  property,
+  variant = 'grid',
+}: PropertyCardProps) {
+  const isList = variant === 'list';
+
   return (
     <Link href={`/properties/${property.id}`} className="block">
-      <div className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-white/20 transition-all duration-300 group cursor-pointer">
+      <div
+        className={`backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-white/20 transition-all duration-300 group cursor-pointer ${isList ? 'flex flex-col sm:flex-row' : 'flex flex-col'}`}
+      >
         {/* Image Container */}
-        <div className="relative aspect-4/3 sm:aspect-video bg-slate-200 overflow-hidden cursor-pointer">
+        <div
+          className={`relative bg-slate-200 overflow-hidden cursor-pointer ${isList ? 'w-full sm:w-72 h-48 sm:h-auto shrink-0' : 'aspect-4/3 sm:aspect-video'}`}
+        >
           <Image
             src={property.image || '/placeholder.svg'}
             alt={property.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes={
+              isList
+                ? '(max-width: 640px) 100vw, 300px'
+                : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+            }
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
@@ -63,44 +77,59 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         {/* Content Container */}
-        <div className="p-5">
-          {/* Price */}
-          <p className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold text-xl sm:text-2xl mb-2 tracking-tight">
-            {property.price}
-            <span className="text-slate-500 font-medium text-sm sm:text-base tracking-normal ml-1">
-              /mo
-            </span>
-          </p>
+        <div className={`p-5 flex-1 flex flex-col justify-between`}>
+          <div>
+            {/* Price & Title */}
+            <div
+              className={`${isList ? 'flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2' : ''}`}
+            >
+              <p className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold text-xl sm:text-2xl tracking-tight">
+                {property.price}
+                <span className="text-slate-500 font-medium text-sm sm:text-base tracking-normal ml-1">
+                  /mo
+                </span>
+              </p>
 
-          {/* Title */}
-          <h3 className="font-bold text-white mb-2.5 text-base sm:text-lg leading-snug cursor-pointer hover:text-blue-400 transition-colors line-clamp-1">
-            {property.title}
-          </h3>
-
-          {/* Location */}
-          <div className="flex items-start gap-1.5 text-blue-200/70 mb-5 text-sm">
-            <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-            <p className="line-clamp-1">{property.location}</p>
-          </div>
-
-          {/* Features Grid */}
-          <div className="flex gap-4 sm:gap-6 mb-5 pb-5 border-b border-white/10 text-blue-200/80 font-medium text-sm">
-            <div className="flex items-center gap-1.5">
-              <Bed className="w-4 h-4 text-blue-400" />
-              <span>{property.beds} Beds</span>
+              {isList && (
+                <h3 className="font-bold text-white text-base sm:text-lg leading-snug cursor-pointer hover:text-blue-400 transition-colors line-clamp-1">
+                  {property.title}
+                </h3>
+              )}
             </div>
-            <div className="flex items-center gap-1.5">
-              <Bath className="w-4 h-4 text-blue-400" />
-              <span>{property.baths} Baths</span>
+
+            {!isList && (
+              <h3 className="font-bold text-white mb-2.5 text-base sm:text-lg leading-snug cursor-pointer hover:text-blue-400 transition-colors line-clamp-1">
+                {property.title}
+              </h3>
+            )}
+
+            {/* Location */}
+            <div className="flex items-start gap-1.5 text-blue-200/70 mb-5 text-sm">
+              <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+              <p className="line-clamp-1">{property.location}</p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Ruler className="w-4 h-4 text-blue-400" />
-              <span>{property.sqft} sqft</span>
+
+            {/* Features Grid */}
+            <div
+              className={`flex gap-4 sm:gap-6 mb-5 pb-5 border-b border-white/10 text-blue-200/80 font-medium text-sm ${isList ? 'flex-wrap' : ''}`}
+            >
+              <div className="flex items-center gap-1.5">
+                <Bed className="w-4 h-4 text-blue-400" />
+                <span>{property.beds} Beds</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Bath className="w-4 h-4 text-blue-400" />
+                <span>{property.baths} Baths</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Ruler className="w-4 h-4 text-blue-400" />
+                <span>{property.sqft} sqft</span>
+              </div>
             </div>
           </div>
 
           {/* Manager / Footer */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-auto">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 shrink-0 shadow-sm" />
             <p className="text-sm text-blue-200/70 truncate">
               Managed by{' '}

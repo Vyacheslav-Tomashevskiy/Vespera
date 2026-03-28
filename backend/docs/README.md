@@ -141,7 +141,7 @@ cd frontend
 make check
 
 # Backend checks (if you changed backend code)
-cd ../backend  
+cd ../backend
 make ci
 ```
 

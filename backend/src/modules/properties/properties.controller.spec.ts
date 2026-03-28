@@ -8,9 +8,11 @@ import {
   Property,
   PropertyType,
   ListingStatus,
+  PropertyRentalMode,
+  CancellationPolicy,
 } from './entities/property.entity';
 import { User, UserRole, AuthMethod } from '../users/entities/user.entity';
-import { KycStatus } from '../kyc/kyc.entity';
+import { KycStatus } from '../kyc/kyc-status.enum';
 
 describe('PropertiesController', () => {
   let controller: PropertiesController;
@@ -38,6 +40,13 @@ describe('PropertiesController', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     kycStatus: KycStatus.PENDING,
+    loginCount: 0,
+    preferredLanguage: 'en',
+    timezone: 'UTC',
+    twoFactorEnabled: false,
+    emailNotifications: true,
+    smsNotifications: false,
+    marketingOptIn: false,
   };
 
   const mockProperty: Property = {
@@ -68,6 +77,43 @@ describe('PropertiesController', () => {
     images: [],
     amenities: [],
     rentalUnits: [],
+    viewCount: 0,
+    favoriteCount: 0,
+    lastViewedAt: null,
+    verificationStatus: null,
+    virtualTourUrl: null,
+    videoUrl: null,
+    floorPlanUrl: null,
+    energyRating: null,
+    petPolicy: null,
+    parkingSpaces: null,
+    rentalMode: PropertyRentalMode.LONG_TERM,
+    minStayDays: 1,
+    maxStayDays: null,
+    nightlyRate: null,
+    weeklyDiscount: 0,
+    monthlyDiscount: 0,
+    cleaningFee: 0,
+    extraGuestFee: 0,
+    maxGuests: 4,
+    instantBooking: false,
+    requireGuestVerification: true,
+    minimumGuestRating: 0,
+    cancellationPolicy: CancellationPolicy.MODERATE,
+    checkInTime: '15:00',
+    checkOutTime: '11:00',
+    checkInMethod: 'lockbox',
+    sublettingAllowed: false,
+    sublettingApprovalRequired: true,
+    sublettingMaxDaysPerYear: 90,
+    sublettingTenantShare: 60,
+    sublettingLandlordShare: 30,
+    smokingAllowed: false,
+    partiesAllowed: false,
+    childrenAllowed: true,
+    aiPricingSuggestion: null,
+    aiOptimalMode: null,
+    aiOccupancyPrediction: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -89,6 +135,8 @@ describe('PropertiesController', () => {
     publish: jest.fn(),
     archive: jest.fn(),
     markAsRented: jest.fn(),
+    recordView: jest.fn(),
+    recordFavorite: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -125,6 +173,7 @@ describe('PropertiesController', () => {
       expect(mockPropertiesService.create).toHaveBeenCalledWith(
         createDto,
         mockUser.id,
+        mockUser,
       );
     });
   });
@@ -180,6 +229,38 @@ describe('PropertiesController', () => {
 
       expect(result).toEqual(mockProperty);
       expect(mockPropertiesService.findOnePublic).toHaveBeenCalledWith(
+        'property-id',
+      );
+    });
+  });
+
+  describe('recordView', () => {
+    it('should record a view', async () => {
+      const payload = {
+        viewCount: 2,
+        lastViewedAt: new Date(),
+      };
+      mockPropertiesService.recordView.mockResolvedValue(payload);
+
+      const result = await controller.recordView('property-id');
+
+      expect(result).toEqual(payload);
+      expect(mockPropertiesService.recordView).toHaveBeenCalledWith(
+        'property-id',
+      );
+    });
+  });
+
+  describe('recordFavorite', () => {
+    it('should record a favorite', async () => {
+      mockPropertiesService.recordFavorite.mockResolvedValue({
+        favoriteCount: 4,
+      });
+
+      const result = await controller.recordFavorite('property-id');
+
+      expect(result).toEqual({ favoriteCount: 4 });
+      expect(mockPropertiesService.recordFavorite).toHaveBeenCalledWith(
         'property-id',
       );
     });

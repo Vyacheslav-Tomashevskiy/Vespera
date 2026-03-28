@@ -29,13 +29,13 @@ export class ApiKey {
   @Column({ type: 'varchar', length: 20, nullable: true })
   keyPrefix: string | null;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'varchar', length: 30, nullable: true })
   lastUsedAt: Date | null;
 
-  @Column({ type: 'timestamp with time zone', nullable: true })
+  @Column({ type: 'varchar', length: 30, nullable: true })
   expiresAt: Date | null;
 
-  @Column({ type: 'timestamp with time zone', nullable: true })
+  @Column({ type: 'varchar', length: 30, nullable: true })
   rotatedAt: Date | null;
 
   @Column({ type: 'varchar', length: 64, nullable: true })

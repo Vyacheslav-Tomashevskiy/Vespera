@@ -3,15 +3,18 @@
 ## ✅ Completed Components
 
 ### 1. Database Entities
+
 - ✅ `AnchorTransaction` entity - Tracks deposit/withdrawal transactions
 - ✅ `SupportedCurrency` entity - Manages supported fiat currencies
 - ✅ Database migration - Creates tables with proper indexes
 
 ### 2. DTOs (Data Transfer Objects)
+
 - ✅ `DepositRequestDto` - Validates deposit requests
 - ✅ `WithdrawRequestDto` - Validates withdrawal requests
 
 ### 3. Service Layer
+
 - ✅ `AnchorService` - Core business logic for SEP-24 integration
   - Deposit initiation
   - Withdrawal initiation
@@ -21,6 +24,7 @@
   - Status mapping
 
 ### 4. API Layer
+
 - ✅ `AnchorController` - REST API endpoints
   - `POST /api/v1/anchor/deposit`
   - `POST /api/v1/anchor/withdraw`
@@ -28,15 +32,18 @@
   - `POST /api/v1/anchor/webhook`
 
 ### 5. Configuration
+
 - ✅ Environment variables added to `.env.example`
 - ✅ Module registration in `StellarModule`
 
 ### 6. Testing
+
 - ✅ Unit tests for `AnchorService`
 - ✅ E2E tests for API endpoints
 - ✅ Mock implementations for testing
 
 ### 7. Documentation
+
 - ✅ API documentation (`anchor-integration.md`)
 - ✅ Integration guide (`anchor-integration-guide.md`)
 - ✅ Error code reference
@@ -74,29 +81,35 @@ backend/
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 All required dependencies are already in `package.json`:
+
 - `@stellar/stellar-sdk` - Stellar blockchain SDK
 - `axios` - HTTP client for Anchor API
 - `class-validator` - Request validation
 
 ### 2. Configure Environment
+
 ```bash
 cp .env.example .env
 # Edit .env and add your anchor credentials
 ```
 
 ### 3. Run Migration
+
 ```bash
 npm run migration:run
 ```
 
 ### 4. Seed Currencies
+
 ```sql
 INSERT INTO supported_currencies (code, name, anchor_url, stellar_asset_code, stellar_asset_issuer, is_active)
 VALUES ('USD', 'US Dollar', 'https://api.anchor-provider.com', 'USDC', 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', true);
 ```
 
 ### 5. Start Server
+
 ```bash
 npm run start:dev
 ```
@@ -179,6 +192,7 @@ npm test
 ## 🔄 Transaction Flow
 
 ### Deposit (Fiat → USDC)
+
 1. User initiates deposit via API
 2. System creates pending transaction
 3. System calls Anchor API
@@ -189,6 +203,7 @@ npm test
 8. USDC credited to user's wallet
 
 ### Withdrawal (USDC → Fiat)
+
 1. User initiates withdrawal via API
 2. System creates pending transaction
 3. System calls Anchor API
@@ -209,16 +224,17 @@ npm test
 
 ## 🔧 Configuration Options
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| ANCHOR_API_URL | Anchor provider API endpoint | https://api.anchor.com |
-| ANCHOR_API_KEY | API authentication key | your_api_key |
-| ANCHOR_USDC_ASSET | USDC asset identifier | USDC:GA5ZSE... |
-| SUPPORTED_FIAT_CURRENCIES | Comma-separated currency codes | USD,EUR,GBP,NGN |
+| Variable                  | Description                    | Example                |
+| ------------------------- | ------------------------------ | ---------------------- |
+| ANCHOR_API_URL            | Anchor provider API endpoint   | https://api.anchor.com |
+| ANCHOR_API_KEY            | API authentication key         | your_api_key           |
+| ANCHOR_USDC_ASSET         | USDC asset identifier          | USDC:GA5ZSE...         |
+| SUPPORTED_FIAT_CURRENCIES | Comma-separated currency codes | USD,EUR,GBP,NGN        |
 
 ## 📝 Next Steps
 
 ### Optional Enhancements
+
 1. **Rate Limiting** - Add throttling per user
 2. **Transaction Limits** - Min/max amounts per transaction
 3. **KYC Integration** - User verification before large transactions
@@ -231,6 +247,7 @@ npm test
 10. **Analytics** - Transaction volume and trends
 
 ### Production Readiness
+
 - [ ] Load testing
 - [ ] Security audit
 - [ ] Penetration testing

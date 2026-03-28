@@ -43,6 +43,13 @@ process.env.SECURITY_ENCRYPTION_KEY =
   'c50c9fe2f3272ae5f275dc9b875712ee41cf931475b615fe6aa8588b8332d062';
 process.env.PAYMENT_METADATA_SECRET = 'test-payment-secret';
 
+// Required by EncryptionService (common) - base64-encoded 32-byte key
+if (!process.env.ENCRYPTION_KEY_BASE64) {
+  process.env.ENCRYPTION_KEY_BASE64 = Buffer.from(
+    '0123456789abcdef0123456789abcdef',
+  ).toString('base64');
+}
+
 // Use PostgreSQL for E2E tests
 // The GitHub Actions workflow provides a PostgreSQL service
 // Already set at top: process.env.NODE_ENV = 'test';

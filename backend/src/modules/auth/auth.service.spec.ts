@@ -21,12 +21,15 @@ import { RegisterDto } from './dto/register.dto';
 import { Repository } from 'typeorm';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { ReferralService } from '../referral/referral.service';
+import { LoggerService } from '../../common/logger/logger.service';
+import { LockService } from '../../common/lock';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: Repository<User>;
-  let jwtService: JwtService;
-  let configService: ConfigService;
+  let _userRepository: Repository<User>;
+  let _jwtService: JwtService;
+  let _configService: ConfigService;
   let emailService: EmailService;
 
   const mockUser: Partial<User> = {
@@ -116,13 +119,40 @@ describe('AuthService', () => {
             verifyMfaToken: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          provide: ReferralService,
+          useValue: {
+            generateReferralCode: jest.fn().mockResolvedValue('REF12345'),
+            trackReferral: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: LoggerService,
+          useValue: {
+            log: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+          },
+        },
+        {
+          provide: LockService,
+          useValue: {
+            withLock: jest.fn(
+              async (
+                _key: string,
+                _ttlMs: number,
+                fn: () => Promise<unknown>,
+              ) => fn(),
+            ),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    jwtService = module.get<JwtService>(JwtService);
-    configService = module.get<ConfigService>(ConfigService);
+    _userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    _jwtService = module.get<JwtService>(JwtService);
+    _configService = module.get<ConfigService>(ConfigService);
     emailService = module.get<EmailService>(EmailService);
   });
 
@@ -160,10 +190,14 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
       expect(result.user.email).toBe(registerDto.email);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: registerDto.email },
-        withDeleted: true,
-      });
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.arrayContaining([
+            expect.objectContaining({ email: registerDto.email }),
+          ]),
+          withDeleted: true,
+        }),
+      );
       expect(mockUserRepository.save).toHaveBeenCalled();
       expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
         registerDto.email,

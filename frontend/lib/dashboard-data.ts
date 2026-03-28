@@ -548,3 +548,8 @@ function formatPersonName(person?: {
   const name = [person.firstName, person.lastName].filter(Boolean).join(' ');
   return name || null;
 }
+
+/** Combined mock disputes for admin dashboard when API is unavailable. */
+export function getAdminDisputesMockList(): DashboardDispute[] {
+  return [...tenantDisputesMock, ...landlordDisputesMock];
+}

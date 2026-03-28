@@ -1,6 +1,7 @@
 # Shared Encryption Service
 
 ## Env Vars
+
 ```
 ENCRYPTION_KEY_BASE64= # Single 32-byte base64 key (fallback)
 # OR
@@ -8,11 +9,13 @@ ENCRYPTION_KEYS=[\"key1b64\",\"key2b64\"] # Array, newest first for rotation
 ```
 
 ## Generate Key
+
 ```bash
 openssl rand -base64 32
 ```
 
 ## Usage
+
 ```ts
 import { EncryptionService } from '../common/services';
 
@@ -29,6 +32,7 @@ async getSensitive(encrypted: string) {
 ```
 
 ## Key Rotation
+
 ```
 ENCRYPTION_KEYS=[\"newkey\",\"oldkey\"] # Auto fallback decrypt
 this.encryption.rotateKey('newkeyb64'); // Dynamic

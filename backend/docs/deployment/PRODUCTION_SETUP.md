@@ -19,6 +19,7 @@ chmod +x scripts/setup-production-db.sh
 ```
 
 This will:
+
 1. Install dependencies
 2. Run all database migrations
 3. Seed demo users for all roles
@@ -83,12 +84,12 @@ NODE_ENV=production ts-node src/commands/index.ts tenant \
 
 After seeding, you can log in with these credentials:
 
-| Role     | Email                    | Password           |
-| -------- | ------------------------ | ------------------ |
-| Admin    | admin@chioma.demo        | Admin@Demo2024!    |
-| Agent    | agent@chioma.demo        | Agent@Demo2024!    |
-| Landlord | landlord@chioma.demo     | Landlord@Demo2024! |
-| Tenant   | tenant@chioma.demo       | Tenant@Demo2024!   |
+| Role     | Email                | Password           |
+| -------- | -------------------- | ------------------ |
+| Admin    | admin@chioma.demo    | Admin@Demo2024!    |
+| Agent    | agent@chioma.demo    | Agent@Demo2024!    |
+| Landlord | landlord@chioma.demo | Landlord@Demo2024! |
+| Tenant   | tenant@chioma.demo   | Tenant@Demo2024!   |
 
 ## Troubleshooting
 
@@ -101,7 +102,7 @@ If you see `connection is insecure (try using sslmode=require)`:
 3. Check that `data-source.ts` has SSL configuration:
 
 ```typescript
-ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false;
 ```
 
 ### Migration Errors
@@ -137,16 +138,19 @@ When deploying to Render:
    - All other required env vars from `.env.production`
 
 2. Add build command:
+
    ```bash
    pnpm install && pnpm build
    ```
 
 3. Add start command:
+
    ```bash
    pnpm start:prod
    ```
 
 4. Run migrations on first deploy:
+
    ```bash
    pnpm migration:run
    ```
@@ -159,6 +163,7 @@ When deploying to Render:
 ## Security Notes
 
 ⚠️ **Important:**
+
 - Demo credentials are for demonstration purposes only
 - Change or disable demo accounts before accepting real users
 - Use strong, unique passwords for production admin accounts
@@ -208,6 +213,7 @@ After setup:
 ## Support
 
 For issues or questions:
+
 - Check logs: `pnpm start:prod`
 - Review migrations: `pnpm typeorm migration:show`
 - Database console: Connect via Neon dashboard

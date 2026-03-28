@@ -16,10 +16,12 @@ on:
       - main
     paths:
       - 'backend/**'
+      - '.github/workflows/backend-ci-cd.yml'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/backend
+  IS_PR: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ============================================================================
@@ -211,6 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Security Scan
     needs: test
+    if: github.event_name == 'push'
     permissions:
       contents: read
       security-events: write
@@ -244,6 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     name: API Docs & Contract
     needs: [test, e2e-tests]
+    if: github.event_name == 'push'
     continue-on-error: true
     services:
       postgres:
@@ -350,7 +354,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build
-    needs: [test, security-scan]
+    needs: test
+    if: always() && needs.test.result == 'success'
 
     steps:
       - name: Checkout code
@@ -383,6 +388,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout code

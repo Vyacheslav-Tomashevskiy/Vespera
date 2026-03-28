@@ -411,6 +411,7 @@ Each queue has a configured retry strategy:
 - **Data Sync**: 3 attempts, exponential backoff starting at 2s
 
 Failed jobs are logged and can be:
+
 - Viewed via the admin API
 - Retried manually
 - Removed if unrecoverable
@@ -539,7 +540,10 @@ describe('Email Queue Integration', () => {
     // Wait for job processing
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    const jobDetails = await queueManagementService.getJobDetails('email', job.id.toString());
+    const jobDetails = await queueManagementService.getJobDetails(
+      'email',
+      job.id.toString(),
+    );
     expect(jobDetails.state).toBe('completed');
   });
 });

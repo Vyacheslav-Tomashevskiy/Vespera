@@ -1,15 +1,14 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
-
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
 import {
   IsString,
   IsEmail,
   IsOptional,
   MinLength,
   Matches,
+  IsBoolean,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateUserDto } from './create-user.dto';
 
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({ example: 'John', description: 'First name' })
@@ -34,6 +33,31 @@ export class UpdateUserProfileDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @ApiPropertyOptional({ example: 'en', description: 'Preferred language' })
+  @IsOptional()
+  @IsString()
+  preferredLanguage?: string;
+
+  @ApiPropertyOptional({ example: 'UTC', description: 'Timezone' })
+  @IsOptional()
+  @IsString()
+  timezone?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Email notifications' })
+  @IsOptional()
+  @IsBoolean()
+  emailNotifications?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: 'SMS notifications' })
+  @IsOptional()
+  @IsBoolean()
+  smsNotifications?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: 'Marketing consent' })
+  @IsOptional()
+  @IsBoolean()
+  marketingOptIn?: boolean;
 }
 
 export class ChangeEmailDto {
@@ -72,3 +96,5 @@ export class ChangePasswordDto {
   })
   newPassword: string;
 }
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {}

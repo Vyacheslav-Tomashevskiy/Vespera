@@ -9,6 +9,8 @@ import {
   Delete,
   Request,
   UseGuards,
+  UseInterceptors,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,12 +30,24 @@ import { CreatePaymentScheduleDto } from './dto/create-payment-schedule.dto';
 import { UpdatePaymentScheduleDto } from './dto/update-payment-schedule.dto';
 import { PaymentScheduleFiltersDto } from './dto/payment-schedule-filters.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RateLimitCategory, EndpointCategory } from '../rate-limiting';
+import { AuditLog } from '../audit/decorators/audit-log.decorator';
+import { AuditAction, AuditLevel } from '../audit/entities/audit-log.entity';
+import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
+import {
+  CreateEscrowGatewayDto,
+  PaymentGatewayWebhookDto,
+  ProcessStellarRentGatewayDto,
+  ReconcilePaymentsDto,
+  RefundEscrowGatewayDto,
+  ReleaseEscrowGatewayDto,
+  RetryFailedPaymentsDto,
+} from './dto/payment-gateway.dto';
 
 @ApiTags('Payments')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('payments')
+@UseInterceptors(AuditLogInterceptor)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
@@ -42,10 +56,21 @@ export class PaymentController {
   @ApiResponse({ status: 201, description: 'Payment recorded' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @AuditLog({
+    action: AuditAction.PAYMENT_COMPLETED,
+    entityType: 'Payment',
+    level: AuditLevel.INFO,
+    includeNewValues: true,
+  })
   async recordPayment(
     @Body() dto: CreatePaymentRecordDto,
     @Request() req: { user?: { id: string } },
+    @Headers('idempotency-key') idempotencyHeader?: string,
   ) {
+    // Header takes precedence over body field; merge into DTO.
+    if (idempotencyHeader) {
+      dto.idempotencyKey = idempotencyHeader;
+    }
     return this.paymentService.recordPayment(dto, req.user?.id || '');
   }
 
@@ -58,6 +83,85 @@ export class PaymentController {
     @Request() req: { user?: { id: string } },
   ) {
     return this.paymentService.listPayments(filters, req.user?.id || '');
+  }
+
+  @Post('stellar/rent')
+  @ApiOperation({ summary: 'Process Stellar rent payment' })
+  async processStellarRent(
+    @Body() dto: ProcessStellarRentGatewayDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.processStellarRentPayment(
+      dto,
+      req.user?.id || '',
+    );
+  }
+
+  @Post('stellar/escrow')
+  @ApiOperation({ summary: 'Create Stellar escrow deposit' })
+  async createEscrowDeposit(
+    @Body() dto: CreateEscrowGatewayDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.createEscrowDeposit(dto, req.user?.id || '');
+  }
+
+  @Post('stellar/escrow/:escrowId/release')
+  @ApiOperation({ summary: 'Release Stellar escrow deposit' })
+  async releaseEscrowDeposit(
+    @Param('escrowId') escrowId: string,
+    @Body() dto: ReleaseEscrowGatewayDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.releaseEscrowDeposit(
+      parseInt(escrowId, 10),
+      { escrowId: parseInt(escrowId, 10), memo: dto.memo },
+      req.user?.id || '',
+    );
+  }
+
+  @Post('stellar/escrow/:escrowId/refund')
+  @ApiOperation({ summary: 'Refund Stellar escrow deposit' })
+  async refundEscrowDeposit(
+    @Param('escrowId') escrowId: string,
+    @Body() dto: RefundEscrowGatewayDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.refundEscrowDeposit(
+      parseInt(escrowId, 10),
+      { escrowId: parseInt(escrowId, 10), reason: dto.reason },
+      req.user?.id || '',
+    );
+  }
+
+  @Post('reconciliation/run')
+  @ApiOperation({ summary: 'Reconcile Stellar-backed payments' })
+  async reconcilePayments(
+    @Body() dto: ReconcilePaymentsDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.reconcileStellarPayments(
+      req.user?.id || '',
+      dto.limit,
+    );
+  }
+
+  @Post('retry-failed')
+  @ApiOperation({ summary: 'Retry failed payment records' })
+  async retryFailedPayments(
+    @Body() dto: RetryFailedPaymentsDto,
+    @Request() req: { user?: { id: string } },
+  ) {
+    return this.paymentService.retryFailedPayments(
+      req.user?.id || '',
+      dto.limit,
+    );
+  }
+
+  @Get('analytics/summary')
+  @ApiOperation({ summary: 'Get payment analytics summary' })
+  async getPaymentAnalytics(@Request() req: { user?: { id: string } }) {
+    return this.paymentService.getPaymentAnalytics(req.user?.id || '');
   }
 
   @Get(':id')
@@ -73,6 +177,12 @@ export class PaymentController {
   }
 
   @Post(':id/refund')
+  @AuditLog({
+    action: AuditAction.PAYMENT_REFUNDED,
+    entityType: 'Payment',
+    level: AuditLevel.WARN,
+    includeNewValues: true,
+  })
   async processRefund(
     @Param('id') id: string,
     @Body() dto: ProcessRefundDto,
@@ -92,10 +202,17 @@ export class PaymentController {
 
 @UseGuards(JwtAuthGuard)
 @Controller('payment-methods')
+@UseInterceptors(AuditLogInterceptor)
 export class PaymentMethodController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
+  @AuditLog({
+    action: AuditAction.CREATE,
+    entityType: 'PaymentMethod',
+    level: AuditLevel.INFO,
+    includeNewValues: true,
+  })
   async createPaymentMethod(
     @Body() dto: CreatePaymentMethodDto,
     @Request() req: { user?: { id: string } },
@@ -112,6 +229,13 @@ export class PaymentMethodController {
   }
 
   @Patch(':id')
+  @AuditLog({
+    action: AuditAction.UPDATE,
+    entityType: 'PaymentMethod',
+    level: AuditLevel.INFO,
+    includeOldValues: true,
+    includeNewValues: true,
+  })
   async updatePaymentMethod(
     @Param('id') id: string,
     @Body() dto: UpdatePaymentMethodDto,
@@ -125,6 +249,12 @@ export class PaymentMethodController {
   }
 
   @Delete(':id')
+  @AuditLog({
+    action: AuditAction.DELETE,
+    entityType: 'PaymentMethod',
+    level: AuditLevel.WARN,
+    includeOldValues: true,
+  })
   async deletePaymentMethod(
     @Param('id') id: string,
     @Request() req: { user?: { id: string } },
@@ -164,12 +294,19 @@ export class AgreementPaymentController {
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('payments/schedules')
+@UseInterceptors(AuditLogInterceptor)
 export class PaymentScheduleController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create payment schedule' })
   @ApiResponse({ status: 201, description: 'Schedule created' })
+  @AuditLog({
+    action: AuditAction.CREATE,
+    entityType: 'PaymentSchedule',
+    level: AuditLevel.INFO,
+    includeNewValues: true,
+  })
   async createSchedule(
     @Body() dto: CreatePaymentScheduleDto,
     @Request() req: { user?: { id: string } },
@@ -189,6 +326,13 @@ export class PaymentScheduleController {
   }
 
   @Patch(':id')
+  @AuditLog({
+    action: AuditAction.UPDATE,
+    entityType: 'PaymentSchedule',
+    level: AuditLevel.INFO,
+    includeOldValues: true,
+    includeNewValues: true,
+  })
   async updateSchedule(
     @Param('id') id: string,
     @Body() dto: UpdatePaymentScheduleDto,
@@ -202,6 +346,12 @@ export class PaymentScheduleController {
   }
 
   @Post(':id/run')
+  @AuditLog({
+    action: AuditAction.PAYMENT_INITIATED,
+    entityType: 'PaymentSchedule',
+    level: AuditLevel.INFO,
+    includeNewValues: true,
+  })
   async runSchedule(
     @Param('id') id: string,
     @Request() req: { user?: { id: string } },
@@ -210,7 +360,27 @@ export class PaymentScheduleController {
   }
 
   @Post('process-due')
+  @AuditLog({
+    action: AuditAction.BULK_OPERATION,
+    entityType: 'PaymentSchedule',
+    level: AuditLevel.INFO,
+  })
   async processDueSchedules() {
     return this.paymentService.processDueSchedules();
+  }
+}
+
+@ApiTags('Payments')
+@Controller('payments/webhooks')
+export class PaymentWebhookController {
+  constructor(private readonly paymentService: PaymentService) {}
+
+  @Post('gateway')
+  @ApiOperation({ summary: 'Handle payment gateway webhook events' })
+  async handleGatewayWebhook(
+    @Body() dto: PaymentGatewayWebhookDto,
+    @Headers('x-chioma-payment-secret') secret?: string,
+  ) {
+    return this.paymentService.handlePaymentGatewayWebhook(dto, secret);
   }
 }

@@ -1,20 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
 import {
   PaymentController,
   PaymentMethodController,
   AgreementPaymentController,
   PaymentScheduleController,
+  PaymentWebhookController,
 } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { AuditService } from '../audit/audit.service';
 import { CreatePaymentRecordDto } from './dto/record-payment.dto';
 import { ProcessRefundDto } from './dto/process-refund.dto';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { CreatePaymentScheduleDto } from './dto/create-payment-schedule.dto';
 import { PaymentInterval } from './entities/payment-schedule.entity';
+import {
+  CreateEscrowGatewayDto,
+  PaymentGatewayWebhookDto,
+  ProcessStellarRentGatewayDto,
+} from './dto/payment-gateway.dto';
 
 const mockPaymentService = {
   recordPayment: jest.fn(),
+  processStellarRentPayment: jest.fn(),
+  createEscrowDeposit: jest.fn(),
+  releaseEscrowDeposit: jest.fn(),
+  refundEscrowDeposit: jest.fn(),
+  reconcileStellarPayments: jest.fn(),
+  retryFailedPayments: jest.fn(),
+  handlePaymentGatewayWebhook: jest.fn(),
+  getPaymentAnalytics: jest.fn(),
   listPayments: jest.fn(),
   getPaymentById: jest.fn(),
   processRefund: jest.fn(),
@@ -35,6 +51,7 @@ describe('Payment Controllers', () => {
   let paymentMethodController: PaymentMethodController;
   let agreementPaymentController: AgreementPaymentController;
   let paymentScheduleController: PaymentScheduleController;
+  let paymentWebhookController: PaymentWebhookController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,11 +60,24 @@ describe('Payment Controllers', () => {
         PaymentMethodController,
         AgreementPaymentController,
         PaymentScheduleController,
+        PaymentWebhookController,
       ],
       providers: [
         {
           provide: PaymentService,
           useValue: mockPaymentService,
+        },
+        {
+          provide: AuditService,
+          useValue: {
+            log: jest.fn(),
+          },
+        },
+        {
+          provide: Reflector,
+          useValue: {
+            get: jest.fn().mockReturnValue(undefined),
+          },
         },
       ],
     }).compile();
@@ -61,6 +91,9 @@ describe('Payment Controllers', () => {
     );
     paymentScheduleController = module.get<PaymentScheduleController>(
       PaymentScheduleController,
+    );
+    paymentWebhookController = module.get<PaymentWebhookController>(
+      PaymentWebhookController,
     );
   });
 
@@ -158,5 +191,50 @@ describe('Payment Controllers', () => {
   it('processes due schedules', async () => {
     await paymentScheduleController.processDueSchedules();
     expect(mockPaymentService.processDueSchedules).toHaveBeenCalled();
+  });
+
+  it('processes stellar rent payment with user id', async () => {
+    const dto: ProcessStellarRentGatewayDto = {
+      tenantAddress: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+      tenantSecret: 'SSECRET',
+      agreementId: 'agreement_1',
+      amount: '12.5',
+    };
+    await paymentController.processStellarRent(dto, { user: { id: 'user_1' } });
+    expect(mockPaymentService.processStellarRentPayment).toHaveBeenCalledWith(
+      dto,
+      'user_1',
+    );
+  });
+
+  it('creates stellar escrow deposit with user id', async () => {
+    const dto: CreateEscrowGatewayDto = {
+      sourcePublicKey:
+        'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+      destinationPublicKey:
+        'GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+      amount: '100',
+      agreementId: 'agreement_2',
+    };
+    await paymentController.createEscrowDeposit(dto, {
+      user: { id: 'user_1' },
+    });
+    expect(mockPaymentService.createEscrowDeposit).toHaveBeenCalledWith(
+      dto,
+      'user_1',
+    );
+  });
+
+  it('handles payment gateway webhook', async () => {
+    const dto: PaymentGatewayWebhookDto = {
+      eventType: 'payment.completed',
+      paymentId: 'pay_1',
+      status: 'completed',
+    };
+    await paymentWebhookController.handleGatewayWebhook(dto, 'secret');
+    expect(mockPaymentService.handlePaymentGatewayWebhook).toHaveBeenCalledWith(
+      dto,
+      'secret',
+    );
   });
 });

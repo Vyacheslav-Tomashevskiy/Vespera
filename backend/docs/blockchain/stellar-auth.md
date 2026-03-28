@@ -7,15 +7,19 @@ This document describes the Stellar Web Authentication implementation following 
 ## Authentication Flow
 
 ### 1. Challenge Generation
+
 The client requests a challenge transaction from the server for their Stellar wallet address.
 
 ### 2. Client Signing
+
 The client signs the challenge transaction using their Stellar wallet.
 
 ### 3. Signature Verification
+
 The client submits the signed challenge back to the server for verification.
 
 ### 4. Token Issuance
+
 Upon successful verification, the server issues JWT tokens for authenticated sessions.
 
 ## API Endpoints
@@ -27,6 +31,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 **Description:** Generates a challenge transaction for the client to sign with their Stellar wallet.
 
 **Request Body:**
+
 ```json
 {
   "walletAddress": "GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q2Q"
@@ -34,6 +39,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 ```
 
 **Response:**
+
 ```json
 {
   "challenge": "AAAAAgAAAABAAAAAAAAAAA...",
@@ -44,6 +50,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 **Rate Limiting:** 5 requests per minute per IP address
 
 **Error Responses:**
+
 - `400 Bad Request`: Invalid wallet address format
 - `429 Too Many Requests`: Rate limit exceeded
 
@@ -54,6 +61,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 **Description:** Verifies the signed challenge and authenticates the user.
 
 **Request Body:**
+
 ```json
 {
   "walletAddress": "GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q2Q",
@@ -63,6 +71,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 ```
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -83,6 +92,7 @@ Upon successful verification, the server issues JWT tokens for authenticated ses
 **Rate Limiting:** 10 requests per minute per IP address
 
 **Error Responses:**
+
 - `400 Bad Request`: Invalid wallet address format or missing required fields
 - `401 Unauthorized`: Invalid signature, expired challenge, or verification failed
 - `429 Too Many Requests`: Rate limit exceeded
@@ -102,8 +112,8 @@ interface StellarAuthChallengeDto {
 ```typescript
 interface StellarAuthVerifyDto {
   walletAddress: string; // Valid Stellar public key
-  signature: string;     // Signature of the challenge transaction
-  challenge: string;     // Challenge transaction XDR
+  signature: string; // Signature of the challenge transaction
+  challenge: string; // Challenge transaction XDR
 }
 ```
 
@@ -111,29 +121,33 @@ interface StellarAuthVerifyDto {
 
 ```typescript
 interface StellarAuthResponseDto {
-  challenge: string;    // Challenge transaction XDR
-  expiresAt: string;   // ISO 8601 timestamp when challenge expires
+  challenge: string; // Challenge transaction XDR
+  expiresAt: string; // ISO 8601 timestamp when challenge expires
 }
 ```
 
 ## Security Considerations
 
 ### Challenge Expiration
+
 - Challenges expire after 5 minutes
 - Expired challenges are automatically cleaned up
 - Clients must request new challenges after expiration
 
 ### Rate Limiting
+
 - Challenge generation: 5 requests per minute
 - Signature verification: 10 requests per minute
 - Applied per IP address to prevent abuse
 
 ### Input Validation
+
 - Stellar addresses are validated using regex pattern
 - All required fields are validated for presence and format
 - Malformed requests are rejected with appropriate error messages
 
 ### Replay Attack Prevention
+
 - Each challenge contains a unique nonce
 - Challenges are single-use and invalidated after verification
 - Server-side challenge storage prevents reuse
@@ -182,15 +196,18 @@ const challengeResponse = await fetch('/auth/stellar/challenge', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    walletAddress: 'GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q2Q'
-  })
+    walletAddress: 'GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q2Q',
+  }),
 });
 
 const { challenge, expiresAt } = await challengeResponse.json();
 
 // 2. Sign challenge with Stellar wallet (using stellar-sdk)
 const { Keypair, Transaction } = require('@stellar/stellar-sdk');
-const transaction = TransactionBuilder.fromXDR(challenge, 'Test SDF Network ; September 2015');
+const transaction = TransactionBuilder.fromXDR(
+  challenge,
+  'Test SDF Network ; September 2015',
+);
 const keypair = Keypair.fromSecret('your-secret-key');
 transaction.sign(keypair);
 const signature = transaction.toXDR();
@@ -202,8 +219,8 @@ const authResponse = await fetch('/auth/stellar/verify', {
   body: JSON.stringify({
     walletAddress: 'GD5DJ3B6A2KHWGFPJGBM4D7J23G5QJY6XQFQKXQ2Q2Q2Q2Q2Q2Q2Q2Q',
     signature,
-    challenge
-  })
+    challenge,
+  }),
 });
 
 const { user, accessToken, refreshToken } = await authResponse.json();
@@ -232,11 +249,13 @@ JWT_REFRESH_SECRET=your-refresh-secret
 ## Testing
 
 ### Unit Tests
+
 - Service layer tests for challenge generation and verification
 - Address validation tests
 - Error handling tests
 
 ### E2E Tests
+
 - Full authentication flow tests
 - Rate limiting tests
 - Security validation tests
@@ -266,6 +285,7 @@ The Stellar authentication system is designed to work alongside the existing ema
 ## Compliance
 
 This implementation follows:
+
 - **SEP-0010**: Stellar Web Authentication standard
 - **RFC 7519**: JWT token specification
 - **OWASP Guidelines**: Security best practices for authentication
@@ -273,6 +293,7 @@ This implementation follows:
 ## Support
 
 For issues related to Stellar authentication:
+
 1. Check the error messages for specific guidance
 2. Verify Stellar address format and network connectivity
 3. Ensure proper time synchronization for challenge expiration

@@ -5,12 +5,15 @@ This document contains demo user credentials for development and testing purpose
 ## Production Database Setup
 
 ### Prerequisites
+
 Ensure your production database URL is set in `.env.production`:
+
 ```env
 DATABASE_URL=postgresql://neondb_owner:npg_st-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 ### Run Migrations and Seed Production Database
+
 ```bash
 cd backend
 chmod +x scripts/seed-production.sh
@@ -18,29 +21,33 @@ chmod +x scripts/seed-production.sh
 ```
 
 This will:
+
 1. Run all database migrations
 2. Create demo users for all roles with fixed credentials
 
 ## Backend Seed Commands
 
 ### Create All Demo Users (Development)
+
 ```bash
 cd backend
 pnpm seed:all
 ```
 
 ### Create All Demo Users (Production)
+
 ```bash
 cd backend
 pnpm seed:all:prod
 ```
 
 ### Create Individual Users
+
 ```bash
 # Admin user
 pnpm seed:admin
 
-# Agent user  
+# Agent user
 pnpm seed:agent
 
 # Landlord user
@@ -53,54 +60,64 @@ pnpm seed:tenant
 ## Demo User Accounts
 
 ### Production Demo Credentials
+
 These credentials are used in production for demo purposes:
 
 #### Admin User
+
 - **Email:** `admin@chioma.demo`
 - **Password:** `Admin@Demo2024!`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
+
 - **Email:** `agent@chioma.demo`
 - **Password:** `Agent@Demo2024!`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
+
 - **Email:** `landlord@chioma.demo`
 - **Password:** `Landlord@Demo2024!`
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
+
 - **Email:** `tenant@chioma.demo`
 - **Password:** `Tenant@Demo2024!`
 - **Role:** Tenant
 - **Access:** Property browsing, rent payments
 
 ### Development Demo Credentials
+
 For local development (auto-generated passwords):
 
 #### Admin User
+
 - **Email:** `admin@chioma.local`
 - **Password:** `QwW??H<EauRx6EyB>wm_`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
+
 - **Email:** `agent@chioma.local`
 - **Password:** `nWkW~HWN6S*-6o!??kHg`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
+
 - **Email:** `landlord@chioma.local`
 - **Password:** (auto-generated on seed)
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
+
 - **Email:** `tenant@chioma.local`
 - **Password:** `8T<}2QXRm(?rwyJ4Pq3/`
 - **Role:** Tenant
@@ -109,6 +126,7 @@ For local development (auto-generated passwords):
 ## Frontend Access
 
 1. Start the frontend development server:
+
    ```bash
    cd frontend
    npm run dev
@@ -153,6 +171,7 @@ DB_NAME=chioma_db
 ```
 
 Run migrations before seeding:
+
 ```bash
 pnpm migration:run
 ```
@@ -160,6 +179,7 @@ pnpm migration:run
 ## Security Notes
 
 ⚠️ **Important Security Information**
+
 - Production demo credentials are for demonstration purposes only
 - Change or disable demo accounts before going live with real users
 - Demo credentials should only be used in controlled demo environments
@@ -168,24 +188,28 @@ pnpm migration:run
 ## User Roles and Permissions
 
 ### Admin
+
 - Full system access
 - User management
 - Platform configuration
 - Analytics and reporting
 
 ### Agent
+
 - Property listings management
 - Client communication
 - Agreement management
 - Commission tracking
 
 ### Landlord
+
 - Property listings creation
 - Tenant management
 - Rent collection
 - Property maintenance
 
 ### Tenant
+
 - Property search and browsing
 - Rental applications
 - Payment processing

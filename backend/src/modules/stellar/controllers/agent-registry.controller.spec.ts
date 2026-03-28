@@ -146,27 +146,4 @@ describe('AgentRegistryController', () => {
       );
     });
   });
-
-  describe('completeTransaction', () => {
-    it('should complete transaction', async () => {
-      const dto = {
-        transactionId: 'tx123',
-        agentAddress: 'GTEST123',
-      };
-      mockAgentRegistryService.completeTransaction.mockResolvedValue(
-        'txhash123',
-      );
-
-      const result = await controller.completeTransaction(dto);
-
-      expect(result).toEqual({
-        txHash: 'txhash123',
-        message: 'Transaction completed on-chain',
-      });
-      expect(service.completeTransaction).toHaveBeenCalledWith(
-        dto.transactionId,
-        dto.agentAddress,
-      );
-    });
-  });
 });

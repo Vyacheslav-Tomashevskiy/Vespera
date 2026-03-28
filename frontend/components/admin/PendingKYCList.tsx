@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Check, Eye, FileText, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Check, Eye, FileText, Search, X } from 'lucide-react';
 import type { KycVerification, PaginatedResponse } from '@/types';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface PendingKYCListProps {
   data?: PaginatedResponse<KycVerification>;
@@ -23,7 +25,8 @@ export function PendingKYCList({
   onReject,
 }: PendingKYCListProps) {
   const [selectedDocUrl, setSelectedDocUrl] = useState<string | null>(null);
-  const [selectedDocName, setSelectedDocName] = useState<string>('Document Preview');
+  const [selectedDocName, setSelectedDocName] =
+    useState<string>('Document Preview');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>('');
 
@@ -67,15 +70,23 @@ export function PendingKYCList({
             <tbody>
               {rows.map((item) => {
                 const docs = item.documents ?? [];
-                const fullName = `${item.kycData?.first_name ?? ''} ${item.kycData?.last_name ?? ''}`.trim();
+                const fullName =
+                  `${item.kycData?.first_name ?? ''} ${item.kycData?.last_name ?? ''}`.trim();
                 return (
-                  <tr key={item.id} className="border-b border-white/5 last:border-b-0">
+                  <tr
+                    key={item.id}
+                    className="border-b border-white/5 last:border-b-0"
+                  >
                     <td className="px-5 py-4 align-top">
                       <p className="font-semibold text-white">
                         {item.user?.name || fullName || 'Unknown User'}
                       </p>
-                      <p className="text-xs text-blue-200/70">{item.user?.email || 'No email'}</p>
-                      <p className="text-xs text-blue-300/50 mt-1">ID: {item.userId}</p>
+                      <p className="text-xs text-blue-200/70">
+                        {item.user?.email || 'No email'}
+                      </p>
+                      <p className="text-xs text-blue-300/50 mt-1">
+                        ID: {item.userId}
+                      </p>
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="space-y-1 text-sm text-blue-100/90">
@@ -89,7 +100,9 @@ export function PendingKYCList({
                     <td className="px-5 py-4 align-top">
                       <div className="space-y-2">
                         {docs.length === 0 ? (
-                          <p className="text-xs text-amber-300/80">No documents attached</p>
+                          <p className="text-xs text-amber-300/80">
+                            No documents attached
+                          </p>
                         ) : (
                           docs.map((doc) => (
                             <button
@@ -97,7 +110,11 @@ export function PendingKYCList({
                               type="button"
                               onClick={() => {
                                 setSelectedDocUrl(doc.url);
-                                setSelectedDocName(doc.filename || doc.type || 'Document Preview');
+                                setSelectedDocName(
+                                  doc.filename ||
+                                    doc.type ||
+                                    'Document Preview',
+                                );
                               }}
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white transition-all mr-2"
                             >
@@ -114,6 +131,13 @@ export function PendingKYCList({
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="flex flex-col gap-2 max-w-[220px]">
+                        <Link
+                          href={`/admin/kyc/${item.id}`}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition-all hover:bg-white/10"
+                        >
+                          <Eye size={14} />
+                          Review details
+                        </Link>
                         <button
                           type="button"
                           onClick={async () => {
@@ -152,12 +176,17 @@ export function PendingKYCList({
                                 type="button"
                                 onClick={async () => {
                                   try {
-                                    await onReject(item.id, rejectReason || undefined);
+                                    await onReject(
+                                      item.id,
+                                      rejectReason || undefined,
+                                    );
                                     toast.success('KYC verification rejected');
                                     setRejectingId(null);
                                     setRejectReason('');
                                   } catch {
-                                    toast.error('Failed to reject KYC verification');
+                                    toast.error(
+                                      'Failed to reject KYC verification',
+                                    );
                                   }
                                 }}
                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-rose-200 text-xs font-bold"
@@ -192,7 +221,8 @@ export function PendingKYCList({
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-blue-200/70">
-          Showing page {page} of {totalPages} ({data?.total ?? rows.length} total)
+          Showing page {page} of {totalPages} ({data?.total ?? rows.length}{' '}
+          total)
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -218,7 +248,9 @@ export function PendingKYCList({
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 p-4 flex items-center justify-center">
           <div className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <p className="text-sm text-white font-semibold">{selectedDocName}</p>
+              <p className="text-sm text-white font-semibold">
+                {selectedDocName}
+              </p>
               <button
                 type="button"
                 onClick={() => setSelectedDocUrl(null)}
@@ -229,12 +261,15 @@ export function PendingKYCList({
             </div>
             <div className="p-4 max-h-[80vh] overflow-auto">
               {/\.(png|jpg|jpeg|gif|webp)$/i.test(selectedDocUrl) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={selectedDocUrl}
-                  alt={selectedDocName}
-                  className="w-full h-auto rounded-xl border border-white/10"
-                />
+                <div className="relative w-full h-[70vh] rounded-xl border border-white/10 overflow-hidden bg-black/20">
+                  <Image
+                    src={selectedDocUrl}
+                    alt={selectedDocName}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <iframe
                   title={selectedDocName}

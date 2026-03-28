@@ -1,11 +1,13 @@
 # Dispute Resolution Module Implementation
 
 ## Overview
+
 A robust Dispute Resolution module has been implemented to handle rental-related disputes between landlords and tenants, including dispute creation, evidence submission, status tracking, and resolution management.
 
 ## Features Implemented
 
 ### Core Functionality
+
 - ✅ Create and manage disputes
 - ✅ Upload and manage evidence
 - ✅ Track dispute status
@@ -15,6 +17,7 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 - ✅ Notification system
 
 ### API Endpoints
+
 - `POST /api/disputes` - Create new dispute
 - `GET /api/disputes` - List disputes (with filters)
 - `GET /api/disputes/:id` - Get dispute details
@@ -27,11 +30,13 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Database Schema
 
 ### Tables Created
+
 1. **disputes** - Main dispute records
 2. **dispute_evidence** - Evidence files and documents
 3. **dispute_comments** - Comments and internal notes
 
 ### Key Fields
+
 - Dispute types: RENT_PAYMENT, SECURITY_DEPOSIT, PROPERTY_DAMAGE, MAINTENANCE, TERMINATION, OTHER
 - Status workflow: OPEN → UNDER_REVIEW → RESOLVED/REJECTED/WITHDRAWN
 - UUID-based dispute identification
@@ -40,11 +45,13 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Architecture Components
 
 ### Entities
+
 - `Dispute` - Main dispute entity with relationships
 - `DisputeEvidence` - File attachments and evidence
 - `DisputeComment` - Comments (public and internal)
 
 ### DTOs
+
 - `CreateDisputeDto` - Dispute creation validation
 - `UpdateDisputeDto` - Dispute updates
 - `AddEvidenceDto` - Evidence file uploads
@@ -53,14 +60,17 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 - `QueryDisputesDto` - Filtering and pagination
 
 ### Services
+
 - `DisputesService` - Core business logic
 - `DisputeNotificationService` - Event notifications
 - `FileUploadService` - Evidence file management
 
 ### Controllers
+
 - `DisputesController` - REST API endpoints with full CRUD operations
 
 ### Security & Validation
+
 - Role-based access control (Admin, Landlord, Tenant)
 - Permission guards for dispute operations
 - File upload validation (type, size limits)
@@ -68,6 +78,7 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 - Input sanitization and validation pipes
 
 ### Testing
+
 - Unit tests for service layer
 - Controller tests for API endpoints
 - Mock implementations for dependencies
@@ -75,24 +86,28 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Business Logic
 
 ### Dispute Creation
+
 - Validates agreement exists and is active
 - Verifies user permission (landlord/tenant only)
 - Prevents duplicate active disputes
 - Updates agreement status to 'disputed'
 
 ### Evidence Management
+
 - Secure file upload with validation
 - Support for images, PDFs, and documents
 - File size limits (10MB max)
 - Automatic file naming and storage
 
 ### Resolution Process
+
 - Admin-only resolution capability
 - Status workflow enforcement
 - Agreement status restoration on resolution
 - Audit logging for all actions
 
 ### Notifications
+
 - Automatic notifications for dispute events
 - Multi-party notification system
 - Internal comment notifications to admins
@@ -101,18 +116,21 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Security Considerations
 
 ### Access Control
+
 - JWT authentication required
 - Role-based permissions
 - Dispute party verification
 - Admin-only resolution access
 
 ### File Security
+
 - MIME type validation
 - File size restrictions
 - Secure file storage
 - Access control for evidence files
 
 ### Data Protection
+
 - Input validation and sanitization
 - SQL injection prevention via TypeORM
 - Audit logging for compliance
@@ -121,12 +139,14 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Integration Points
 
 ### Existing Modules
+
 - **RentAgreements** - Dispute-agreement relationship
 - **Users** - User roles and permissions
 - **Audit** - Activity logging
 - **Auth** - Authentication and authorization
 
 ### External Services
+
 - File storage (local/S3 ready)
 - Email notifications (pluggable)
 - Payment processing (for refunds)
@@ -134,6 +154,7 @@ A robust Dispute Resolution module has been implemented to handle rental-related
 ## Usage Examples
 
 ### Creating a Dispute
+
 ```typescript
 POST /api/disputes
 {
@@ -145,6 +166,7 @@ POST /api/disputes
 ```
 
 ### Adding Evidence
+
 ```typescript
 POST /api/disputes/dispute-uuid/evidence
 Content-Type: multipart/form-data
@@ -153,6 +175,7 @@ description: "Photo of property condition"
 ```
 
 ### Resolving a Dispute
+
 ```typescript
 POST /api/disputes/dispute-uuid/resolve
 {
@@ -164,6 +187,7 @@ POST /api/disputes/dispute-uuid/resolve
 ## Future Enhancements
 
 ### Planned Features
+
 - Automated dispute resolution suggestions
 - Integration with payment systems
 - Advanced reporting and analytics
@@ -171,6 +195,7 @@ POST /api/disputes/dispute-uuid/resolve
 - Multi-language support
 
 ### Scalability
+
 - Redis caching for frequent queries
 - Queue system for notifications
 - Microservice decomposition
@@ -179,19 +204,24 @@ POST /api/disputes/dispute-uuid/resolve
 ## Deployment Notes
 
 ### Database Migration
+
 Run the migration to create the required tables:
+
 ```bash
 npm run migration:run
 ```
 
 ### Environment Variables
+
 Ensure these are configured:
+
 - File upload directory permissions
 - Database connection
 - JWT secret
 - File size limits
 
 ### Monitoring
+
 - Dispute creation metrics
 - Resolution time tracking
 - File storage usage

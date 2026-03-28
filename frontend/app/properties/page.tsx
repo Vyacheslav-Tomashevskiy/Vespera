@@ -7,14 +7,17 @@ import PropertyCardSkeleton from '@/components/PropertyCardSkeleton';
 import PropertyCard from '@/components/properties/PropertyCard';
 import { Filter, Bell, List, Map } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { LOADING_KEYS, useLoading } from '@/store';
+import { Spinner, LoadingButton } from '@/components/loading';
 
 const PropertyMapView = dynamic(
   () => import('@/components/properties/PropertyMapView'),
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-500">Loading map...</div>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-600">
+        <Spinner size="lg" label="Loading map" />
+        <span className="text-sm">Loading map…</span>
       </div>
     ),
   },
@@ -24,15 +27,18 @@ type ViewMode = 'split' | 'list' | 'map';
 
 export default function PropertyListing() {
   const [searchAsIMove, setSearchAsIMove] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoading, setLoading } = useLoading(LOADING_KEYS.pageProperties);
+  const [loadMoreLoading, setLoadMoreLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    setLoading(true);
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => {
+      clearTimeout(timer);
+      setLoading(false);
+    };
+  }, [setLoading]);
 
   const [properties] = useState([
     {
@@ -134,7 +140,7 @@ export default function PropertyListing() {
     west: number;
   }) => {
     if (!searchAsIMove) return;
-    const filtered = properties.filter((p) => {
+    const _filtered = properties.filter((p) => {
       if (!p.latitude || !p.longitude) return false;
       return (
         p.latitude >= bounds.south &&
@@ -143,7 +149,6 @@ export default function PropertyListing() {
         p.longitude <= bounds.east
       );
     });
-    console.log('Properties in bounds:', filtered.length);
   };
 
   const filteredProperties = properties;
@@ -310,9 +315,16 @@ export default function PropertyListing() {
 
                 {/* Load More Button */}
                 <div className="flex justify-center">
-                  <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base">
+                  <LoadingButton
+                    loading={loadMoreLoading}
+                    onClick={() => {
+                      setLoadMoreLoading(true);
+                      setTimeout(() => setLoadMoreLoading(false), 1200);
+                    }}
+                    className="rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-blue-600 hover:to-indigo-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70 sm:text-base"
+                  >
                     Load More Listings
-                  </button>
+                  </LoadingButton>
                 </div>
               </div>
             </div>

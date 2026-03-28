@@ -7,6 +7,7 @@ The Auth module implements a secure, production-ready authentication system for 
 ## 🎯 Features
 
 ### Core Authentication
+
 - User registration with email validation
 - Login/logout with session management
 - JWT-based token authentication
@@ -14,6 +15,7 @@ The Auth module implements a secure, production-ready authentication system for 
 - Password reset flow
 
 ### Security
+
 - Bcrypt password hashing (12 salt rounds)
 - Account lockout after failed attempts
 - Rate limiting on auth endpoints
@@ -106,6 +108,7 @@ const isValid = await bcrypt.compare(password, hash);
 ```
 
 **Why bcrypt?**
+
 - Intentionally slow to prevent brute force attacks
 - Built-in salt handling
 - Adaptive algorithm (can increase rounds as compute power increases)
@@ -174,6 +177,7 @@ Process:
 Register a new user account.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -185,6 +189,7 @@ Register a new user account.
 ```
 
 **Response (201):**
+
 ```json
 {
   "accessToken": "jwt...",
@@ -204,6 +209,7 @@ Register a new user account.
 Authenticate user with credentials.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -212,6 +218,7 @@ Authenticate user with credentials.
 ```
 
 **Response (200):**
+
 ```json
 {
   "accessToken": "jwt...",
@@ -221,6 +228,7 @@ Authenticate user with credentials.
 ```
 
 **Errors:**
+
 - `401` - Invalid credentials
 - `401` - Account locked (try again in X minutes)
 
@@ -229,11 +237,13 @@ Authenticate user with credentials.
 Logout the current user.
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
 
 **Response (200):**
+
 ```json
 {
   "message": "Logged out successfully"
@@ -245,6 +255,7 @@ Authorization: Bearer <accessToken>
 Get a new access token using refresh token.
 
 **Request:**
+
 ```json
 {
   "refreshToken": "jwt..."
@@ -252,6 +263,7 @@ Get a new access token using refresh token.
 ```
 
 **Response (200):**
+
 ```json
 {
   "accessToken": "jwt...",
@@ -264,6 +276,7 @@ Get a new access token using refresh token.
 Request a password reset email.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com"
@@ -271,6 +284,7 @@ Request a password reset email.
 ```
 
 **Response (200):**
+
 ```json
 {
   "message": "If an account exists with this email, you will receive a password reset link."
@@ -282,6 +296,7 @@ Request a password reset email.
 Reset password with token from email.
 
 **Request:**
+
 ```json
 {
   "token": "reset-token-from-email",
@@ -290,6 +305,7 @@ Reset password with token from email.
 ```
 
 **Response (200):**
+
 ```json
 {
   "message": "Password has been reset successfully."
@@ -307,6 +323,7 @@ npm test src/modules/auth
 ```
 
 Coverage includes:
+
 - Registration with validation
 - Login with various scenarios
 - Token generation and refresh
@@ -323,6 +340,7 @@ npm run test:e2e test/auth.e2e-spec.ts
 ```
 
 Coverage includes:
+
 - Full registration flow
 - Full login flow
 - Token refresh flow
@@ -357,22 +375,22 @@ You can customize the auth behavior by modifying constants in `auth.service.ts`:
 
 ```typescript
 // Account lockout settings
-const MAX_FAILED_ATTEMPTS = 5;              // Change to 3, 10, etc.
-const LOCKOUT_DURATION_MINUTES = 15;        // Change duration
+const MAX_FAILED_ATTEMPTS = 5; // Change to 3, 10, etc.
+const LOCKOUT_DURATION_MINUTES = 15; // Change duration
 
 // Token expiry
-expiresIn: '15m'          // Access token
-expiresIn: '7d'           // Refresh token
+expiresIn: '15m'; // Access token
+expiresIn: '7d'; // Refresh token
 
 // Password reset
-const RESET_TOKEN_EXPIRY_MINUTES = 60;      // Change to 30, 120, etc.
+const RESET_TOKEN_EXPIRY_MINUTES = 60; // Change to 30, 120, etc.
 ```
 
 Rate limiting in `middleware/rate-limit.middleware.ts`:
 
 ```typescript
-const WINDOW_MS = 15 * 60 * 1000;  // Time window
-const MAX_REQUESTS = 5;             // Requests allowed
+const WINDOW_MS = 15 * 60 * 1000; // Time window
+const MAX_REQUESTS = 5; // Requests allowed
 ```
 
 ## 📖 Usage Examples
@@ -383,7 +401,7 @@ const MAX_REQUESTS = 5;             // Requests allowed
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000'
+  baseURL: 'http://localhost:3000',
 });
 
 // Register
@@ -393,9 +411,9 @@ async function register() {
     password: 'SecurePass123!',
     firstName: 'John',
     lastName: 'Doe',
-    role: 'tenant'
+    role: 'tenant',
   });
-  
+
   const { accessToken, refreshToken } = response.data;
   localStorage.setItem('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
@@ -405,7 +423,7 @@ async function register() {
 async function getProfile() {
   const accessToken = localStorage.getItem('accessToken');
   const response = await api.get('/users/profile', {
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   return response.data;
 }
@@ -414,7 +432,7 @@ async function getProfile() {
 async function refreshAccessToken() {
   const refreshToken = localStorage.getItem('refreshToken');
   const response = await api.post('/auth/refresh', { refreshToken });
-  
+
   const { accessToken } = response.data;
   localStorage.setItem('accessToken', accessToken);
 }
@@ -422,10 +440,14 @@ async function refreshAccessToken() {
 // Logout
 async function logout() {
   const accessToken = localStorage.getItem('accessToken');
-  await api.post('/auth/logout', {}, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  
+  await api.post(
+    '/auth/logout',
+    {},
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
 }
@@ -448,10 +470,10 @@ export function useAuth() {
       const response = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
-      
+
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       setUser(data.user);
@@ -466,7 +488,7 @@ export function useAuth() {
     const accessToken = localStorage.getItem('accessToken');
     await fetch('/auth/logout', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -484,6 +506,7 @@ export function useAuth() {
 The account is locked due to too many failed login attempts.
 
 **Solution:**
+
 - Wait 15 minutes for automatic unlock
 - Or contact admin to unlock manually
 
@@ -492,6 +515,7 @@ The account is locked due to too many failed login attempts.
 The refresh token is expired or invalid.
 
 **Solution:**
+
 - Login again to get new tokens
 - Ensure token wasn't used more than once
 
@@ -501,11 +525,12 @@ Password doesn't meet the security policy.
 
 **Solution:**
 Ensure password contains:
+
 - 8-128 characters
 - Uppercase letter (A-Z)
 - Lowercase letter (a-z)
 - Number (0-9)
-- Special character (@$!%*?&)
+- Special character (@$!%\*?&)
 
 Example: `SecurePass123!`
 
@@ -514,6 +539,7 @@ Example: `SecurePass123!`
 Rate limit exceeded on auth endpoint.
 
 **Solution:**
+
 - Wait 15 minutes for rate limit window to reset
 - Reduce number of requests to auth endpoints
 
@@ -524,20 +550,20 @@ The recommended approach for client-side token management:
 ```typescript
 // Intercept API calls
 axios.interceptors.response.use(
-  response => response,
-  async error => {
+  (response) => response,
+  async (error) => {
     if (error.response?.status === 401) {
       const refreshToken = localStorage.getItem('refreshToken');
       const response = await api.post('/auth/refresh', { refreshToken });
       const { accessToken } = response.data;
-      
+
       localStorage.setItem('accessToken', accessToken);
-      
+
       // Retry original request
       return api(error.config);
     }
     throw error;
-  }
+  },
 );
 ```
 
@@ -569,17 +595,17 @@ axios.interceptors.response.use(
 
 The auth module uses these fields in the `users` table:
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `id` | UUID | User ID |
-| `email` | VARCHAR | Unique email |
-| `password_hash` | VARCHAR | Bcrypt hash |
-| `refresh_token` | VARCHAR | Stored JWT hash |
-| `password_reset_token` | VARCHAR | SHA256 token hash |
-| `reset_token_expires_at` | TIMESTAMP | Token expiry |
-| `account_locked` | BOOLEAN | Lockout status |
-| `failed_login_attempts` | INT | Attempt counter |
-| `locked_until` | TIMESTAMP | Lock expiry |
+| Field                    | Type      | Purpose           |
+| ------------------------ | --------- | ----------------- |
+| `id`                     | UUID      | User ID           |
+| `email`                  | VARCHAR   | Unique email      |
+| `password_hash`          | VARCHAR   | Bcrypt hash       |
+| `refresh_token`          | VARCHAR   | Stored JWT hash   |
+| `password_reset_token`   | VARCHAR   | SHA256 token hash |
+| `reset_token_expires_at` | TIMESTAMP | Token expiry      |
+| `account_locked`         | BOOLEAN   | Lockout status    |
+| `failed_login_attempts`  | INT       | Attempt counter   |
+| `locked_until`           | TIMESTAMP | Lock expiry       |
 
 ## 🚢 Deployment
 

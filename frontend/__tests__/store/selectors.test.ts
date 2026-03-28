@@ -69,7 +69,7 @@ const notificationState: NotificationStore = {
     },
   ],
   isLoaded: true,
-  fetchNotifications: () => {},
+  fetchNotifications: async () => {},
   markAsRead: () => {},
   markAsUnread: () => {},
   markAllAsRead: () => {},

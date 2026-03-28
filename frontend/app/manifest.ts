@@ -5,15 +5,14 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Chioma',
     short_name: 'Chioma',
     description:
-      'Blockchain-powered rental platform with mobile-first workflows for agents, landlords, and tenants.',
+      'Blockchain-powered housing rentals with transparent leases, payments, and offline-ready access.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#0f172a',
+    background_color: '#020617',
     theme_color: '#1d4ed8',
-    categories: ['finance', 'productivity', 'lifestyle'],
-    lang: 'en',
+    categories: ['housing', 'finance', 'productivity'],
     icons: [
       {
         src: '/android_192.png',
@@ -26,9 +25,25 @@ export default function manifest(): MetadataRoute.Manifest {
         type: 'image/png',
       },
       {
-        src: '/favicon_48.png',
-        sizes: '48x48',
+        src: '/apple_touch_180.png',
+        sizes: '180x180',
         type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/logo_512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+    ],
+    screenshots: [
+      {
+        src: '/og-image.png',
+        sizes: '1200x630',
+        type: 'image/png',
+        form_factor: 'wide',
+        label: 'Chioma landing page preview',
       },
     ],
   };

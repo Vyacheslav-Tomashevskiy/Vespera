@@ -9,7 +9,8 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from './users.service';
 import { User, UserRole, AuthMethod } from './entities/user.entity';
-import { KycStatus } from '../kyc/kyc.entity';
+import { KycStatus } from '../kyc/kyc-status.enum';
+import { AuditService } from '../audit/audit.service';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -38,6 +39,13 @@ describe('UsersService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     kycStatus: KycStatus.PENDING,
+    loginCount: 0,
+    preferredLanguage: 'en',
+    timezone: 'UTC',
+    twoFactorEnabled: false,
+    emailNotifications: true,
+    smsNotifications: false,
+    marketingOptIn: false,
   };
 
   const mockUserRepository = {
@@ -45,6 +53,12 @@ describe('UsersService', () => {
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    delete: jest.fn(),
+    restore: jest.fn(),
+  };
+
+  const mockAuditService = {
+    log: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -55,6 +69,7 @@ describe('UsersService', () => {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -70,7 +85,7 @@ describe('UsersService', () => {
     it('should return a user by id', async () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
-      const result = await service.findById('1');
+      const result = await service.getUserById('1');
 
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
@@ -82,7 +97,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findById('999')).rejects.toThrow(NotFoundException);
+      await expect(service.getUserById('999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

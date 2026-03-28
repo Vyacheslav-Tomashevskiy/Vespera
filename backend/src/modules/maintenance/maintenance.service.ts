@@ -1,7 +1,5 @@
 import {
   Injectable,
-  Inject,
-  forwardRef,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -41,7 +39,6 @@ export class MaintenanceService {
     private readonly notificationsService: NotificationsService,
     private readonly propertiesService: PropertiesService,
     private readonly usersService: UsersService,
-    @Inject(forwardRef(() => ReviewPromptService))
     private readonly reviewPromptService: ReviewPromptService,
   ) {}
 
@@ -49,8 +46,8 @@ export class MaintenanceService {
     const property = await this.propertiesService.findOne(dto.propertyId);
     if (!property) throw new BadRequestException('Invalid property');
 
-    const tenant = await this.usersService.findById(dto.tenantId);
-    const landlord = await this.usersService.findById(dto.landlordId);
+    const tenant = await this.usersService.getUserById(dto.tenantId);
+    const landlord = await this.usersService.getUserById(dto.landlordId);
     if (!tenant || !landlord) throw new BadRequestException('Invalid user');
 
     if (dto.mediaUrls && dto.mediaUrls.length > 0) {

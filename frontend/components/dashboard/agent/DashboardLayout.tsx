@@ -16,8 +16,10 @@ import {
   Plus,
   LogOut,
   Menu,
+  ClipboardCheck,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications';
+import { useMessagingUnreadCount } from '@/components/messaging/useMessagingUnreadCount';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,6 +28,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const unreadMessages = useMessagingUnreadCount();
 
   const navItems = [
     {
@@ -44,10 +47,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       icon: Wallet,
     },
     {
+      name: 'Transactions',
+      href: '/agents/transactions',
+      icon: ClipboardCheck,
+    },
+    {
       name: 'Messages',
       href: '/agents/messages',
       icon: MessageSquare,
-      badge: '3',
+      badge: unreadMessages > 0 ? String(unreadMessages) : undefined,
       badgeColor: 'bg-blue-600',
     },
     {
@@ -59,6 +67,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       name: 'Analytics',
       href: '/agents/analytics',
       icon: PieChart,
+    },
+    {
+      name: 'Onboarding',
+      href: '/agents/onboarding',
+      icon: ClipboardCheck,
     },
     {
       name: 'Notifications',

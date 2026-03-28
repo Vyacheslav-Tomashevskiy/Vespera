@@ -37,6 +37,6 @@ See `cache.constants.ts` (`TTL_PUBLIC_PROPERTY_LIST_MS`, `TTL_SEARCH_RESULTS_MS`
 
 ## Environment
 
-| Variable                 | Purpose                                      |
-| ------------------------ | -------------------------------------------- |
-| `ENABLE_CACHE_WARMING`   | If `true`, warm property keys on app startup |
+| Variable               | Purpose                                      |
+| ---------------------- | -------------------------------------------- |
+| `ENABLE_CACHE_WARMING` | If `true`, warm property keys on app startup |

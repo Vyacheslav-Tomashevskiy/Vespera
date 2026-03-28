@@ -12,6 +12,7 @@ import {
   DefaultValuePipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import {
@@ -33,9 +34,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import { AuditLog } from '../audit/decorators/audit-log.decorator';
+import { AuditAction, AuditLevel } from '../audit/entities/audit-log.entity';
+import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
 
 @ApiTags('Security')
 @Controller()
+@UseInterceptors(AuditLogInterceptor)
 export class SecurityController {
   constructor(
     private readonly configService: ConfigService,
@@ -94,7 +99,7 @@ export class SecurityController {
 
   // ─── Security Events ──────────────────────────────────────────────────────
 
-  @Get('api/v1/security/events')
+  @Get('security/events')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -109,7 +114,7 @@ export class SecurityController {
     return this.securityEventsService.getRecentEvents(hours, limit);
   }
 
-  @Get('api/v1/security/events/user/:userId')
+  @Get('security/events/user/:userId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -123,7 +128,7 @@ export class SecurityController {
     return this.securityEventsService.getUserEvents(userId, limit, offset);
   }
 
-  @Get('api/v1/security/events/suspicious/:userId')
+  @Get('security/events/suspicious/:userId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -136,7 +141,7 @@ export class SecurityController {
 
   // ─── Threat Detection ─────────────────────────────────────────────────────
 
-  @Get('api/v1/security/threats')
+  @Get('security/threats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -148,7 +153,7 @@ export class SecurityController {
     return this.threatDetectionService.getRecentThreats(limit);
   }
 
-  @Get('api/v1/security/threats/stats')
+  @Get('security/threats/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -160,19 +165,25 @@ export class SecurityController {
     return this.threatDetectionService.getThreatStats(hours);
   }
 
-  @Patch('api/v1/security/threats/:id/false-positive')
+  @Patch('security/threats/:id/false-positive')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Mark a threat event as false positive' })
+  @AuditLog({
+    action: AuditAction.SECURITY_INCIDENT,
+    entityType: 'ThreatEvent',
+    level: AuditLevel.SECURITY,
+    includeNewValues: true,
+  })
   async markFalsePositive(@Param('id') threatId: string) {
     await this.threatDetectionService.markFalsePositive(threatId);
   }
 
   // ─── Incident Management ──────────────────────────────────────────────────
 
-  @Get('api/v1/security/incidents')
+  @Get('security/incidents')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -181,7 +192,7 @@ export class SecurityController {
     return this.incidentService.getOpenIncidents();
   }
 
-  @Get('api/v1/security/incidents/metrics')
+  @Get('security/incidents/metrics')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -190,11 +201,17 @@ export class SecurityController {
     return this.incidentService.getResponseMetrics();
   }
 
-  @Post('api/v1/security/incidents/:id/resolve')
+  @Post('security/incidents/:id/resolve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Resolve a security incident' })
+  @AuditLog({
+    action: AuditAction.SECURITY_INCIDENT,
+    entityType: 'SecurityIncident',
+    level: AuditLevel.SECURITY,
+    includeNewValues: true,
+  })
   async resolveIncident(
     @Param('id') incidentId: string,
     @Body('resolution') resolution: string,
@@ -205,7 +222,7 @@ export class SecurityController {
     );
   }
 
-  @Get('api/v1/security/incidents/:id/report')
+  @Get('security/incidents/:id/report')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -216,7 +233,7 @@ export class SecurityController {
 
   // ─── Compliance Reports ───────────────────────────────────────────────────
 
-  @Get('api/v1/security/compliance/score')
+  @Get('security/compliance/score')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -225,7 +242,7 @@ export class SecurityController {
     return this.complianceService.getSecurityScore();
   }
 
-  @Get('api/v1/security/compliance/gdpr')
+  @Get('security/compliance/gdpr')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -253,7 +270,7 @@ export class SecurityController {
     return this.complianceService.generateGdprReport(from, to);
   }
 
-  @Get('api/v1/security/compliance/soc2')
+  @Get('security/compliance/soc2')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -271,7 +288,7 @@ export class SecurityController {
     return this.complianceService.generateSoc2Report(from, to);
   }
 
-  @Get('api/v1/security/compliance/pci-dss')
+  @Get('security/compliance/pci-dss')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -291,7 +308,7 @@ export class SecurityController {
 
   // ─── RBAC Management ─────────────────────────────────────────────────────
 
-  @Get('api/v1/security/rbac/roles')
+  @Get('security/rbac/roles')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -300,7 +317,7 @@ export class SecurityController {
     return this.rbacService.findAllRoles();
   }
 
-  @Get('api/v1/security/rbac/permissions')
+  @Get('security/rbac/permissions')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -309,24 +326,35 @@ export class SecurityController {
     return this.rbacService.findAllPermissions();
   }
 
-  @Post('api/v1/security/rbac/seed')
+  @Post('security/rbac/seed')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Seed default RBAC roles and permissions' })
+  @AuditLog({
+    action: AuditAction.PERMISSION_CHANGE,
+    entityType: 'Rbac',
+    level: AuditLevel.SECURITY,
+  })
   async seedRbac() {
     await this.rbacService.seedDefaultRoles();
   }
 
   // ─── Blockchain Audit Anchoring ───────────────────────────────────────────
 
-  @Post('api/v1/security/audit/anchor')
+  @Post('security/audit/anchor')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Anchor latest audit log batch to blockchain' })
   @ApiQuery({ name: 'batchSize', required: false, type: Number })
+  @AuditLog({
+    action: AuditAction.BLOCKCHAIN_TX_SUBMITTED,
+    entityType: 'AuditBatch',
+    level: AuditLevel.SECURITY,
+    includeNewValues: true,
+  })
   async anchorAuditLogs(
     @Query('batchSize', new DefaultValuePipe(100), ParseIntPipe)
     batchSize: number,
