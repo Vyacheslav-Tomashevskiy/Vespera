@@ -32,6 +32,33 @@ import {
 } from './cache-manager';
 import type { Property, RentalAgreement, Payment } from '@/types';
 
+// ─── Online Detection Hook ───────────────────────────────────────────────────
+
+/**
+ * Lightweight hook that tracks `navigator.onLine` via window events.
+ * SSR-safe: defaults to `true` on the server.
+ */
+export function useOnline(): boolean {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
 // ─── Offline Status Hook ─────────────────────────────────────────────────────
 
 export function useOfflineStatus() {
@@ -218,16 +245,22 @@ export function useCachePayment() {
 
 // ─── Offline Mutation Hook ───────────────────────────────────────────────────
 
+/**
+ * Mutation hook that is offline-aware.
+ *
+ * - Online: delegates to `onlineFn` (the real API call).
+ * - Offline: queues the operation in IndexedDB for later sync and returns `null`.
+ */
 export function useOfflineMutation<TData, TVariables>(
   entity: string,
   action: 'create' | 'update' | 'delete',
+  onlineFn: (variables: TVariables) => Promise<TData>,
 ) {
   const { isOnline } = useOfflineStatus();
 
   return useMutation({
-    mutationFn: async (variables: TVariables) => {
+    mutationFn: async (variables: TVariables): Promise<TData | null> => {
       if (!isOnline) {
-        // Queue for later sync
         const entityId =
           typeof variables === 'object' &&
           variables !== null &&
@@ -235,19 +268,11 @@ export function useOfflineMutation<TData, TVariables>(
             ? String((variables as { id: unknown }).id)
             : '';
 
-        await addToSyncQueue({
-          action,
-          entity,
-          entityId,
-          payload: variables,
-        });
-
+        await addToSyncQueue({ action, entity, entityId, payload: variables });
         return null;
       }
 
-      // Online - execute immediately
-      // This would be replaced with actual API call
-      return variables as unknown as TData;
+      return onlineFn(variables);
     },
   });
 }

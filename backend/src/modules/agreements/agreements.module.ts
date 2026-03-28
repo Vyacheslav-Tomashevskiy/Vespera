@@ -7,6 +7,8 @@ import { AgreementNftService } from './agreement-nft.service';
 import { NftAnalyticsService } from './nft-analytics.service';
 import { BlockchainSyncService } from './blockchain-sync.service';
 import { EscrowIntegrationService } from './escrow-integration.service';
+import { TemplateRenderingService } from './template-rendering.service';
+import { PDFGenerationService } from './pdf-generation.service';
 import { RentAgreement } from '../rent/entities/rent-contract.entity';
 import { Payment } from '../rent/entities/payment.entity';
 import { StellarEscrow } from '../stellar/entities/stellar-escrow.entity';
@@ -37,6 +39,8 @@ import { StellarModule } from '../stellar/stellar.module';
     NftAnalyticsService,
     BlockchainSyncService,
     EscrowIntegrationService,
+    TemplateRenderingService,
+    PDFGenerationService,
   ],
   exports: [
     AgreementsService,
@@ -44,6 +48,8 @@ import { StellarModule } from '../stellar/stellar.module';
     NftAnalyticsService,
     BlockchainSyncService,
     EscrowIntegrationService,
+    TemplateRenderingService,
+    PDFGenerationService,
   ],
 })
 export class AgreementsModule {}

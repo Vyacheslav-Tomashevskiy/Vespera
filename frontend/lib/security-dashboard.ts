@@ -347,7 +347,7 @@ export function buildSecurityDashboardSummary(
   }
 
   const typeCounts = Array.from(typeCounter.entries())
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 6)
     .map(([key, count]) => ({
       key,
