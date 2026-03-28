@@ -89,7 +89,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getUserById('999')).rejects.toThrow(NotFoundException);
+      await expect(service.getUserById('999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

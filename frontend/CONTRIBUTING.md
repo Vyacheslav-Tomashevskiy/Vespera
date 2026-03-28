@@ -164,26 +164,31 @@ frontend/
 ### Key Directories Explained
 
 **`app/`** - Next.js App Router pages
+
 - Organized by feature/role (admin, landlords, tenant, etc.)
 - Each route can have `layout.tsx`, `page.tsx`, `error.tsx`, `loading.tsx`
 - Use `'use client'` directive for client components
 
 **`components/`** - Reusable components
+
 - Organized by feature or UI layer
 - `ui/` contains base components (buttons, modals, spinners)
 - Feature folders contain domain-specific components
 - Each component should be self-contained with its own types
 
 **`lib/`** - Utilities and helpers
+
 - `errors/` - centralized error handling
 - API client configuration
 - Helper functions for common tasks
 
 **`store/`** - Global state with Zustand
+
 - Organized by feature
 - Each store file exports hooks for component usage
 
 **`types/`** - TypeScript definitions
+
 - Shared types used across the app
 - API response types
 - Component prop interfaces
@@ -220,15 +225,13 @@ export default function MyComponent({
   isLoading = false,
 }: MyComponentProps) {
   return (
-    <div className={`bg-slate-800/50 border border-white/10 rounded-2xl p-5 ${
-      variant === 'primary' ? 'border-blue-400/30' : 'border-white/10'
-    }`}>
+    <div
+      className={`bg-slate-800/50 border border-white/10 rounded-2xl p-5 ${
+        variant === 'primary' ? 'border-blue-400/30' : 'border-white/10'
+      }`}
+    >
       <h2 className="text-white font-bold text-lg">{title}</h2>
-      {isLoading ? (
-        <div className="animate-pulse">Loading...</div>
-      ) : (
-        children
-      )}
+      {isLoading ? <div className="animate-pulse">Loading...</div> : children}
     </div>
   );
 }
@@ -260,9 +263,9 @@ export default function MyComponent({
 
 ```tsx
 // Controlled - parent manages state
-<input 
-  value={value} 
-  onChange={(e) => setValue(e.target.value)} 
+<input
+  value={value}
+  onChange={(e) => setValue(e.target.value)}
 />
 
 // Uncontrolled - component manages state
@@ -345,7 +348,7 @@ export default function MyButton({
   isLoading = false,
 }: MyButtonProps) {
   const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-all';
-  
+
   const variantStyles = {
     primary: 'bg-blue-600 text-white hover:bg-blue-700',
     secondary: 'bg-slate-700 text-white hover:bg-slate-600',
@@ -453,7 +456,7 @@ describe('MyButton', () => {
   it('calls onClick handler when clicked', async () => {
     const handleClick = vi.fn();
     render(<MyButton onClick={handleClick}>Click me</MyButton>);
-    
+
     await userEvent.click(screen.getByText('Click me'));
     expect(handleClick).toHaveBeenCalled();
   });
@@ -515,7 +518,7 @@ class MyComponent extends React.Component {}
 const [count, setCount] = useState(0);
 
 // ✅ Use 'use client' for client-side features
-'use client';
+('use client');
 ```
 
 **Tailwind CSS**
@@ -627,7 +630,11 @@ const schema = z.object({
 });
 
 export default function LoginForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(schema),
   });
 
@@ -654,6 +661,7 @@ make check
 ```
 
 This runs:
+
 1. **ESLint** - Code quality and style
 2. **Prettier** - Code formatting
 3. **Tests** - Unit and E2E tests
@@ -664,6 +672,7 @@ This runs:
 #### 1. ESLint (Code Quality)
 
 Checks for:
+
 - Unused variables
 - Missing dependencies
 - Accessibility issues
@@ -729,24 +738,30 @@ Before submitting a PR:
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Related Issues
+
 Closes #123
 
 ## Testing
+
 How to test these changes
 
 ## Screenshots (if applicable)
+
 Add screenshots for UI changes
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Tests pass locally (`make check`)
 - [ ] No new warnings generated
@@ -898,6 +913,7 @@ pnpm run storybook
 ### Performance
 
 1. **Code Splitting**
+
    ```tsx
    // Use dynamic imports for large components
    const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
@@ -906,17 +922,18 @@ pnpm run storybook
    ```
 
 2. **Image Optimization**
+
    ```tsx
    // Always use Next.js Image component
    import Image from 'next/image';
-   
+
    <Image
      src="/image.jpg"
      alt="Description"
      width={400}
      height={300}
      priority // for above-the-fold images
-   />
+   />;
    ```
 
 3. **Memoization**
@@ -928,15 +945,17 @@ pnpm run storybook
 ### Accessibility
 
 1. **Semantic HTML**
+
    ```tsx
    // ✅ Good
    <button onClick={handleClick}>Click me</button>
-   
+
    // ❌ Avoid
    <div onClick={handleClick}>Click me</div>
    ```
 
 2. **ARIA Labels**
+
    ```tsx
    <button aria-label="Close menu" onClick={closeMenu}>
      <X />
@@ -946,24 +965,30 @@ pnpm run storybook
 3. **Keyboard Navigation**
    ```tsx
    // Ensure all interactive elements are keyboard accessible
-   <input onKeyDown={(e) => {
-     if (e.key === 'Enter') handleSubmit();
-   }} />
+   <input
+     onKeyDown={(e) => {
+       if (e.key === 'Enter') handleSubmit();
+     }}
+   />
    ```
 
 ### Security
 
 1. **Sanitize User Input**
+
    ```tsx
    // Use libraries like DOMPurify for user-generated content
    import DOMPurify from 'dompurify';
-   
-   <div dangerouslySetInnerHTML={{
-     __html: DOMPurify.sanitize(userContent)
-   }} />
+
+   <div
+     dangerouslySetInnerHTML={{
+       __html: DOMPurify.sanitize(userContent),
+     }}
+   />;
    ```
 
 2. **Environment Variables**
+
    ```tsx
    // Use .env.local for sensitive data
    const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
@@ -991,17 +1016,18 @@ pnpm run storybook
 ### Documentation
 
 1. **Component Documentation**
+
    ```tsx
    /**
     * PropertyCard displays a single property listing
-    * 
+    *
     * @param property - The property data to display
     * @param variant - Display variant: 'grid' or 'list'
     * @param onSelect - Callback when property is selected
-    * 
+    *
     * @example
-    * <PropertyCard 
-    *   property={propertyData} 
+    * <PropertyCard
+    *   property={propertyData}
     *   variant="grid"
     *   onSelect={(id) => console.log(id)}
     * />
@@ -1015,6 +1041,7 @@ pnpm run storybook
    - Include examples
 
 3. **Inline Comments**
+
    ```tsx
    // Explain WHY, not WHAT
    // ✅ Good
@@ -1023,7 +1050,7 @@ pnpm run storybook
      debounce((query) => search(query), 300),
      []
    );
-   
+
    // ❌ Avoid
    // Call debounce function
    const debouncedSearch = useCallback(...);
