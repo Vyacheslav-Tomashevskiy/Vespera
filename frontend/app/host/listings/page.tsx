@@ -46,7 +46,7 @@ export default function HostListingsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings.map((p: any) => (
+          {listings.map((p: { id: string; title?: unknown; status?: unknown; city?: unknown; [key: string]: unknown }) => (
             <div
               key={p.id}
               className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all"
@@ -56,28 +56,28 @@ export default function HostListingsPage() {
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold line-clamp-1">{p.title}</h3>
+                  <h3 className="font-semibold line-clamp-1">{String(p.title)}</h3>
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ml-2 shrink-0 ${p.status === 'published' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
+                    className={`text-xs px-2 py-1 rounded-full ml-2 shrink-0 ${String(p.status) === 'published' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
                   >
-                    {p.status}
+                    {String(p.status)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-blue-300/60 text-sm mb-3">
                   <MapPin size={12} />
-                  <span>{p.city}</span>
+                  <span>{String(p.city)}</span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-blue-200/60 mb-4">
                   <span className="flex items-center gap-1">
                     <Bed size={14} />
-                    {p.bedrooms}bd
+                    {String(p.bedrooms)}bd
                   </span>
                   <span className="flex items-center gap-1">
                     <Bath size={14} />
-                    {p.bathrooms}ba
+                    {String(p.bathrooms)}ba
                   </span>
                   <span className="ml-auto font-semibold text-white">
-                    ${p.price}/mo
+                    ${String(p.price)}/mo
                   </span>
                 </div>
                 <div className="flex gap-2">

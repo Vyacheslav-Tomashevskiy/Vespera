@@ -36,9 +36,9 @@ const authState: AuthStore = {
   isAuthenticated: true,
   loading: false,
   login: async () => ({ success: true }),
-  logout: async () => {},
-  setTokens: () => {},
-  hydrate: () => {},
+  logout: async () => { },
+  setTokens: () => { },
+  hydrate: () => { },
 };
 
 const notificationState: NotificationStore = {
@@ -69,11 +69,11 @@ const notificationState: NotificationStore = {
     },
   ],
   isLoaded: true,
-  fetchNotifications: () => {},
-  markAsRead: () => {},
-  markAsUnread: () => {},
-  markAllAsRead: () => {},
-  addNotification: () => {},
+  fetchNotifications: async () => { },
+  markAsRead: () => { },
+  markAsUnread: () => { },
+  markAllAsRead: () => { },
+  addNotification: () => { },
 };
 
 const propertyState: PropertyStore = {
@@ -83,12 +83,12 @@ const propertyState: PropertyStore = {
   selectedPropertyId: null,
   viewMode: 'grid',
   searchQuery: '',
-  setFilters: () => {},
-  resetFilters: () => {},
-  setSort: () => {},
-  selectProperty: () => {},
-  setViewMode: () => {},
-  setSearchQuery: () => {},
+  setFilters: () => { },
+  resetFilters: () => { },
+  setSort: () => { },
+  selectProperty: () => { },
+  setViewMode: () => { },
+  setSearchQuery: () => { },
 };
 
 const uiState: UIStore = {
@@ -99,16 +99,16 @@ const uiState: UIStore = {
   toasts: [{ id: 't-1', type: 'info', title: 'Hi' }],
   globalLoading: true,
   isOnline: false,
-  setTheme: () => {},
-  toggleSidebar: () => {},
-  setSidebarOpen: () => {},
-  setSidebarCollapsed: () => {},
-  openModal: () => {},
-  closeModal: () => {},
-  addToast: () => {},
-  removeToast: () => {},
-  setGlobalLoading: () => {},
-  setOnlineStatus: () => {},
+  setTheme: () => { },
+  toggleSidebar: () => { },
+  setSidebarOpen: () => { },
+  setSidebarCollapsed: () => { },
+  openModal: () => { },
+  closeModal: () => { },
+  addToast: () => { },
+  removeToast: () => { },
+  setGlobalLoading: () => { },
+  setOnlineStatus: () => { },
 };
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

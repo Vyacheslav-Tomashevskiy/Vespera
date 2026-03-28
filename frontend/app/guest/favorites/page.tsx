@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MapPin, Bed, Bath } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import Link from 'next/link';
 
 // Favorites are stored client-side (localStorage) until a backend endpoint exists

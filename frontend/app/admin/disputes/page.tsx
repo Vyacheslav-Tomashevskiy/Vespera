@@ -6,11 +6,9 @@ import {
   CheckCircle2,
   Clock3,
   Eye,
-  Filter,
   Gavel,
   MessageSquareMore,
   RefreshCw,
-  Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -30,14 +28,6 @@ const STATUS_OPTIONS: Array<AdminDisputeStatus | 'ALL'> = [
   'REJECTED',
   'WITHDRAWN',
 ];
-
-const statusBadgeMap: Record<AdminDisputeStatus, string> = {
-  OPEN: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
-  UNDER_REVIEW: 'border-blue-400/30 bg-blue-500/10 text-blue-200',
-  RESOLVED: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
-  REJECTED: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
-  WITHDRAWN: 'border-slate-400/30 bg-slate-500/10 text-slate-200',
-};
 
 export default function AdminDisputesPage() {
   const { user, loading: authLoading } = useAuth();

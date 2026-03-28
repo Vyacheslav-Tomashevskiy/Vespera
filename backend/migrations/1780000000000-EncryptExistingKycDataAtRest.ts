@@ -19,7 +19,7 @@ export class EncryptExistingKycDataAtRest implements MigrationInterface {
           const encrypted = encryptionService.encrypt(
             JSON.stringify(kyc.encryptedKycData),
           );
-          kyc.encryptedKycData = encrypted;
+          kyc.encryptedKycData = JSON.parse(encrypted) as Record<string, any>;
           kyc.encryptionVersion = 1;
           await queryRunner.manager.save(kyc);
         }

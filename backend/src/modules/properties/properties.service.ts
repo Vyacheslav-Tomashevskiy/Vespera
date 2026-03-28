@@ -346,7 +346,9 @@ export class PropertiesService {
     landlordId: string,
   ): Promise<Property> {
     const draft = await this.requireDraftForLandlord(draftId, landlordId);
-    const createDto = this.buildCreateDtoFromWizardData(draft.data);
+    const createDto = this.buildCreateDtoFromWizardData(
+      draft.data as Record<string, unknown>,
+    );
     const property = await this.create(createDto, landlordId);
     const published = await this.publish(property.id, {
       id: landlordId,

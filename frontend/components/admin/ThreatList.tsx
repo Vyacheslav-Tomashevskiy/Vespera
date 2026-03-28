@@ -77,7 +77,7 @@ export function ThreatList({
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={filters.type}
-          onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+          onChange={(e) => setFilters({ ...filters, type: e.target.value, search: '' })}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
         >
           <option value="">All Types</option>
@@ -90,7 +90,7 @@ export function ThreatList({
 
         <select
           value={filters.level}
-          onChange={(e) => setFilters({ ...filters, level: e.target.value })}
+          onChange={(e) => setFilters({ ...filters, level: e.target.value, search: '' })}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
         >
           <option value="">All Severities</option>
@@ -103,7 +103,7 @@ export function ThreatList({
 
         <select
           value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value, search: '' })}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
         >
           <option value="">All Statuses</option>

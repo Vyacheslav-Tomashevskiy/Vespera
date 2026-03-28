@@ -25,7 +25,7 @@ const AMENITY_CATEGORIES = [
   }
 ];
 
-export const Step3Amenities: React.FC<StepProps> = ({ data, onChange, errors }) => {
+export const Step3Amenities: React.FC<StepProps> = ({ data, onChange }) => {
   const toggleAmenity = (item: string) => {
     const current = data.amenities || [];
     if (current.includes(item)) {

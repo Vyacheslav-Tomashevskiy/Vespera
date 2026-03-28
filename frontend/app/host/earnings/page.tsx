@@ -30,13 +30,13 @@ export default function HostEarningsPage() {
         {[
           {
             label: 'Total Earned',
-            value: `$${total.toLocaleString()}`,
+            value: `${total.toLocaleString()}`,
             icon: DollarSign,
             color: 'from-emerald-500 to-teal-600',
           },
           {
             label: 'This Month',
-            value: `$${mockMonthly[mockMonthly.length - 1].earnings.toLocaleString()}`,
+            value: `${mockMonthly[mockMonthly.length - 1].earnings.toLocaleString()}`,
             icon: Calendar,
             color: 'from-blue-500 to-indigo-600',
           },
@@ -82,7 +82,7 @@ export default function HostEarningsPage() {
                 borderRadius: 8,
                 color: '#fff',
               }}
-              formatter={(v: number) => [`$${v}`, 'Earnings']}
+              formatter={(v: number | undefined) => [`${v ?? 0}`, 'Earnings']}
             />
             <Bar
               dataKey="earnings"

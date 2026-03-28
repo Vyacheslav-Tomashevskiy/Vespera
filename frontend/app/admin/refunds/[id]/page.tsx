@@ -71,7 +71,7 @@ export default function AdminRefundDetailPage() {
         id: `h-${Date.now()}`,
         action: args.action === 'approve' ? 'approved' : 'rejected',
         message: args.notes,
-        actorName: user?.name ?? 'Admin',
+        actorName: user ? `${user.firstName} ${user.lastName}` : 'Admin',
         actorRole: 'admin',
         createdAt: decidedAt,
       };

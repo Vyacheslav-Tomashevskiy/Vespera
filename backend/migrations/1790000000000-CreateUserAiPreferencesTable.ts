@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateUserAiPreferencesTable1790000000000 implements MigrationInterface {
   name = 'CreateUserAiPreferencesTable1790000000000';
@@ -91,8 +91,7 @@ export class CreateUserAiPreferencesTable1790000000000 implements MigrationInter
 
     await queryRunner.createIndex(
       'user_ai_preferences',
-      new Index({
-        name: 'IDX_user_ai_preferences_user_id',
+      new TableIndex({
         columnNames: ['user_id'],
         isUnique: true,
       }),

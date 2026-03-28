@@ -12,6 +12,18 @@ const TABS = [
   { label: 'Cancelled', value: 'cancelled' },
 ];
 
+interface Trip {
+  id: string;
+  propertyTitle?: string;
+  property?: { title?: string; city?: string; id?: string };
+  city?: string;
+  checkInDate?: string;
+  startDate?: string;
+  guests?: number;
+  propertyId?: string;
+  [key: string]: unknown;
+}
+
 export default function GuestTripsPage() {
   const [tab, setTab] = useState('confirmed');
 
@@ -58,7 +70,7 @@ export default function GuestTripsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {trips.map((trip: any) => (
+          {trips.map((trip: Trip) => (
             <div
               key={trip.id}
               className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all"

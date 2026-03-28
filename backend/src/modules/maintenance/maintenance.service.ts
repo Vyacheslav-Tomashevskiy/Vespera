@@ -46,8 +46,8 @@ export class MaintenanceService {
     const property = await this.propertiesService.findOne(dto.propertyId);
     if (!property) throw new BadRequestException('Invalid property');
 
-    const tenant = await this.usersService.findById(dto.tenantId);
-    const landlord = await this.usersService.findById(dto.landlordId);
+    const tenant = await this.usersService.getUserById(dto.tenantId);
+    const landlord = await this.usersService.getUserById(dto.landlordId);
     if (!tenant || !landlord) throw new BadRequestException('Invalid user');
 
     if (dto.mediaUrls && dto.mediaUrls.length > 0) {

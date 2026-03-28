@@ -72,7 +72,7 @@ export default function AdminDisputeDetailPage() {
         id: `local-${Date.now()}`,
         decision: args.action === 'approve' ? 'approve' : 'reject',
         notes: args.resolutionNotes,
-        decidedByName: user?.name ?? 'Admin',
+        decidedByName: user ? `${user.firstName} ${user.lastName}` : 'Admin',
         decidedByRole: 'admin',
         decidedAt,
       };
@@ -82,7 +82,7 @@ export default function AdminDisputeDetailPage() {
         type: 'resolution_decision',
         title: 'Resolution recorded',
         description: args.action === 'approve' ? 'Claim approved.' : 'Claim rejected.',
-        actorName: user?.name ?? 'Admin',
+        actorName: user ? `${user.firstName} ${user.lastName}` : 'Admin',
         actorRole: 'admin',
         createdAt: decidedAt,
       };

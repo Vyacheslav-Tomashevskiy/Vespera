@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizardStore } from '@/store/wizard-store';
 import { ChevronRight, ChevronLeft, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -12,12 +12,10 @@ export const WizardNavigationButtons: React.FC = () => {
   const { 
     currentStep, 
     setCurrentStep, 
-    data, 
     draftId, 
-    syncStatus, 
-    setSyncStatus, 
-    saveStep, 
-    validationErrors 
+    validationErrors,
+    saveStep,
+    syncStatus,
   } = useWizardStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,8 +50,8 @@ export const WizardNavigationButtons: React.FC = () => {
       const response = await axios.post(`/api/property-listings/wizard/${draftId}/publish`);
       toast.success('Property published successfully!');
       router.push(response.data.redirectUrl || `/properties/${response.data.propertyListingId}`);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to publish property';
+    } catch (error: unknown) {
+      const message = String((((error as unknown as Record<string, unknown>)?.response as unknown as Record<string, unknown>)?.data as unknown as Record<string, unknown>)?.message) || 'Failed to publish property';
       toast.error(message);
       console.error('Publish error:', error);
     } finally {

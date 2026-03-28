@@ -12,10 +12,10 @@ interface StepProps {
   errors: Record<string, string>;
 }
 
-export const Step8Preview: React.FC<StepProps> = ({ data, onChange, errors }) => {
+export const Step8Preview: React.FC<StepProps> = ({ data }) => {
   const { draftId, setCurrentStep } = useWizardStore();
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiScore, setAiScore] = useState<any>(null);
+  const [aiScore, setAiScore] = useState<{ [key: string]: unknown } | null>(null);
 
   useEffect(() => {
     const fetchScore = async () => {
@@ -68,13 +68,13 @@ export const Step8Preview: React.FC<StepProps> = ({ data, onChange, errors }) =>
               <circle 
                 cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="10" fill="transparent" 
                 strokeDasharray={364.4}
-                strokeDashoffset={364.4 - (364.4 * (aiScore?.score || 0)) / 100}
-                className={`transition-all duration-1000 ${ (aiScore?.score || 0) < 70 ? 'text-brand-orange' : 'text-green-500'}`} 
+                strokeDashoffset={364.4 - (364.4 * (Number((aiScore as unknown as Record<string, unknown>)?.score) || 0)) / 100}
+                className={`transition-all duration-1000 ${ (Number((aiScore as unknown as Record<string, unknown>)?.score) || 0) < 70 ? 'text-brand-orange' : 'text-green-500'}`} 
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center tabular-nums">
               <span className="text-3xl font-black text-neutral-900 dark:text-neutral-100">
-                {isAiLoading ? '...' : aiScore?.score || 0}
+                {isAiLoading ? '...' : Number((aiScore as unknown as Record<string, unknown>)?.score) || 0}
               </span>
               <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-tighter">Score</span>
             </div>
@@ -90,8 +90,8 @@ export const Step8Preview: React.FC<StepProps> = ({ data, onChange, errors }) =>
                   <Loader2 size={16} className="animate-spin" />
                   <span className="text-xs font-bold uppercase">Analyzing Listing Content...</span>
                 </div>
-              ) : aiScore?.improvements ? (
-                aiScore.improvements.map((imp: string, i: number) => (
+              ) : (aiScore as unknown as Record<string, unknown>)?.improvements ? (
+                ((aiScore as unknown as Record<string, unknown>).improvements as string[]).map((imp: string, i: number) => (
                   <span key={i} className="bg-white dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-700 text-[10px] font-bold py-2 px-4 rounded-full text-neutral-600 dark:text-neutral-400 shadow-sm animate-slide-in">
                     + {imp}
                   </span>

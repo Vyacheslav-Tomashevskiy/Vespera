@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PropertyData } from '@/store/wizard-store';
-import { DollarSign, FileText, Calendar, Zap, Sparkles, Loader2 } from 'lucide-react';
+import { DollarSign, Calendar, Zap, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useWizardStore } from '@/store/wizard-store';
 
@@ -15,12 +15,12 @@ interface StepProps {
 export const Step2PricingTerms: React.FC<StepProps> = ({ data, onChange, errors }) => {
   const { draftId } = useWizardStore();
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<any>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<{ [key: string]: unknown } | null>(null);
 
   const leaseTerms = ['Month-to-month', '6-months', '1-year', '2-years', 'Other'];
   const utilities = ['Water', 'Electricity', 'Gas', 'Internet', 'Trash'];
 
-  const handleChange = (field: keyof PropertyData, value: any) => {
+  const handleChange = (field: keyof PropertyData, value: unknown) => {
     onChange({ [field]: value });
   };
 
@@ -51,8 +51,8 @@ export const Step2PricingTerms: React.FC<StepProps> = ({ data, onChange, errors 
   const useSuggestion = () => {
     if (aiSuggestion) {
       onChange({
-        monthlyRent: aiSuggestion.suggestedRent.min,
-        securityDeposit: aiSuggestion.suggestedDeposit.min,
+        monthlyRent: Number(((aiSuggestion as unknown as Record<string, unknown>).suggestedRent as unknown as Record<string, unknown>)?.min),
+        securityDeposit: Number(((aiSuggestion as unknown as Record<string, unknown>).suggestedDeposit as unknown as Record<string, unknown>)?.min),
       });
       setAiSuggestion(null);
     }
@@ -85,8 +85,8 @@ export const Step2PricingTerms: React.FC<StepProps> = ({ data, onChange, errors 
             <div>
               <p className="text-sm font-bold text-brand-blue">AI Recommendation</p>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
-                Suggested Rent: <span className="font-bold">${aiSuggestion.suggestedRent.min} - ${aiSuggestion.suggestedRent.max}</span>. 
-                {aiSuggestion.reasoning}
+                Suggested Rent: <span className="font-bold">${Number(((aiSuggestion as unknown as Record<string, unknown>).suggestedRent as unknown as Record<string, unknown>)?.min)} - ${Number(((aiSuggestion as unknown as Record<string, unknown>).suggestedRent as unknown as Record<string, unknown>)?.max)}</span>. 
+                {String((aiSuggestion as unknown as Record<string, unknown>).reasoning)}
               </p>
             </div>
           </div>

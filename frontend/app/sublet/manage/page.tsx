@@ -43,25 +43,25 @@ export default function SubletManagePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {sublets.map((s: any) => (
+            {sublets.map((s: { id: string; [key: string]: unknown }) => (
               <div
                 key={s.id}
                 className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl p-5"
               >
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-semibold">
-                    {s.propertyTitle ?? 'Property'}
+                    {String(s.propertyTitle) ?? 'Property'}
                   </h3>
                   <span
-                    className={`text-xs px-3 py-1 rounded-full capitalize ${s.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : s.status === 'pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}
+                    className={`text-xs px-3 py-1 rounded-full capitalize ${String(s.status) === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : String(s.status) === 'pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}
                   >
-                    {s.status}
+                    {String(s.status)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-blue-300/60">
                   <CalendarDays size={14} />
                   <span>
-                    {s.startDate} → {s.endDate}
+                    {String(s.startDate)} → {String(s.endDate)}
                   </span>
                 </div>
               </div>

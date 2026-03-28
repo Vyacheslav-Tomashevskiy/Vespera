@@ -1,16 +1,31 @@
+import { Injectable, Logger, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { createHash } from 'crypto';
+import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
+import { User } from './entities/user.entity';
+import { UpdateUserProfileDto } from './dto/update-user.dto';
+import { ChangeEmailDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/update-user.dto';
+import { UserRestoreDto } from './dto/user-restore.dto';
+import { KycStatus } from '../kyc/kyc-status.enum';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction, AuditLevel, AuditStatus } from '../audit/entities/audit-log.entity';
-import { LoggerService } from '../../common/logger/logger.service';
-import { Logging } from '../../common/logger/logging.decorator';
-import { InjectRepository } from '@nestjs/repository';
-import { Repository } from 'typeorm';
-import { User } from '../user/entities/user.entity';
-import * as bcrypt from 'bcrypt';
-import * as randomBytes from 'randombytes';
-import { SALT_ROUNDS } from '../../common/constants';
 
-@Logging({ service: 'UsersService' })
-async exportUserData(userId: string): Promise<any> {
+const SALT_ROUNDS = 12;
+
+@Injectable()
+export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly auditService: AuditService,
+  ) { }
+
+  async exportUserData(userId: string): Promise<any> {
     // Gather all user data for export (including related entities)
     const user = await this.findById(userId, true);
     // TODO: Add related data (KYC, agreements, etc.)
@@ -31,7 +46,6 @@ async exportUserData(userId: string): Promise<any> {
     return exportData;
   }
 
-  @Logging({ service: 'UsersService' })
   async gdprDeleteAccount(userId: string): Promise<{ message: string }> {
     const user = await this.findById(userId);
     // Anonymize user data
@@ -61,7 +75,6 @@ async exportUserData(userId: string): Promise<any> {
     return { message: 'Account deleted and data anonymized (GDPR)' };
   }
 
-  @Logging({ service: 'UsersService' })
   async updateConsent(userId: string, consent: any): Promise<{ message: string }> {
     // Store consent preferences (simple example, should be expanded)
     const user = await this.findById(userId);
@@ -253,6 +266,21 @@ async exportUserData(userId: string): Promise<any> {
   async setKycStatus(userId: string, status: KycStatus): Promise<void> {
     await this.userRepository.update(userId, { kycStatus: status });
     this.logger.log(`KYC status updated for user ${userId}: ${status}`);
+  }
+
+  private async findById(userId: string, withDeleted = false): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      withDeleted,
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async getUserById(userId: string, withDeleted = false): Promise<User> {
+    return this.findById(userId, withDeleted);
   }
 
   private hashLookupValue(value: string): string {

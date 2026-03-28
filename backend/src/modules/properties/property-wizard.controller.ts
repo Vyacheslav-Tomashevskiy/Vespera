@@ -11,7 +11,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PropertyWizardService } from './property-wizard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -37,7 +37,10 @@ export class PropertyWizardController {
 
   @Get(':id/draft')
   @ApiOperation({ summary: 'Get draft content' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     return await this.wizardService.findDraft(id, user.id);
   }
 
@@ -48,65 +51,99 @@ export class PropertyWizardController {
     @CurrentUser() user: User,
     @Body() body: { step: number; data: Partial<PropertyData> },
   ) {
-    return await this.wizardService.updateStep(id, user.id, body.step, body.data);
+    return await this.wizardService.updateStep(
+      id,
+      user.id,
+      body.step,
+      body.data,
+    );
   }
 
   @Delete(':id/draft')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a draft' })
-  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     await this.wizardService.removeDraft(id, user.id);
   }
 
   @Post(':id/publish')
   @ApiOperation({ summary: 'Publish draft' })
-  async publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async publish(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     return await this.wizardService.publish(id, user.id);
   }
 
   // AI Helpers
   @Get(':id/ai/pricing-suggestion')
   @ApiOperation({ summary: 'AI pricing suggestion' })
-  async getPricingSuggestion(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async getPricingSuggestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     try {
       const draft = await this.wizardService.findDraft(id, user.id);
-      const { propertyType, address, bedrooms, bathrooms, squareFootage } = draft.data;
-      
+      const { propertyType, address, bedrooms, bathrooms, squareFootage } =
+        draft.data;
+
       const prompt = `Suggest a monthly rent range and security deposit for a ${propertyType} at ${address} with ${bedrooms} bedrooms, ${bathrooms} bathrooms, and ${squareFootage} sqft. Return JSON only with fields: suggestedRent (min, max), suggestedDeposit (min, max), reasoning.`;
 
       const response = await this.callAI(prompt);
       return { ...response, available: true };
-    } catch (error) {
+    } catch (_error) {
       return { available: false };
     }
   }
 
   @Get(':id/ai/description-suggestion')
   @ApiOperation({ summary: 'AI description suggestion' })
-  async getDescriptionSuggestion(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async getDescriptionSuggestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     try {
       const draft = await this.wizardService.findDraft(id, user.id);
-      const { propertyType, address, bedrooms, bathrooms, amenities, houseRules } = draft.data;
-      
-      const prompt = `Generate a compelling property description and neighborhood blurb for a ${propertyType} at ${address} with ${bedrooms} bedrooms, ${bathrooms} bathrooms. Amenities: ${amenities?.join(', ')}. Rules: ${Object.keys(houseRules || {}).filter(k => houseRules?.[k]).join(', ')}. Return JSON only with fields: propertyDescription, neighborhoodDescription.`;
+      const {
+        propertyType,
+        address,
+        bedrooms,
+        bathrooms,
+        amenities,
+        houseRules,
+      } = draft.data;
+
+      const prompt = `Generate a compelling property description and neighborhood blurb for a ${propertyType} at ${address} with ${bedrooms} bedrooms, ${bathrooms} bathrooms. Amenities: ${amenities?.join(', ')}. Rules: ${Object.keys(
+        houseRules || {},
+      )
+        .filter((k) => houseRules?.[k])
+        .join(
+          ', ',
+        )}. Return JSON only with fields: propertyDescription, neighborhoodDescription.`;
 
       const response = await this.callAI(prompt);
       return { ...response, available: true };
-    } catch (error) {
+    } catch (_error) {
       return { available: false };
     }
   }
 
   @Get(':id/ai/completeness-score')
   @ApiOperation({ summary: 'AI completeness score' })
-  async getCompletenessScore(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  async getCompletenessScore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     try {
       const draft = await this.wizardService.findDraft(id, user.id);
       const prompt = `Rate this listing completeness 0-100 and list specific improvements. Listing data: ${JSON.stringify(draft.data)}. Return JSON only with fields: score (number), improvements (string array).`;
 
       const response = await this.callAI(prompt);
       return { ...response, available: true };
-    } catch (error) {
+    } catch (_error) {
       return { available: false };
     }
   }
@@ -115,13 +152,17 @@ export class PropertyWizardController {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error('AI API KEY not configured');
 
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-    }, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+      },
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      },
+    );
 
     return JSON.parse(response.data.choices[0].message.content);
   }

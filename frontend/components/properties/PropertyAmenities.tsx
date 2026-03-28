@@ -8,7 +8,6 @@ import {
   Dumbbell,
   Shield,
   Tv,
-  Coffee,
   Trees,
   Battery,
   LucideIcon,

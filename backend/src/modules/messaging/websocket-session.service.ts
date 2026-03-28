@@ -66,7 +66,7 @@ export class WebSocketSessionService {
   }
 
   async getSessionByConnectionId(
-    connectionId: string,
+    _connectionId: string,
   ): Promise<WebSocketSession | null> {
     // Scan user connections to find by connectionId — used on disconnect
     // In practice the gateway stores sessionId on socket.data so this is a fallback

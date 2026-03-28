@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { PropertyData, PhotoData } from '@/store/wizard-store';
-import { Image as ImageIcon, Upload, X, Loader2, GripVertical, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Loader2, GripVertical, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -63,7 +63,7 @@ export const Step5Photos: React.FC<StepProps> = ({ data, onChange, errors }) => 
           caption: '',
           order: newPhotos.length
         });
-      } catch (err) {
+      } catch (_err) {
         toast.error(`Failed to upload ${file.name}`);
       } finally {
         setUploadingFiles(prev => {

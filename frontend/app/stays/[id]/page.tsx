@@ -7,9 +7,7 @@ import {
   MapPin,
   Bed,
   Bath,
-  Star,
   ArrowLeft,
-  Wifi,
   Car,
   PawPrint,
 } from 'lucide-react';

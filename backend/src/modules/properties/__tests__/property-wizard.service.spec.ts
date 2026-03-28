@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { PropertyWizardService } from '../property-wizard.service';
 import { PropertyListingDraft } from '../entities/property-listing-draft.entity';
 import { PropertiesService } from '../properties.service';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('PropertyWizardService', () => {
   let service: PropertyWizardService;
@@ -21,8 +21,12 @@ describe('PropertyWizardService', () => {
 
   beforeEach(async () => {
     draftRepository = {
-      create: jest.fn().mockImplementation(dto => dto),
-      save: jest.fn().mockImplementation(draft => Promise.resolve({ ...draft, id: 'draft-id' })),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest
+        .fn()
+        .mockImplementation((draft) =>
+          Promise.resolve({ ...draft, id: 'draft-id' }),
+        ),
       findOne: jest.fn(),
       remove: jest.fn(),
     };
@@ -64,32 +68,39 @@ describe('PropertyWizardService', () => {
   describe('updateStep', () => {
     it('should merge data and update step', async () => {
       draftRepository.findOne.mockResolvedValue({ ...mockDraft });
-      
-      const result = await service.updateStep('draft-id', 'landlord-id', 1, { propertyType: 'apartment' });
-      
+
+      const result = await service.updateStep('draft-id', 'landlord-id', 1, {
+        propertyType: 'apartment',
+      });
+
       expect(result.data.propertyType).toBe('apartment');
       expect(result.currentStep).toBe(1);
       expect(result.completedSteps).toContain(1);
     });
 
     it('should throw ForbiddenException if landlordId does not match', async () => {
-      draftRepository.findOne.mockResolvedValue({ ...mockDraft, landlordId: 'other-id' });
-      
-      await expect(service.updateStep('draft-id', 'landlord-id', 1, {}))
-        .rejects.toThrow(ForbiddenException);
+      draftRepository.findOne.mockResolvedValue({
+        ...mockDraft,
+        landlordId: 'other-id',
+      });
+
+      await expect(
+        service.updateStep('draft-id', 'landlord-id', 1, {}),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('publish', () => {
     it('should fail if required steps are missing', async () => {
-      draftRepository.findOne.mockResolvedValue({ 
-        ...mockDraft, 
-        completedSteps: [1], 
-        data: { photos: [] } 
+      draftRepository.findOne.mockResolvedValue({
+        ...mockDraft,
+        completedSteps: [1],
+        data: { photos: [] },
       });
-      
-      await expect(service.publish('draft-id', 'landlord-id'))
-        .rejects.toThrow();
+
+      await expect(
+        service.publish('draft-id', 'landlord-id'),
+      ).rejects.toThrow();
     });
 
     it('should succeed and delete draft if all data is valid', async () => {
@@ -102,19 +113,23 @@ describe('PropertyWizardService', () => {
         securityDeposit: 1000,
         leaseTerm: '1-year',
         moveInDate: '2026-01-01',
-        photos: [{ url: 'u1', order: 0 }, { url: 'u2', order: 1 }, { url: 'u3', order: 2 }],
+        photos: [
+          { url: 'u1', order: 0 },
+          { url: 'u2', order: 1 },
+          { url: 'u3', order: 2 },
+        ],
         propertyDescription: 'a'.repeat(60),
         availableFrom: '2026-01-01',
       };
 
-      draftRepository.findOne.mockResolvedValue({ 
-        ...mockDraft, 
-        completedSteps: [1, 2, 3, 5, 6, 7], 
-        data: validData 
+      draftRepository.findOne.mockResolvedValue({
+        ...mockDraft,
+        completedSteps: [1, 2, 3, 5, 6, 7],
+        data: validData,
       });
-      
+
       const result = await service.publish('draft-id', 'landlord-id');
-      
+
       expect(propertiesService.create).toHaveBeenCalled();
       expect(draftRepository.remove).toHaveBeenCalled();
       expect(result.propertyListingId).toBe('prop-id');

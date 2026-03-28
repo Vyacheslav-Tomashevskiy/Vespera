@@ -110,7 +110,7 @@ export class PaymentController {
   ) {
     return this.paymentService.releaseEscrowDeposit(
       parseInt(escrowId, 10),
-      dto,
+      { escrowId: parseInt(escrowId, 10), memo: dto.memo },
       req.user?.id || '',
     );
   }
@@ -124,7 +124,7 @@ export class PaymentController {
   ) {
     return this.paymentService.refundEscrowDeposit(
       parseInt(escrowId, 10),
-      dto,
+      { escrowId: parseInt(escrowId, 10), reason: dto.reason },
       req.user?.id || '',
     );
   }

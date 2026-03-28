@@ -17,7 +17,7 @@ export default function HostReviewsPage() {
 
   const avg = reviews.length
     ? (
-        reviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) /
+        reviews.reduce((s: number, r: { rating?: number }) => s + (r.rating ?? 0), 0) /
         reviews.length
       ).toFixed(1)
     : '—';
@@ -41,7 +41,7 @@ export default function HostReviewsPage() {
         <div className="text-center py-20 text-blue-300/60">No reviews yet</div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((r: any) => (
+          {reviews.map((r: { id: string; [key: string]: unknown }) => (
             <div
               key={r.id}
               className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl p-5"
@@ -49,10 +49,10 @@ export default function HostReviewsPage() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="font-semibold">
-                    {r.reviewerName ?? r.reviewer?.firstName ?? 'Guest'}
+                    {String(r.reviewerName) ?? (r.reviewer as unknown as Record<string, unknown>)?.firstName ?? 'Guest'}
                   </p>
                   <p className="text-sm text-blue-300/60">
-                    {r.propertyTitle ?? r.property?.title}
+                    {String(r.propertyTitle) ?? (r.property as unknown as Record<string, unknown>)?.title}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -61,7 +61,7 @@ export default function HostReviewsPage() {
                       key={i}
                       size={14}
                       className={
-                        i < (r.rating ?? 0)
+                        i < (Number(r.rating) ?? 0)
                           ? 'text-amber-400 fill-amber-400'
                           : 'text-white/20'
                       }
@@ -69,13 +69,13 @@ export default function HostReviewsPage() {
                   ))}
                 </div>
               </div>
-              {r.comment && (
+              {Boolean(r.comment) && (
                 <p className="text-blue-200/70 text-sm leading-relaxed">
-                  {r.comment}
+                  {String(r.comment)}
                 </p>
               )}
               <p className="text-xs text-blue-300/40 mt-3">
-                {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
+                {r.createdAt ? new Date(String(r.createdAt)).toLocaleDateString() : ''}
               </p>
             </div>
           ))}

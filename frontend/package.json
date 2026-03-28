@@ -21,6 +21,7 @@
     "@stellar/freighter-api": "^6.0.1",
     "@tanstack/react-query": "^5.90.21",
     "@types/leaflet": "^1.9.21",
+    "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "immer": "^11.1.4",

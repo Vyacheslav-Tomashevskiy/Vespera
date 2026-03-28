@@ -95,7 +95,7 @@ export class PaymentService {
     const feeAmount = dto.amount * 0.02;
     const netAmount = dto.amount - feeAmount;
 
-    const user = await this.usersService.findById(userId);
+    const user = await this.usersService.getUserById(userId);
     const decryptedMetadata = decryptMetadata(paymentMethod.encryptedMetadata);
 
     // Process payment through gateway
@@ -233,7 +233,7 @@ export class PaymentService {
     ensureUserId(userId);
     const payment = await this.paymentRepository.findOne({
       where: { id: paymentId, userId },
-      relations: ['user', 'paymentMethod'],
+      relations: ['user', 'paymentMethodRelation'],
     });
 
     if (!payment) {
@@ -251,10 +251,10 @@ export class PaymentService {
         id: payment.user.id,
         email: payment.user.email,
       },
-      paymentMethod: payment.paymentMethod
+      paymentMethod: payment.paymentMethodRelation
         ? {
-            type: payment.paymentMethod.paymentType,
-            lastFour: payment.paymentMethod.lastFour,
+            type: payment.paymentMethodRelation.paymentType,
+            lastFour: payment.paymentMethodRelation.lastFour,
           }
         : null,
     };
@@ -289,7 +289,7 @@ export class PaymentService {
     const query = this.paymentRepository
       .createQueryBuilder('payment')
       .leftJoinAndSelect('payment.user', 'user')
-      .leftJoinAndSelect('payment.paymentMethod', 'paymentMethod');
+      .leftJoinAndSelect('payment.paymentMethodRelation', 'paymentMethod');
 
     query.andWhere('payment.userId = :userId', { userId });
 
@@ -330,7 +330,7 @@ export class PaymentService {
     ensureUserId(userId);
     const payment = await this.paymentRepository.findOne({
       where: { id, userId },
-      relations: ['user', 'paymentMethod'],
+      relations: ['user', 'paymentMethodRelation'],
     });
 
     if (!payment) {
@@ -567,7 +567,7 @@ export class PaymentService {
         userId,
         agreementId: dto.agreementId,
         amount: Number(dto.amount),
-        feeAmount: 0,
+        transactionFee: 0,
         netAmount: Number(dto.amount),
         currency: 'XLM',
         status: PaymentStatus.COMPLETED,
@@ -595,7 +595,7 @@ export class PaymentService {
         userId,
         agreementId: dto.agreementId,
         amount: Number(dto.amount),
-        feeAmount: 0,
+        transactionFee: 0,
         netAmount: Number(dto.amount),
         currency: 'XLM',
         status: PaymentStatus.FAILED,
@@ -631,7 +631,7 @@ export class PaymentService {
         userId,
         agreementId: dto.agreementId ?? null,
         amount: Number(dto.amount),
-        feeAmount: 0,
+        transactionFee: 0,
         netAmount: Number(dto.amount),
         currency: 'XLM',
         status: PaymentStatus.PENDING,
@@ -661,7 +661,7 @@ export class PaymentService {
         userId,
         agreementId: dto.agreementId ?? null,
         amount: Number(dto.amount),
-        feeAmount: 0,
+        transactionFee: 0,
         netAmount: Number(dto.amount),
         currency: 'XLM',
         status: PaymentStatus.FAILED,
@@ -805,7 +805,7 @@ export class PaymentService {
     let skipped = 0;
 
     for (const payment of failedPayments) {
-      if (!payment.paymentMethodId) {
+      if (!payment.paymentMethodRelationId) {
         skipped += 1;
         continue;
       }
@@ -815,7 +815,7 @@ export class PaymentService {
           {
             agreementId: payment.agreementId ?? undefined,
             amount: Number(payment.amount),
-            paymentMethodId: String(payment.paymentMethodId),
+            paymentMethodId: String(payment.paymentMethodRelationId),
             notes: payment.notes ?? undefined,
             referenceNumber: payment.referenceNumber ?? undefined,
             idempotencyKey: `${payment.id}-retry-${Date.now()}`,
@@ -909,7 +909,7 @@ export class PaymentService {
 
     for (const payment of payments) {
       const amount = Number(payment.amount ?? 0);
-      const refundedAmount = Number(payment.refundedAmount ?? 0);
+      const refundedAmount = Number(payment.refundAmount ?? 0);
       summary.totalVolume += amount;
       summary.totalRefunded += refundedAmount;
 
@@ -991,5 +991,40 @@ export class PaymentService {
       );
       throw error;
     }
+  }
+
+  private async syncEscrowPaymentFromState(
+    escrowId: number,
+    status: string,
+    userId: string,
+    metadata: Record<string, unknown>,
+  ): Promise<Payment | null> {
+    const payment = await this.paymentRepository.findOne({
+      where: { userId, metadata: { escrowId } as any },
+    });
+
+    if (!payment) {
+      return null;
+    }
+
+    payment.status =
+      status === 'released' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING;
+    payment.metadata = { ...payment.metadata, ...metadata };
+    return this.paymentRepository.save(payment);
+  }
+
+  private parseEscrowReference(referenceNumber: string): number | null {
+    const match = referenceNumber.match(/escrow:(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  private mapWebhookStatus(status: string): PaymentStatus {
+    const statusMap: Record<string, PaymentStatus> = {
+      completed: PaymentStatus.COMPLETED,
+      failed: PaymentStatus.FAILED,
+      refunded: PaymentStatus.REFUNDED,
+      pending: PaymentStatus.PENDING,
+    };
+    return statusMap[status.toLowerCase()] ?? PaymentStatus.PENDING;
   }
 }

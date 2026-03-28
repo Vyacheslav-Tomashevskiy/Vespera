@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import {
   Property,
   ListingStatus,
+  PropertyType,
 } from '../properties/entities/property.entity';
 import { PropertyAmenity } from '../properties/entities/property-amenity.entity';
 import { UserPreferences } from './entities/user-preferences.entity';
@@ -63,7 +64,10 @@ export class MatchingAiService {
       reasons.push('bathroom_match');
     }
 
-    if (prefs.preferredType && property.type === prefs.preferredType) {
+    if (
+      prefs.preferredType &&
+      property.type === (prefs.preferredType as PropertyType)
+    ) {
       score += 10;
       reasons.push('type_match');
     }
@@ -112,7 +116,7 @@ export class MatchingAiService {
         const prefs = await this.preferencesRepo.findOne({ where: { userId } });
 
         const properties = await this.propertyRepo.find({
-          where: { status: ListingStatus.PUBLISHED },
+          where: { status: ListingStatus.PUBLISHED as any },
           relations: ['amenities'],
           take: 500, // cap for scoring pass
         });
@@ -213,7 +217,7 @@ export class MatchingAiService {
         if (!source) return [];
 
         const candidates = await this.propertyRepo.find({
-          where: { status: ListingStatus.PUBLISHED, city: source.city },
+          where: { status: ListingStatus.PUBLISHED as any, city: source.city },
           relations: ['amenities'],
           take: 200,
         });

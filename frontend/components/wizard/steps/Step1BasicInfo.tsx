@@ -13,7 +13,7 @@ interface StepProps {
 export const Step1BasicInfo: React.FC<StepProps> = ({ data, onChange, errors }) => {
   const propertyTypes = ['Apartment', 'House', 'Room', 'Studio', 'Duplex', 'Other'];
 
-  const handleChange = (field: keyof PropertyData, value: any) => {
+  const handleChange = (field: keyof PropertyData, value: unknown) => {
     onChange({ [field]: value });
   };
 

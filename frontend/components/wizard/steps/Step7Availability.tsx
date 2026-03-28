@@ -13,7 +13,7 @@ interface StepProps {
 export const Step7Availability: React.FC<StepProps> = ({ data, onChange, errors }) => {
   const [newBlockedDate, setNewBlockedDate] = useState('');
 
-  const handleChange = (field: keyof PropertyData, value: any) => {
+  const handleChange = (field: keyof PropertyData, value: unknown) => {
     onChange({ [field]: value });
   };
 

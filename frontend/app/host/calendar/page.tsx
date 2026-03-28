@@ -51,7 +51,7 @@ export default function HostCalendarPage() {
           ) : properties.length === 0 ? (
             <p className="text-sm text-blue-300/40">No listings found</p>
           ) : (
-            properties.map((p: any) => (
+            properties.map((p: { id: string; title?: string; [key: string]: unknown }) => (
               <button
                 key={p.id}
                 onClick={() => setSelectedProperty(p.id)}

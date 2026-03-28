@@ -4,6 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
+interface Review {
+  id: string;
+  propertyTitle?: string;
+  property?: { title?: string };
+  rating?: number;
+  comment?: string;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 export default function GuestReviewsPage() {
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: ['guest-reviews'],
@@ -33,7 +43,7 @@ export default function GuestReviewsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((r: any) => (
+          {reviews.map((r: Review) => (
             <div
               key={r.id}
               className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl p-5"

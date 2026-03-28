@@ -77,7 +77,7 @@ export class AnchorController {
   @ApiOperation({ summary: '[Admin] Get anchor transaction statistics' })
   @ApiResponse({ status: 200, description: 'Anchor transaction statistics' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async getTransactionStats() {
+  async getTransactionStats(): Promise<any> {
     return this.anchorService.getTransactionStats();
   }
 

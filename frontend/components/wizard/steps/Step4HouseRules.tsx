@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PropertyData } from '@/store/wizard-store';
-import { ShieldCheck, PawPrint, Smoke as Cigarette, Volume2, UserPlus, Users } from 'lucide-react';
+import { ShieldCheck, PawPrint, Wind, Volume2, UserPlus, Users } from 'lucide-react';
 
 interface StepProps {
   data: PropertyData;
@@ -12,13 +12,13 @@ interface StepProps {
 
 const RULES = [
   { id: 'petsAllowed', label: 'Pets Allowed', icon: <PawPrint size={20} />, description: 'Small pets or specific breeds allowed' },
-  { id: 'smokingAllowed', label: 'Smoking Allowed', icon: <Cigarette size={20} />, description: 'Designated smoking areas available' },
+  { id: 'smokingAllowed', label: 'Smoking Allowed', icon: <Wind size={20} />, description: 'Designated smoking areas available' },
   { id: 'quietHours', label: 'Quiet Hours', icon: <Volume2 size={20} />, description: 'General noise restriction after 10 PM' },
   { id: 'partiesAllowed', label: 'Parties Allowed', icon: <Users size={20} />, description: 'Occasional social gatherings are fine' },
   { id: 'sublettingAllowed', label: 'Subletting Allowed', icon: <UserPlus size={20} />, description: 'Permission required before subletting' },
 ];
 
-export const Step4HouseRules: React.FC<StepProps> = ({ data, onChange, errors }) => {
+export const Step4HouseRules: React.FC<StepProps> = ({ data, onChange }) => {
   const toggleRule = (id: string) => {
     const current = data.houseRules || {};
     onChange({

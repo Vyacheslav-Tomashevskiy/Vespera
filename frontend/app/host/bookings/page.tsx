@@ -8,6 +8,21 @@ import toast from 'react-hot-toast';
 
 const STATUS_TABS = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
 
+interface Booking {
+  id: string;
+  guestName?: string;
+  guest?: { firstName?: string };
+  propertyTitle?: string;
+  property?: { title?: string };
+  checkInDate?: string;
+  startDate?: string;
+  checkOutDate?: string;
+  endDate?: string;
+  guests?: number;
+  status?: string;
+  [key: string]: unknown;
+}
+
 export default function HostBookingsPage() {
   const [status, setStatus] = useState('all');
   const queryClient = useQueryClient();
@@ -71,7 +86,7 @@ export default function HostBookingsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {bookings.map((b: any) => (
+          {bookings.map((b: Booking) => (
             <div
               key={b.id}
               className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl p-5"
@@ -125,7 +140,7 @@ export default function HostBookingsPage() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: { status?: string }) {
   const map: Record<string, string> = {
     confirmed: 'bg-emerald-500/20 text-emerald-400',
     pending: 'bg-amber-500/20 text-amber-400',
@@ -134,7 +149,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`text-xs px-3 py-1 rounded-full capitalize ${map[status] ?? 'bg-white/10 text-blue-300/60'}`}
+      className={`text-xs px-3 py-1 rounded-full capitalize ${map[status ?? ''] ?? 'bg-white/10 text-blue-300/60'}`}
     >
       {status}
     </span>

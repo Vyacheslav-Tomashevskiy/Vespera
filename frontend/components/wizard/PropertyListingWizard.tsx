@@ -54,7 +54,7 @@ export const PropertyListingWizard: React.FC<PropertyListingWizardProps> = ({ dr
 
   // On page unload
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (_e: BeforeUnloadEvent) => {
       // Synchronous save attempt is hard in modern browsers, but we can try
       saveStep(currentStep);
     };
