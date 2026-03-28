@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual } from 'typeorm';
+import { DataSource, Repository, LessThanOrEqual } from 'typeorm';
 import {
   Payment,
   PaymentStatus,
@@ -66,6 +66,7 @@ export class PaymentService {
     private readonly stellarService: StellarService,
     private readonly lockService: LockService,
     private readonly idempotencyService: IdempotencyService,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Locked({
@@ -192,59 +193,66 @@ export class PaymentService {
     userId: string,
   ): Promise<Payment> {
     ensureUserId(userId);
-    const payment = await this.paymentRepository.findOne({
-      where: { id: paymentId, userId },
+
+    // Wrap in a transaction with a pessimistic write lock to prevent
+    // concurrent refunds from double-spending the same payment.
+    return this.dataSource.transaction(async (manager) => {
+      const payment = await manager.findOne(Payment, {
+        where: { id: paymentId, userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!payment) {
+        throw new NotFoundException('Payment not found');
+      }
+
+      if (payment.status !== PaymentStatus.COMPLETED) {
+        throw new BadRequestException(
+          'Only completed payments can be refunded',
+        );
+      }
+
+      if (dto.amount > payment.amount - payment.refundAmount) {
+        throw new BadRequestException('Refund amount exceeds available amount');
+      }
+
+      const chargeId = payment.metadata?.chargeId;
+      if (!chargeId) {
+        throw new BadRequestException('No charge ID found for refund');
+      }
+
+      const refundResult = await Promise.resolve(
+        this.paymentGateway.processRefund(chargeId, dto.amount),
+      );
+
+      if (!refundResult.success) {
+        throw new BadRequestException('Refund processing failed');
+      }
+
+      payment.refundAmount += dto.amount;
+      payment.refundReason = dto.reason;
+      payment.refundStatus = 'completed';
+      payment.status =
+        payment.refundAmount >= payment.amount
+          ? PaymentStatus.REFUNDED
+          : PaymentStatus.PARTIAL_REFUND;
+      payment.metadata = {
+        ...(payment.metadata ?? {}),
+        refundId: refundResult.refundId,
+      };
+
+      const updatedPayment = await manager.save(Payment, payment);
+      this.logger.log(`Refund processed for payment: ${paymentId}`);
+
+      await this.notificationsService.notify(
+        userId,
+        'Refund processed',
+        `Your refund of ${dto.amount} ${payment.currency} was processed successfully.`,
+        'PAYMENT_REFUNDED',
+      );
+
+      return updatedPayment;
     });
-
-    if (!payment) {
-      throw new NotFoundException('Payment not found');
-    }
-
-    if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Only completed payments can be refunded');
-    }
-
-    if (dto.amount > payment.amount - payment.refundAmount) {
-      throw new BadRequestException('Refund amount exceeds available amount');
-    }
-
-    // Process refund through gateway
-    const chargeId = payment.metadata?.chargeId;
-    if (!chargeId) {
-      throw new BadRequestException('No charge ID found for refund');
-    }
-    const refundResult = await Promise.resolve(
-      this.paymentGateway.processRefund(chargeId, dto.amount),
-    );
-
-    if (!refundResult.success) {
-      throw new BadRequestException('Refund processing failed');
-    }
-
-    // Update payment
-    payment.refundAmount = (payment.refundAmount ?? 0) + dto.amount;
-    payment.refundReason = dto.reason;
-    payment.refundStatus = 'completed'; // Mocking success for now
-    payment.status =
-      payment.refundAmount >= payment.amount
-        ? PaymentStatus.REFUNDED
-        : PaymentStatus.PARTIAL_REFUND;
-    payment.metadata = {
-      ...(payment.metadata ?? {}),
-      refundId: refundResult.refundId,
-    };
-
-    const updatedPayment = await this.paymentRepository.save(payment);
-    this.logger.log(`Refund processed for payment: ${paymentId}`);
-
-    await this.notificationsService.notify(
-      userId,
-      'Refund processed',
-      `Your refund of ${dto.amount} ${payment.currency} was processed successfully.`,
-      'PAYMENT_REFUNDED',
-    );
-
-    return updatedPayment;
   }
 
   async generateReceipt(paymentId: string, userId: string): Promise<any> {

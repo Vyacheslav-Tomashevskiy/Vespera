@@ -63,3 +63,18 @@ export {
   useMarkThreatFalsePositive,
   useResolveSecurityIncident,
 } from './use-security-dashboard';
+
+export { useOptimisticUpdate } from './use-optimistic-update';
+export type {
+  UseOptimisticUpdateOptions,
+  UseOptimisticUpdateResult,
+} from './use-optimistic-update';
+
+export {
+  useCacheInvalidation,
+  invalidationDependencies,
+} from './use-cache-invalidation';
+export type {
+  CacheInvalidationConfig,
+  UseCacheInvalidationResult,
+} from './use-cache-invalidation';

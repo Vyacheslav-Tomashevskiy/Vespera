@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs';
 import { UsersService } from './users.service';
 import { User, UserRole, AuthMethod } from './entities/user.entity';
 import { KycStatus } from '../kyc/kyc-status.enum';
+import { AuditService } from '../audit/audit.service';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -52,6 +53,12 @@ describe('UsersService', () => {
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    delete: jest.fn(),
+    restore: jest.fn(),
+  };
+
+  const mockAuditService = {
+    log: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -62,6 +69,7 @@ describe('UsersService', () => {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 

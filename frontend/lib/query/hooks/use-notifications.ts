@@ -58,8 +58,8 @@ export function useUnreadCount() {
 // ─── Mutations ───────────────────────────────────────────────────────────────
 
 /**
- * Mark a single notification as read. Optimistically updates the unread
- * count cache for immediate UI feedback.
+ * Mark a single notification as read.
+ * Optimistically marks it read in the cache; reverts on failure.
  */
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
@@ -69,16 +69,59 @@ export function useMarkNotificationRead() {
       await apiClient.patch(`/notifications/${notificationId}/read`);
       return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({
         queryKey: queryKeys.notifications.all,
       });
+
+      const previousNotifications = queryClient.getQueriesData<Notification[]>({
+        queryKey: queryKeys.notifications.all,
+      });
+
+      queryClient.setQueriesData<Notification[]>(
+        { queryKey: queryKeys.notifications.all },
+        (old) =>
+          old?.map((n) =>
+            (n as unknown as { id: string }).id === notificationId
+              ? { ...n, isRead: true }
+              : n,
+          ),
+      );
+
+      const previousCount = queryClient.getQueryData<number>(
+        queryKeys.notifications.unreadCount(),
+      );
+      if (previousCount !== undefined) {
+        queryClient.setQueryData(
+          queryKeys.notifications.unreadCount(),
+          Math.max(0, previousCount - 1),
+        );
+      }
+
+      return { previousNotifications, previousCount };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousNotifications) {
+        context.previousNotifications.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+      if (context?.previousCount !== undefined) {
+        queryClient.setQueryData(
+          queryKeys.notifications.unreadCount(),
+          context.previousCount,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });
 }
 
 /**
  * Mark all notifications as read.
+ * Optimistically zeroes the unread count and marks all items read.
  */
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
@@ -87,16 +130,48 @@ export function useMarkAllNotificationsRead() {
     mutationFn: async () => {
       await apiClient.patch('/notifications/read-all');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async () => {
+      await queryClient.cancelQueries({
         queryKey: queryKeys.notifications.all,
       });
+
+      const previousNotifications = queryClient.getQueriesData<Notification[]>({
+        queryKey: queryKeys.notifications.all,
+      });
+      const previousCount = queryClient.getQueryData<number>(
+        queryKeys.notifications.unreadCount(),
+      );
+
+      queryClient.setQueriesData<Notification[]>(
+        { queryKey: queryKeys.notifications.all },
+        (old) => old?.map((n) => ({ ...n, isRead: true })),
+      );
+      queryClient.setQueryData(queryKeys.notifications.unreadCount(), 0);
+
+      return { previousNotifications, previousCount };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousNotifications) {
+        context.previousNotifications.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+      if (context?.previousCount !== undefined) {
+        queryClient.setQueryData(
+          queryKeys.notifications.unreadCount(),
+          context.previousCount,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });
 }
 
 /**
  * Delete a single notification.
+ * Optimistically removes it from the list; reverts on failure.
  */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
@@ -106,10 +181,34 @@ export function useDeleteNotification() {
       await apiClient.delete(`/notifications/${notificationId}`);
       return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({
         queryKey: queryKeys.notifications.all,
       });
+
+      const previousNotifications = queryClient.getQueriesData<Notification[]>({
+        queryKey: queryKeys.notifications.all,
+      });
+
+      queryClient.setQueriesData<Notification[]>(
+        { queryKey: queryKeys.notifications.all },
+        (old) =>
+          old?.filter(
+            (n) => (n as unknown as { id: string }).id !== notificationId,
+          ),
+      );
+
+      return { previousNotifications };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousNotifications) {
+        context.previousNotifications.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });
 }

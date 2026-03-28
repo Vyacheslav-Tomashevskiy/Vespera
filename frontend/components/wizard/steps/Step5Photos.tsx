@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 interface StepProps {
   data: PropertyData;
@@ -189,10 +190,13 @@ export const Step5Photos: React.FC<StepProps> = ({
             onDragOver={(e) => e.preventDefault()}
             className="group relative aspect-square bg-neutral-100 dark:bg-neutral-800 rounded-3xl overflow-hidden border border-neutral-100 dark:border-neutral-700 hover:shadow-xl transition-all"
           >
-            <img
+            <Image
               src={photo.url}
               alt={`Photo ${index + 1}`}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              fill
+              unoptimized
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 768px) 50vw, 200px"
             />
 
             <div className="absolute top-2 right-2 flex space-x-2">

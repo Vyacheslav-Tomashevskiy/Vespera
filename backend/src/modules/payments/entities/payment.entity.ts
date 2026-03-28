@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  VersionColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { PaymentMethod } from './payment-method.entity';
@@ -139,4 +140,9 @@ export class Payment {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  /** Optimistic locking — incremented on every save; concurrent updates on a
+   *  stale version throw an OptimisticLockVersionMismatchError. */
+  @VersionColumn({ default: 1 })
+  version: number;
 }

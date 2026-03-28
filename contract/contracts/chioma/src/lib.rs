@@ -30,6 +30,9 @@ mod tests_multi_token;
 mod tests_deposit_interest;
 
 #[cfg(test)]
+mod tests_multisig_governance;
+
+#[cfg(test)]
 mod tests_errors;
 
 #[cfg(test)]

@@ -116,7 +116,7 @@
                         "symbol": "error_code"
                       },
                       "val": {
-                        "u32": 1001
+                        "u32": 13
                       }
                     },
                     {
@@ -124,7 +124,7 @@
                         "symbol": "error_message"
                       },
                       "val": {
-                        "string": "Booking not found. Please check the booking ID."
+                        "string": "Agreement not found. Please check the ID."
                       }
                     },
                     {

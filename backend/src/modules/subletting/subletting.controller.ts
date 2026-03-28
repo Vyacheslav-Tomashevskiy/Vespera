@@ -1,0 +1,95 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SublettingService } from './subletting.service';
+import { RequestSublettingDto } from './dto/request-subletting.dto';
+import { ApproveSublettingDto } from './dto/approve-subletting.dto';
+import { DenySublettingDto } from './dto/deny-subletting.dto';
+import { SubletRequestStatus } from './entities/sublet-request.entity';
+
+@Controller('api/subletting')
+@UseGuards(JwtAuthGuard)
+export class SublettingController {
+  constructor(private readonly sublettingService: SublettingService) {}
+
+  @Post('request')
+  async requestSubletting(
+    @Body() dto: RequestSublettingDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.sublettingService.requestSubletting(dto, req.user?.id ?? '');
+  }
+
+  @Get('requests')
+  async getSublettingRequests(
+    @Query('status') status: SubletRequestStatus | undefined,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.sublettingService.getSublettingRequests(
+      req.user?.id ?? '',
+      status,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Patch('requests/:requestId/approve')
+  async approveSubletting(
+    @Param('requestId') requestId: string,
+    @Body() dto: ApproveSublettingDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.sublettingService.approveSubletting(
+      requestId,
+      dto,
+      req.user?.id ?? '',
+    );
+  }
+
+  @Patch('requests/:requestId/deny')
+  async denySubletting(
+    @Param('requestId') requestId: string,
+    @Body() dto: DenySublettingDto,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.sublettingService.denySubletting(
+      requestId,
+      dto,
+      req.user?.id ?? '',
+    );
+  }
+
+  @Get('bookings')
+  async getSubletBookings(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Req() req: { user?: { id: string } },
+  ) {
+    return this.sublettingService.getTenantSubletBookings(
+      req.user?.id ?? '',
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Get('earnings')
+  async getTenantEarnings(@Req() req: { user?: { id: string } }) {
+    return this.sublettingService.getTenantEarnings(req.user?.id ?? '');
+  }
+
+  @Get('landlord-earnings')
+  async getLandlordEarnings(@Req() req: { user?: { id: string } }) {
+    return this.sublettingService.getLandlordEarnings(req.user?.id ?? '');
+  }
+}

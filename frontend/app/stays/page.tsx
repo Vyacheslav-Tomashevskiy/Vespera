@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, SlidersHorizontal, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface StayProperty {
@@ -195,10 +196,13 @@ function StayCard({ property }: { property: StayProperty }) {
       <div className="backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 hover:shadow-2xl transition-all duration-300">
         <div className="aspect-video bg-slate-700 relative overflow-hidden">
           {property.image ? (
-            <img
+            <Image
               src={property.image}
               alt={property.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              fill
+              unoptimized
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-blue-300/30 text-4xl">

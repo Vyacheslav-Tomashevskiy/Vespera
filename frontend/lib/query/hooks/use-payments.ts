@@ -87,8 +87,8 @@ export function usePaymentsByAgreement(agreementId: string | null) {
 // ─── Mutations ───────────────────────────────────────────────────────────────
 
 /**
- * Initiate a new payment. Invalidates both the payments cache and the
- * related agreement's payment list on success.
+ * Initiate a new payment. Invalidates payments, agreements, and transactions
+ * (cross-domain) via the cache invalidation dependency map.
  */
 export function useCreatePayment() {
   const queryClient = useQueryClient();
@@ -99,12 +99,19 @@ export function useCreatePayment() {
       return data;
     },
     onSuccess: (created) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.payments.all,
-      });
+      // Bust payments + cross-domain deps (agreements, transactions).
+      [
+        queryKeys.payments.all,
+        queryKeys.agreements.all,
+        queryKeys.transactions.all,
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+
       if (created.agreementId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.payments.byAgreement(created.agreementId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agreements.detail(created.agreementId),
         });
       }
     },

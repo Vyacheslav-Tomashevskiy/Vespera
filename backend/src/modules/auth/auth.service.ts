@@ -26,7 +26,7 @@ import {
 import { PasswordPolicyService } from './services/password-policy.service';
 import { MfaService } from './services/mfa.service';
 import { ReferralService } from '../referral/referral.service';
-import { LoggerService } from '../../common/logger/logger.service';
+import { LoggerService } from '../../common/services/logger.service';
 import { Logging } from '../../common/logger/logging.decorator';
 import { Locked, LockService } from '../../common/lock';
 

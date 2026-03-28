@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaymentService } from './payment.service';
 import { Payment } from './entities/payment.entity';
 import { PaymentMethod } from './entities/payment-method.entity';
@@ -60,8 +60,8 @@ const mockNotificationsService = {
   notify: jest.fn(),
 };
 
-const mockUsersService: { findById: jest.Mock } = {
-  findById: jest.fn(),
+const mockUsersService: { getUserById: jest.Mock } = {
+  getUserById: jest.fn(),
 };
 
 const mockPaymentProcessingService = {
@@ -85,6 +85,18 @@ const mockLockService = {
 const mockIdempotencyService = {
   process: jest.fn(
     async (_key: string, _ttlMs: number, fn: () => Promise<unknown>) => fn(),
+  ),
+};
+
+// DataSource mock — transaction() runs the callback with a mock entity manager.
+const mockEntityManager = {
+  findOne: jest.fn(),
+  save: jest.fn(),
+};
+const mockDataSource = {
+  transaction: jest.fn(
+    (cb: (em: typeof mockEntityManager) => Promise<unknown>) =>
+      cb(mockEntityManager),
   ),
 };
 
@@ -138,6 +150,10 @@ describe('PaymentService', () => {
           provide: IdempotencyService,
           useValue: mockIdempotencyService,
         },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
+        },
       ],
     }).compile();
 
@@ -185,7 +201,7 @@ describe('PaymentService', () => {
         userId: 'user_1',
         encryptedMetadata: null,
       });
-      mockUsersService.findById.mockResolvedValue({
+      mockUsersService.getUserById.mockResolvedValue({
         email: 'test@example.com',
       });
       mockPaymentGateway.chargePayment.mockResolvedValue({
@@ -225,7 +241,7 @@ describe('PaymentService', () => {
         id: 1,
         userId: 'user_1',
       });
-      mockUsersService.findById.mockResolvedValue({
+      mockUsersService.getUserById.mockResolvedValue({
         email: 'test@example.com',
       });
       mockPaymentGateway.chargePayment.mockResolvedValue({
@@ -260,8 +276,12 @@ describe('PaymentService', () => {
   });
 
   describe('processRefund', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('throws when payment is not found', async () => {
-      (paymentRepository.findOne as jest.Mock).mockResolvedValue(null);
+      mockEntityManager.findOne.mockResolvedValue(null);
 
       await expect(
         service.processRefund(
@@ -272,7 +292,7 @@ describe('PaymentService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('processes refund successfully', async () => {
+    it('processes refund successfully using pessimistic lock transaction', async () => {
       const payment = {
         id: 'pay_1',
         userId: 'user_1',
@@ -299,21 +319,27 @@ describe('PaymentService', () => {
         updatedAt: new Date(),
       } as unknown as Payment;
 
-      (paymentRepository.findOne as jest.Mock).mockResolvedValue(payment);
+      mockEntityManager.findOne.mockResolvedValue(payment);
       mockPaymentGateway.processRefund.mockResolvedValue({
         success: true,
         refundId: 'refund_1',
       });
-      (paymentRepository.save as jest.Mock).mockResolvedValue({
+      mockEntityManager.save.mockResolvedValue({
         ...payment,
         status: PaymentStatus.REFUNDED,
         refundAmount: 100,
       });
 
       const dto: ProcessRefundDto = { amount: 100, reason: 'test' };
-
       const result = await service.processRefund('pay_1', dto, 'user_1');
 
+      // Verify pessimistic lock was requested.
+      expect(mockEntityManager.findOne).toHaveBeenCalledWith(
+        Payment,
+        expect.objectContaining({
+          lock: { mode: 'pessimistic_write' },
+        }),
+      );
       expect(result.status).toBe(PaymentStatus.REFUNDED);
       expect(mockNotificationsService.notify).toHaveBeenCalledWith(
         'user_1',
@@ -321,6 +347,27 @@ describe('PaymentService', () => {
         expect.stringContaining('100'),
         'PAYMENT_REFUNDED',
       );
+    });
+
+    it('throws when refund amount exceeds available amount', async () => {
+      const payment = {
+        id: 'pay_1',
+        userId: 'user_1',
+        status: PaymentStatus.COMPLETED,
+        amount: 50,
+        refundAmount: 0,
+        metadata: { chargeId: 'charge_1' },
+      } as unknown as Payment;
+
+      mockEntityManager.findOne.mockResolvedValue(payment);
+
+      await expect(
+        service.processRefund(
+          'pay_1',
+          { amount: 100, reason: 'over' },
+          'user_1',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('throws when charge id is missing', async () => {
@@ -331,26 +378,10 @@ describe('PaymentService', () => {
         amount: 100,
         refundAmount: 0,
         metadata: {},
-        user: {} as any,
-        agreementId: null,
-        transactionFee: 0,
-        netAmount: 100,
-        paymentMethod: null,
-        paymentMethodRelation: null,
-        paymentMethodRelationId: null,
-        receiptUrl: '',
-        referenceNumber: null,
-        processedAt: new Date(),
-        idempotencyKey: null,
-        refundStatus: 'none',
-        refundReason: null,
-        notes: null,
         currency: 'NGN',
-        createdAt: new Date(),
-        updatedAt: new Date(),
       } as unknown as Payment;
 
-      (paymentRepository.findOne as jest.Mock).mockResolvedValue(payment);
+      mockEntityManager.findOne.mockResolvedValue(payment);
 
       await expect(
         service.processRefund(
@@ -358,6 +389,24 @@ describe('PaymentService', () => {
           { amount: 10, reason: 'test' },
           'user_1',
         ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('prevents double-refund: second concurrent call sees updated refundAmount', async () => {
+      // Simulate the state after a first refund has already been applied.
+      const alreadyRefunded = {
+        id: 'pay_1',
+        userId: 'user_1',
+        status: PaymentStatus.REFUNDED,
+        amount: 100,
+        refundAmount: 100,
+        metadata: { chargeId: 'charge_1' },
+      } as unknown as Payment;
+
+      mockEntityManager.findOne.mockResolvedValue(alreadyRefunded);
+
+      await expect(
+        service.processRefund('pay_1', { amount: 1, reason: 'dup' }, 'user_1'),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
   });

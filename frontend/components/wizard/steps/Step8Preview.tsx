@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useWizardStore } from '@/store/wizard-store';
+import Image from 'next/image';
 
 interface StepProps {
   data: PropertyData;
@@ -287,12 +288,15 @@ export const Step8Preview: React.FC<StepProps> = ({ data }) => {
               data.photos?.map((photo, i) => (
                 <div
                   key={i}
-                  className="flex-none w-48 aspect-[4/3] bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-100 dark:border-neutral-700 shadow-sm snap-start"
+                  className="relative flex-none w-48 aspect-[4/3] bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-100 dark:border-neutral-700 shadow-sm snap-start"
                 >
-                  <img
+                  <Image
                     src={photo.url}
                     alt={`Preview ${i}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="192px"
                   />
                 </div>
               ))

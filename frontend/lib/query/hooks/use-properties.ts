@@ -111,6 +111,35 @@ export function useProperty(id: string | null) {
 }
 
 /**
+ * Record a public listing view (increments backend viewCount).
+ */
+export function useRecordPropertyView() {
+  return useMutation({
+    mutationFn: async (propertyId: string) => {
+      const { data } = await apiClient.post<{
+        viewCount: number;
+        lastViewedAt: string;
+      }>(`/properties/${propertyId}/view`);
+      return data;
+    },
+  });
+}
+
+/**
+ * Record interest / favorite (increments backend favoriteCount).
+ */
+export function useRecordPropertyFavorite() {
+  return useMutation({
+    mutationFn: async (propertyId: string) => {
+      const { data } = await apiClient.post<{ favoriteCount: number }>(
+        `/properties/${propertyId}/favorite`,
+      );
+      return data;
+    },
+  });
+}
+
+/**
  * Infinite-scroll property list. Each page returns `PaginatedResponse<Property>`.
  */
 export function useInfiniteProperties(
@@ -155,6 +184,7 @@ export function useCreateProperty() {
 
 /**
  * Update an existing property.
+ * Optimistically updates the detail cache; reverts on failure.
  */
 export function useUpdateProperty(id: string) {
   const queryClient = useQueryClient();
@@ -167,11 +197,34 @@ export function useUpdateProperty(id: string) {
       );
       return data;
     },
-    onSuccess: (updated) => {
-      queryClient.setQueryData(queryKeys.properties.detail(id), updated);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.properties.lists(),
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.properties.detail(id),
       });
+      const previous = queryClient.getQueryData<Property>(
+        queryKeys.properties.detail(id),
+      );
+      if (previous) {
+        queryClient.setQueryData(queryKeys.properties.detail(id), {
+          ...previous,
+          ...payload,
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          queryKeys.properties.detail(id),
+          context.previous,
+        );
+      }
+    },
+    onSettled: (updated) => {
+      if (updated) {
+        queryClient.setQueryData(queryKeys.properties.detail(id), updated);
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.properties.lists() });
     },
   });
 }
@@ -187,10 +240,30 @@ export function useDeleteProperty() {
       await apiClient.delete(`/properties/${id}`);
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.properties.all,
-      });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.properties.all });
+
+      const previousLists = queryClient.getQueriesData<
+        PaginatedResponse<Property>
+      >({ queryKey: queryKeys.properties.lists() });
+
+      queryClient.setQueriesData<PaginatedResponse<Property>>(
+        { queryKey: queryKeys.properties.lists() },
+        (old) =>
+          old ? { ...old, data: old.data.filter((p) => p.id !== id) } : old,
+      );
+
+      return { previousLists };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.properties.all });
     },
   });
 }

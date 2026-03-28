@@ -1,9 +1,36 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   useNotificationStore,
   selectUnreadCount,
 } from '@/store/notificationStore';
 import type { Notification } from '@/components/notifications/types';
+
+// ─── Mock apiClient ───────────────────────────────────────────────────────────
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    get: vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'mock-1',
+          title: 'Rent received',
+          message: 'Your tenant paid',
+          isRead: false,
+          type: 'payment',
+          createdAt: '2026-03-27T12:00:00.000Z',
+        },
+        {
+          id: 'mock-2',
+          title: 'Maintenance update',
+          message: 'Request resolved',
+          isRead: true,
+          type: 'maintenance',
+          createdAt: '2026-03-26T10:00:00.000Z',
+        },
+      ],
+    }),
+  },
+}));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -36,8 +63,8 @@ describe('notificationStore', () => {
     expect(state.isLoaded).toBe(false);
   });
 
-  it('fetchNotifications loads sorted mock data', () => {
-    useNotificationStore.getState().fetchNotifications();
+  it('fetchNotifications loads sorted mock data', async () => {
+    await useNotificationStore.getState().fetchNotifications();
 
     const state = useNotificationStore.getState();
     expect(state.isLoaded).toBe(true);

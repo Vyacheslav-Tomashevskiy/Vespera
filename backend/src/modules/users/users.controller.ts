@@ -26,6 +26,7 @@ import {
 } from './dto/update-user.dto';
 import { UserRestoreDto } from './dto/user-restore.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -33,7 +34,7 @@ import { User, UserRole } from './entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
@@ -142,7 +143,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user consent preferences (GDPR)' })
   @ApiResponse({ status: 200, description: 'Consent updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateConsent(@CurrentUser() user: User, @Body() consent: unknown) {
+  async updateConsent(
+    @CurrentUser() user: User,
+    @Body() consent: Record<string, unknown>,
+  ) {
     return this.usersService.updateConsent(user.id, consent);
   }
 

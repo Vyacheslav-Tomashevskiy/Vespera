@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ReferralModule } from '../referral/referral.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthMetricsService } from './services/auth-metrics.service';
@@ -39,6 +40,7 @@ import { PasswordPolicyService } from './services/password-policy.service';
       inject: [ConfigService],
     }),
     NotificationsModule,
+    ReferralModule,
   ],
   controllers: [AuthController, StellarAuthController, AuthMetricsController],
   providers: [
