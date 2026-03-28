@@ -67,10 +67,6 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     });
   }, [isOpen, property?.id, recordView]);
 
-  useEffect(() => {
-    setOptimisticFavorites(null);
-  }, [property?.id]);
-
   if (!property) return null;
 
   const handleFavorite = () => {
@@ -243,7 +239,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
         {(property.virtualTourUrl || property.videoUrl) && (
           <section className="space-y-2">
-            <h4 className="text-base font-bold text-neutral-900">Tours & video</h4>
+            <h4 className="text-base font-bold text-neutral-900">
+              Tours & video
+            </h4>
             <div className="flex flex-wrap gap-3">
               {property.virtualTourUrl ? (
                 <a

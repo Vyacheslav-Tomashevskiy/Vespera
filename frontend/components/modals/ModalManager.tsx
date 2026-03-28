@@ -151,6 +151,10 @@ export const ModalManager: React.FC = () => {
     case 'propertyDetail':
       return (
         <PropertyDetailModal
+          key={
+            (modalState.data?.property as PropertyDetailData | null)?.id ??
+            'property-detail'
+          }
           isOpen={modalState.isOpen}
           onClose={closeModal}
           property={modalState.data?.property as PropertyDetailData | null}

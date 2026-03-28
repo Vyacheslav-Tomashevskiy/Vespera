@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, Bed, Bath, ArrowLeft, Car, PawPrint } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -45,12 +46,15 @@ export default function StayDetailPage() {
         </Link>
 
         {/* Image */}
-        <div className="aspect-video bg-slate-700 rounded-2xl overflow-hidden mb-8">
+        <div className="relative aspect-video bg-slate-700 rounded-2xl overflow-hidden mb-8">
           {property.images?.[0]?.url ? (
-            <img
+            <Image
               src={property.images[0].url}
               alt={property.title}
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              className="object-cover"
+              sizes="(max-width: 1280px) 100vw, 1280px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-blue-300/30 text-6xl">
