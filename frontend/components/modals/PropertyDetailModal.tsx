@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { BedDouble, Bath, Ruler, MessageCircle } from 'lucide-react';
 import { BaseModal } from './BaseModal';
 import type { PropertyDetailData } from './types';
+import Image from 'next/image';
 
 interface PropertyDetailModalProps {
   isOpen: boolean;
@@ -68,11 +69,15 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     >
       <div className="space-y-5">
         <div className="overflow-hidden rounded-2xl border border-neutral-200">
-          <img
-            src={images[activeImage]}
-            alt={`${property.title} image ${activeImage + 1}`}
-            className="h-72 w-full object-cover md:h-96"
-          />
+          <div className="relative h-72 w-full md:h-96">
+            <Image
+              src={images[activeImage]}
+              alt={`${property.title} image ${activeImage + 1}`}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
@@ -88,11 +93,15 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               }`}
               aria-label={`Show image ${index + 1}`}
             >
-              <img
-                src={image}
-                alt={`Thumbnail ${index + 1}`}
-                className="h-20 w-full object-cover"
-              />
+              <div className="relative h-20 w-full">
+                <Image
+                  src={image}
+                  alt={`Thumbnail ${index + 1}`}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
             </button>
           ))}
         </div>

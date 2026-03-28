@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -384,6 +379,15 @@ export class AgentRegistryService {
       );
       throw error;
     }
+  }
+
+  async getAgentTransactions(
+    agentAddress: string,
+  ): Promise<AgentTransaction[]> {
+    return this.agentTransactionRepo.find({
+      where: { agentAddress },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   private async pollTransactionStatus(

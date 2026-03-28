@@ -187,6 +187,52 @@ export interface Transaction {
   createdAt: string;
 }
 
+export type AnchorTransactionType = 'deposit' | 'withdrawal';
+export type AnchorTransactionStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded';
+
+export interface AnchorTransaction {
+  id: string;
+  anchorTransactionId?: string | null;
+  type: AnchorTransactionType;
+  status: AnchorTransactionStatus;
+  amount: number | string;
+  currency: string;
+  walletAddress: string;
+  paymentMethod?: string | null;
+  destination?: string | null;
+  stellarTransactionId?: string | null;
+  memo?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnchorTransactionStats {
+  total: number;
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  refunded: number;
+  verified: number;
+  averageTimeToAnchorSeconds: number;
+}
+
+export interface AgentTransaction {
+  transactionId: string;
+  agentAddress: string;
+  parties: string[];
+  completed: boolean;
+  blockchainHash: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // KYC Types (Admin)
 export type KycStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
 
@@ -220,6 +266,29 @@ export interface KycVerification {
     [key: string]: unknown;
   };
   documents?: KycDocument[];
+}
+
+// RBAC Types (Admin)
+export interface Permission {
+  id: string;
+  name: string;
+  description?: string | null;
+  resource: string;
+  action: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string | null;
+  systemRole?: string | null;
+  isActive: boolean;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 // API Response Types

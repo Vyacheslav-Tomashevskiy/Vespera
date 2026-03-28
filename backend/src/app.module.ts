@@ -23,7 +23,6 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PaymentModule } from './modules/payments/payment.module';
 import { ProfileModule } from './modules/profile/profile.module';
-import { StellarPayment } from './modules/stellar/entities/stellar-payment.entity';
 import { SecurityModule } from './modules/security/security.module';
 import { AuthRateLimitMiddleware } from './modules/auth/middleware/rate-limit.middleware';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -52,6 +51,7 @@ import { LoggerModule } from './common/services/logger.module';
 import { QueuesModule } from './modules/queues/queues.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ScreeningModule } from './modules/screening/screening.module';
+import { ReferralModule } from './modules/referral/referral.module';
 
 const appLogger = new Logger('AppModule');
 
@@ -219,6 +219,7 @@ const appLogger = new Logger('AppModule');
     AiModule,
     WebhooksModule,
     ScreeningModule,
+    ReferralModule,
     ...(process.env.OPENAPI_GENERATE !== 'true' ? [RateLimitingModule] : []),
     // Maintenance module
     require('./modules/maintenance/maintenance.module').MaintenanceModule,

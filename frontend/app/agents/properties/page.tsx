@@ -197,22 +197,16 @@ const AgentPropertiesPage = () => {
     return diffDays;
   };
 
-  const handleEdit = (propertyId: string) => {
-    // Navigate to edit page
-    console.log('Edit property:', propertyId);
-    // router.push(`/agents/properties/${propertyId}/edit`);
+  const handleEdit = (_propertyId: string) => {
+    // Navigate to edit page - pending router integration
   };
 
-  const handleUnpublish = (propertyId: string) => {
-    // Handle unpublish action
-    console.log('Unpublish property:', propertyId);
-    // Show confirmation modal and update property status
+  const handleUnpublish = (_propertyId: string) => {
+    // Unpublish action - pending confirmation modal integration
   };
 
-  const handleViewContract = (propertyId: string) => {
-    // Navigate to contract details
-    console.log('View contract for property:', propertyId);
-    // router.push(`/agents/contracts?property=${propertyId}`);
+  const handleViewContract = (_propertyId: string) => {
+    // Navigate to contract details - pending router integration
   };
 
   // Filter and search properties

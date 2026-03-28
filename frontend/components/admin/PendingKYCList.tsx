@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Check, Eye, FileText, Search, X } from 'lucide-react';
 import type { KycVerification, PaginatedResponse } from '@/types';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface PendingKYCListProps {
   data?: PaginatedResponse<KycVerification>;
@@ -130,6 +131,13 @@ export function PendingKYCList({
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="flex flex-col gap-2 max-w-[220px]">
+                        <Link
+                          href={`/admin/kyc/${item.id}`}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition-all hover:bg-white/10"
+                        >
+                          <Eye size={14} />
+                          Review details
+                        </Link>
                         <button
                           type="button"
                           onClick={async () => {

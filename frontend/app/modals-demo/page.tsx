@@ -21,7 +21,6 @@ import type {
   AgreementSigningData,
 } from '@/components/modals/types';
 
-// Import types for type safety
 interface PropertyAgreementData {
   propertyId: string;
   propertyTitle: string;

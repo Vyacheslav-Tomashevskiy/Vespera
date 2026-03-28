@@ -1,24 +1,51 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import {
+  CheckCircle2,
+  Clock3,
+  Eye,
+  Filter,
+  Gavel,
+  MessageSquareMore,
+  RefreshCw,
+  Search,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import { useAuth } from '@/store/authStore';
 import {
-  loadAdminDisputesList,
-  statusLabel,
-  typeLabel,
-} from '@/lib/admin-dispute-detail';
-import type { DashboardDispute } from '@/lib/dashboard-data';
-import { Gavel, Loader2, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
+  useAdminDisputes,
+  useUpdateAdminDisputeStatus,
+  type AdminDisputeRecord,
+  type AdminDisputeStatus,
+} from '@/lib/query/hooks/use-admin-disputes';
 
-export default function AdminDisputesDashboardPage() {
+const STATUS_OPTIONS: Array<AdminDisputeStatus | 'ALL'> = [
+  'ALL',
+  'OPEN',
+  'UNDER_REVIEW',
+  'RESOLVED',
+  'REJECTED',
+  'WITHDRAWN',
+];
+
+const statusBadgeMap: Record<AdminDisputeStatus, string> = {
+  OPEN: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
+  UNDER_REVIEW: 'border-blue-400/30 bg-blue-500/10 text-blue-200',
+  RESOLVED: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
+  REJECTED: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
+  WITHDRAWN: 'border-slate-400/30 bg-slate-500/10 text-slate-200',
+};
+
+export default function AdminDisputesPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [rows, setRows] = useState<DashboardDispute[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<AdminDisputeStatus | 'ALL'>('ALL');
+  const [selected, setSelected] = useState<AdminDisputeRecord | null>(null);
 
   useEffect(() => {
     if (!authLoading && user?.role !== 'admin') {
@@ -26,124 +53,173 @@ export default function AdminDisputesDashboardPage() {
     }
   }, [authLoading, user?.role, router]);
 
-  useEffect(() => {
-    if (authLoading || user?.role !== 'admin') return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await loadAdminDisputesList();
-        if (!cancelled) setRows(data);
-      } catch {
-        if (!cancelled) setError('Could not load disputes.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authLoading, user?.role]);
+  const disputesQuery = useAdminDisputes({ search, status });
+  const updateStatus = useUpdateAdminDisputeStatus();
+
+  const disputes = useMemo(
+    () => disputesQuery.data ?? [],
+    [disputesQuery.data],
+  );
+
+  const metrics = useMemo(() => {
+    return disputes.reduce(
+      (acc, dispute) => {
+        acc.total += 1;
+        if (dispute.status === 'OPEN') acc.open += 1;
+        if (dispute.status === 'UNDER_REVIEW') acc.underReview += 1;
+        if (dispute.status === 'RESOLVED') acc.resolved += 1;
+        return acc;
+      },
+      { total: 0, open: 0, underReview: 0, resolved: 0 },
+    );
+  }, [disputes]);
+
+  const handleQuickAction = async (
+    disputeId: string,
+    nextStatus: AdminDisputeStatus,
+  ) => {
+    try {
+      const result = await updateStatus.mutateAsync({
+        disputeId,
+        status: nextStatus,
+        resolution:
+          nextStatus === 'RESOLVED'
+            ? 'Resolved from admin dashboard.'
+            : undefined,
+      });
+
+      toast.success(
+        result.localOnly
+          ? `Updated locally to ${formatLabel(nextStatus)}`
+          : `Moved to ${formatLabel(nextStatus)}`,
+      );
+    } catch {
+      toast.error('Could not update dispute status');
+    }
+  };
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
-        <Loader2 className="animate-spin" size={28} />
+        Loading...
       </div>
     );
   }
 
-  if (user?.role !== 'admin') {
-    return null;
-  }
+  if (user?.role !== 'admin') return null;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Gavel className="text-amber-400" size={28} />
-            Disputes
-          </h1>
-          <p className="text-blue-200/60 mt-1 text-sm max-w-xl">
-            Open a case to review evidence, timeline, and record a resolution.
-          </p>
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-amber-300">
+            <Gavel className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              Disputes Dashboard
+            </h1>
+            <p className="text-sm text-blue-200/60">
+              Review and resolve disputes efficiently.
+            </p>
+          </div>
         </div>
-        <a
-          href="https://t.me/chiomagroup"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-sky-300/90 hover:text-sky-200 underline underline-offset-4"
+
+        <button
+          onClick={() => void disputesQuery.refetch()}
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white hover:bg-white/10"
         >
-          Community: Telegram support
-        </a>
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </button>
+      </header>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <MetricCard label="Total" value={metrics.total} icon={<Gavel />} />
+        <MetricCard label="Open" value={metrics.open} icon={<Clock3 />} />
+        <MetricCard label="Review" value={metrics.underReview} icon={<MessageSquareMore />} />
+        <MetricCard label="Resolved" value={metrics.resolved} icon={<CheckCircle2 />} />
       </div>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-        {loading ? (
-          <div className="flex justify-center py-20 text-blue-200/80">
-            <Loader2 className="animate-spin" size={28} />
-          </div>
-        ) : error ? (
-          <p className="p-8 text-red-400 text-center">{error}</p>
-        ) : rows.length === 0 ? (
-          <p className="p-8 text-slate-500 text-center">No disputes found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 uppercase text-xs tracking-wider">
-                <tr>
-                  <th className="px-5 py-4 font-semibold">Case</th>
-                  <th className="px-5 py-4 font-semibold hidden md:table-cell">
-                    Property
-                  </th>
-                  <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 font-semibold hidden sm:table-cell">
-                    Updated
-                  </th>
-                  <th className="px-5 py-4 font-semibold w-12" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-5 py-4">
-                      <p className="text-white font-medium">{row.disputeId}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">
-                        {typeLabel(row.disputeType)}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-slate-300 hidden md:table-cell max-w-[220px] truncate">
-                      {row.propertyName}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
-                        {statusLabel(row.status)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-slate-500 hidden sm:table-cell whitespace-nowrap">
-                      {format(new Date(row.updatedAt), 'MMM d, yyyy')}
-                    </td>
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/admin/disputes/${row.id}`}
-                        className="inline-flex items-center gap-1 text-sky-400 hover:text-sky-300 font-medium"
-                      >
-                        View
-                        <ArrowRight size={16} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* Filters */}
+      <div className="flex gap-3">
+        <input
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 rounded-xl bg-slate-900 px-3 py-2 text-white"
+        />
+        <select
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value as AdminDisputeStatus | 'ALL')
+          }
+          className="rounded-xl bg-slate-900 px-3 py-2 text-white"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Table */}
+      <div className="rounded-2xl border border-white/10">
+        <table className="w-full text-sm">
+          <tbody>
+            {disputes.map((d) => (
+              <tr key={d.id}>
+                <td className="p-3 text-white">{d.disputeId}</td>
+                <td className="p-3">{formatLabel(d.status)}</td>
+                <td className="p-3">
+                  <button onClick={() => setSelected(d)}>
+                    <Eye />
+                  </button>
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={() => handleQuickAction(d.id, 'RESOLVED')}
+                  >
+                    Resolve
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Detail */}
+      {selected && (
+        <div className="p-4 border rounded-xl">
+          <h2 className="text-white">{selected.disputeId}</h2>
+          <p>{selected.description}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+      {icon}
+      <p>{label}</p>
+      <h3>{value}</h3>
     </div>
   );
+}
+
+function formatLabel(value: string) {
+  return value.replace(/_/g, ' ');
 }

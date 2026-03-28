@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertCircle, Eye, FileText, RefreshCw, Search, X } from 'lucide-react';
 import type { KycVerification, PaginatedResponse } from '@/types';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface RejectedKYCListProps {
   data?: PaginatedResponse<KycVerification>;
@@ -162,6 +163,13 @@ export function RejectedKYCList({
                     {/* Documents */}
                     <td className="px-5 py-4 align-top">
                       <div className="space-y-2">
+                        <Link
+                          href={`/admin/kyc/${item.id}`}
+                          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white transition-all hover:bg-white/10"
+                        >
+                          <Eye size={14} />
+                          Review details
+                        </Link>
                         {docs.length === 0 ? (
                           <p className="text-xs text-amber-300/80">
                             No documents

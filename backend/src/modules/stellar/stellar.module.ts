@@ -36,6 +36,12 @@ import { PaymentProcessingService } from './services/payment-processing.service'
 import { PaymentProcessingController } from './controllers/payment-processing.controller';
 import stellarConfig from './config/stellar.config';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import {
+  PropertyRegistry,
+  PropertyHistory,
+} from './entities/property-registry.entity';
+import { PropertyRegistryController } from './controllers/property-registry.controller';
+import { PropertyRegistryService } from './services/property-registry.service';
 
 @Module({
   imports: [
@@ -55,6 +61,8 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
       AnchorTransaction,
       SupportedCurrency,
       StellarPayment,
+      PropertyRegistry,
+      PropertyHistory,
     ]),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
@@ -66,6 +74,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     AgentRegistryController,
     DisputeController,
     PaymentProcessingController,
+    PropertyRegistryController,
   ],
   providers: [
     StellarService,
@@ -80,6 +89,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     NftEventProcessor,
     AgentRegistryService,
     PaymentProcessingService,
+    PropertyRegistryService,
   ],
   exports: [
     StellarService,
@@ -94,6 +104,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     NftEventProcessor,
     AgentRegistryService,
     PaymentProcessingService,
+    PropertyRegistryService,
   ],
 })
 export class StellarModule {}

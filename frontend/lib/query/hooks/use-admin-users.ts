@@ -56,8 +56,11 @@ export function useSuspendUser() {
     mutationFn: async (userId: string) => {
       await apiClient.post(`/users/${userId}/deactivate`, {});
     },
-    onSuccess: () => {
+    onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-user-detail-bundle', userId],
+      });
     },
   });
 }
@@ -71,8 +74,29 @@ export function useActivateUser() {
     mutationFn: async (userId: string) => {
       await apiClient.post(`/users/restore`, { userId });
     },
-    onSuccess: () => {
+    onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-user-detail-bundle', userId],
+      });
+    },
+  });
+}
+
+/**
+ * Mark a user as verified (admin).
+ */
+export function useVerifyUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      await apiClient.post(`/admin/users/${encodeURIComponent(userId)}/verify`, {});
+    },
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-user-detail-bundle', userId],
+      });
     },
   });
 }

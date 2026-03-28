@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
@@ -10,6 +13,19 @@ const eslintConfig = defineConfig([
     files: ['scripts/verify-alt-text.js'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  // Ignore unused variables/parameters prefixed with underscore.
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   // Enforce descriptive alt text on all images (including Next.js Image).
@@ -33,6 +49,7 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
   ]),
+  ...storybook.configs["flat/recommended"]
 ]);
 
 export default eslintConfig;
