@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import { Home, Users, DollarSign, PenTool } from 'lucide-react';
 import KPICard from '@/components/landlord-dashboard/KPICard';
@@ -21,7 +22,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">
             Overview
@@ -30,6 +31,14 @@ export default function DashboardPage() {
             Here&apos;s what&apos;s happening with your properties today.
           </p>
         </div>
+
+        <Link
+          href="/landlords/properties/wizard"
+          className="flex items-center justify-center bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-lg active:scale-95 group"
+        >
+          <Home className="mr-2 group-hover:scale-110 transition-transform" size={20} />
+          Create New Listing
+        </Link>
       </div>
 
       {/* KPI Cards Grid */}

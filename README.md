@@ -139,3 +139,24 @@ Chioma is not just a rental app.
 
 It is **open financial infrastructure for housing**, built on Stellar, and designed to scale across borders, currencies, and communities.
 
+## Property Listing Wizard
+
+The Property Listing Wizard is a guided 8-step flow for landlords to create high-quality rental listings with AI-assisted content generation and automated draft saving.
+
+### API Endpoints
+
+*   `POST /property-listings/wizard/start` - Initialize a new property draft.
+*   `GET /property-listings/wizard/:id/draft` - Resume an existing draft.
+*   `PATCH /property-listings/wizard/:id/step` - Save current step data and run validation.
+*   `DELETE /property-listings/wizard/:id/draft` - Discard a draft.
+*   `POST /property-listings/wizard/:id/publish` - Finalize and publish the property.
+
+### AI Features
+
+The wizard includes server-side AI helpers for:
+*   **Pricing Suggestions**: Recommended rent ranges based on property type and location.
+*   **Description Generation**: Compelling property and neighborhood blurbs.
+*   **Completeness Scoring**: Real-time analysis of listing quality with improvement tips.
+
+### Draft Expiry
+Drafts automatically expire after **30 days** of inactivity. A cleanup task runs periodically to remove expired drafts.
