@@ -1,4 +1,5 @@
 //! Tests for recurring payment functionality (Issue #653)
+#![allow(unused_results)]
 
 use crate::storage::DataKey;
 use crate::types::*;
@@ -210,7 +211,7 @@ fn test_auto_renewal_enabled() {
         .try_get_recurring_payment(&recurring_id)
         .unwrap()
         .unwrap();
-    assert_eq!(recurring.auto_renew, true);
+    assert!(recurring.auto_renew);
 }
 
 #[test]

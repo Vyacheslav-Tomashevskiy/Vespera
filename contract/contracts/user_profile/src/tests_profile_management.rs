@@ -1,7 +1,7 @@
 //! Tests for user profile management & verification (Issue #655)
+#![allow(unused_results)]
 
-use crate::storage::DataKey;
-use crate::types::{AccountType, UserProfile};
+use crate::types::AccountType;
 use crate::UserProfileContract;
 use soroban_sdk::{testutils::Address as _, Address, Bytes, Env};
 
@@ -39,7 +39,7 @@ fn test_double_initialization_fails() {
     let client = create_contract(&env);
     let admin = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
     let result = client.try_initialize(&admin);
     assert!(result.is_err());
 }
@@ -53,7 +53,7 @@ fn test_create_profile_success() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
     let result = client.try_create_profile(&account, &AccountType::Tenant, &hash);
@@ -70,7 +70,7 @@ fn test_create_profile_landlord() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
     let result = client.try_create_profile(&account, &AccountType::Landlord, &hash);
@@ -87,7 +87,7 @@ fn test_create_profile_agent() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
     let result = client.try_create_profile(&account, &AccountType::Agent, &hash);
@@ -104,10 +104,12 @@ fn test_prevent_duplicate_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_create_profile(&account, &AccountType::Tenant, &hash);
     assert!(result.is_err());
@@ -122,7 +124,7 @@ fn test_data_hash_validation_sha256() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
     let result = client.try_create_profile(&account, &AccountType::Tenant, &hash);
@@ -138,7 +140,7 @@ fn test_data_hash_validation_ipfs_cid() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 46);
     let result = client.try_create_profile(&account, &AccountType::Tenant, &hash);
@@ -154,7 +156,7 @@ fn test_data_hash_validation_invalid_length() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 31);
     let result = client.try_create_profile(&account, &AccountType::Tenant, &hash);
@@ -170,10 +172,12 @@ fn test_update_profile_account_type() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_update_profile(&account, &Some(AccountType::Landlord), &None);
 
@@ -189,10 +193,12 @@ fn test_update_profile_data_hash() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash1 = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash1).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash1)
+        .unwrap();
 
     let hash2 = create_hash(&env, 32);
     let result = client.try_update_profile(&account, &None, &Some(hash2));
@@ -209,7 +215,7 @@ fn test_update_non_existent_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let result = client.try_update_profile(&account, &Some(AccountType::Landlord), &None);
 
@@ -225,10 +231,12 @@ fn test_verify_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_verify_profile(&admin, &account);
     assert!(result.is_ok());
@@ -243,12 +251,14 @@ fn test_unverify_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
-    client.try_verify_profile(&admin, &account).unwrap();
+    let _ = client.try_verify_profile(&admin, &account).unwrap();
     let result = client.try_unverify_profile(&admin, &account);
     assert!(result.is_ok());
 }
@@ -262,10 +272,12 @@ fn test_get_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_get_profile(&account);
     assert!(result.is_ok());
@@ -280,13 +292,15 @@ fn test_has_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_has_profile(&account).unwrap().unwrap();
-    assert_eq!(result, true);
+    assert!(result);
 }
 
 #[test]
@@ -298,10 +312,12 @@ fn test_delete_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
     let result = client.try_delete_profile(&account);
     assert!(result.is_ok());
@@ -316,7 +332,7 @@ fn test_delete_non_existent_profile() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let result = client.try_delete_profile(&account);
     assert!(result.is_err());
@@ -332,17 +348,21 @@ fn test_multiple_profiles() {
     let account1 = Address::generate(&env);
     let account2 = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account1, &AccountType::Tenant, &hash).unwrap();
-    client.try_create_profile(&account2, &AccountType::Landlord, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account1, &AccountType::Tenant, &hash)
+        .unwrap();
+    let _ = client
+        .try_create_profile(&account2, &AccountType::Landlord, &hash)
+        .unwrap();
 
     let has1 = client.try_has_profile(&account1).unwrap().unwrap();
     let has2 = client.try_has_profile(&account2).unwrap().unwrap();
 
-    assert_eq!(has1, true);
-    assert_eq!(has2, true);
+    assert!(has1);
+    assert!(has2);
 }
 
 #[test]
@@ -354,15 +374,23 @@ fn test_account_type_transitions() {
     let admin = Address::generate(&env);
     let account = Address::generate(&env);
 
-    client.try_initialize(&admin).unwrap();
+    let _ = client.try_initialize(&admin).unwrap();
 
     let hash = create_hash(&env, 32);
-    client.try_create_profile(&account, &AccountType::Tenant, &hash).unwrap();
+    let _ = client
+        .try_create_profile(&account, &AccountType::Tenant, &hash)
+        .unwrap();
 
-    client.try_update_profile(&account, &Some(AccountType::Landlord), &None).unwrap();
-    client.try_update_profile(&account, &Some(AccountType::Agent), &None).unwrap();
-    client.try_update_profile(&account, &Some(AccountType::Tenant), &None).unwrap();
+    let _ = client
+        .try_update_profile(&account, &Some(AccountType::Landlord), &None)
+        .unwrap();
+    let _ = client
+        .try_update_profile(&account, &Some(AccountType::Agent), &None)
+        .unwrap();
+    let _ = client
+        .try_update_profile(&account, &Some(AccountType::Tenant), &None)
+        .unwrap();
 
     let has_profile = client.try_has_profile(&account).unwrap().unwrap();
-    assert_eq!(has_profile, true);
+    assert!(has_profile);
 }

@@ -1,7 +1,7 @@
 //! Tests for multi-sig governance and timelock execution (Issue #654)
+#![allow(unused_results)]
 
 use crate::{
-    errors::RentalError,
     types::{ActionType, Config},
     Contract, ContractClient,
 };
@@ -58,7 +58,7 @@ fn test_get_multisig_config() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let config = client.try_get_multisig_config().unwrap().unwrap();
     assert_eq!(config.total_admins, 2);
@@ -77,13 +77,13 @@ fn test_is_admin_check() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let is_admin1 = client.try_is_admin(&admin1).unwrap().unwrap();
-    assert_eq!(is_admin1, true);
+    assert!(is_admin1);
 
     let is_non_admin = client.try_is_admin(&non_admin).unwrap().unwrap();
-    assert_eq!(is_non_admin, false);
+    assert!(!is_non_admin);
 }
 
 // ─── Proposal Management Tests ─────────────────────────────────────────────
@@ -100,7 +100,7 @@ fn test_propose_add_admin() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
     let result = client.try_propose_action(
@@ -124,7 +124,7 @@ fn test_propose_remove_admin() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
     let result = client.try_propose_action(
@@ -149,18 +149,20 @@ fn test_get_active_proposals() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap();
+    let _ = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap();
 
     let proposals = client.try_get_active_proposals().unwrap().unwrap();
-    assert!(proposals.len() > 0);
+    assert!(!proposals.is_empty());
 }
 
 // ─── Proposal Voting Tests ────────────────────────────────────────────────
@@ -177,15 +179,18 @@ fn test_approve_action() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
     let result = client.try_approve_action(&admin2, &proposal_id);
     assert!(result.is_ok());
@@ -203,17 +208,20 @@ fn test_prevent_duplicate_approval() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
-    client.try_approve_action(&admin2, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
 
     let result = client.try_approve_action(&admin2, &proposal_id);
     assert!(result.is_err());
@@ -231,15 +239,18 @@ fn test_reject_action() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
     let result = client.try_reject_action(&admin1, &proposal_id);
     assert!(result.is_ok());
@@ -259,17 +270,20 @@ fn test_execute_approved_proposal() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
-    client.try_approve_action(&admin2, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
 
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_ok());
@@ -287,17 +301,20 @@ fn test_execute_add_admin_proposal() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
-    client.try_approve_action(&admin2, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_ok());
 }
@@ -314,15 +331,18 @@ fn test_prevent_execution_without_approvals() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_err());
@@ -340,18 +360,21 @@ fn test_prevent_double_execution() {
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
-    client.try_approve_action(&admin2, &proposal_id).unwrap();
-    client.try_execute_action(&admin1, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
+    let _ = client.try_execute_action(&admin1, &proposal_id).unwrap();
 
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_err());
@@ -386,18 +409,21 @@ fn test_all_admins_approve() {
     admins.push_back(admin2.clone());
     admins.push_back(admin3.clone());
 
-    client.try_initialize_multisig(&admins, &2).unwrap();
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let proposal_id = client.try_propose_action(
-        &admin1,
-        &ActionType::AddAdmin,
-        &Some(new_admin.clone()),
-        &data,
-    ).unwrap().unwrap();
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+        )
+        .unwrap()
+        .unwrap();
 
-    client.try_approve_action(&admin2, &proposal_id).unwrap();
-    client.try_approve_action(&admin3, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
+    let _ = client.try_approve_action(&admin3, &proposal_id).unwrap();
 
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_ok());
