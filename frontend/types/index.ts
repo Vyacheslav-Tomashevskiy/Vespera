@@ -3,12 +3,15 @@
  * Matches backend entity structures
  */
 
+// Security Types
+export * from './security';
+
 // User Types
 export interface User {
   id: string;
   email: string;
   name?: string;
-  role: 'tenant' | 'landlord' | 'agent' | 'admin';
+  role: 'tenant' | 'landlord' | 'agent' | 'admin' | 'support' | 'auditor';
   phone?: string;
   avatar?: string;
   isVerified: boolean;
