@@ -587,7 +587,7 @@ fn test_distribute_interest_split_50_50() {
     client.accrue_interest(&id);
 
     let di_before = client.get_deposit_interest(&id);
-    let accrued = di_before.accrued_interest;
+    let _accrued = di_before.accrued_interest;
 
     // Distribute interest
     client.distribute_interest(&id);
@@ -666,7 +666,7 @@ fn test_process_interest_accruals_batch() {
 
     // Create multiple agreements
     let mut agreement_ids = Vec::new(&env);
-    for i in 0..3 {
+    for _i in 0..3 {
         let tenant = Address::generate(&env);
         let landlord = Address::generate(&env);
         let id = create_agreement_helper(&env, &client, &tenant, &landlord, 5_000);

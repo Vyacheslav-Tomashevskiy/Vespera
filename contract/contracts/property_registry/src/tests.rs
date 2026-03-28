@@ -438,13 +438,13 @@ fn test_register_property_with_various_types() {
 
     client.initialize(&admin);
 
-    let property_types = vec![
+    let property_types = [
         ("APARTMENT-001", "QmApartment001"),
         ("HOUSE-001", "QmHouse001"),
         ("COMMERCIAL-001", "QmCommercial001"),
     ];
 
-    for (prop_id, metadata) in property_types {
+    for (prop_id, metadata) in property_types.iter() {
         let property_id = String::from_str(&env, prop_id);
         let metadata_hash = String::from_str(&env, metadata);
 
@@ -544,8 +544,22 @@ fn test_property_count_accuracy() {
     assert_eq!(client.get_property_count(), 0);
 
     for i in 0..5 {
-        let property_id = String::from_str(&env, &format!("PROP-{}", i));
-        let metadata_hash = String::from_str(&env, &format!("QmMetadata{}", i));
+        let property_id = match i {
+            0 => String::from_str(&env, "PROP-0"),
+            1 => String::from_str(&env, "PROP-1"),
+            2 => String::from_str(&env, "PROP-2"),
+            3 => String::from_str(&env, "PROP-3"),
+            4 => String::from_str(&env, "PROP-4"),
+            _ => String::from_str(&env, "PROP-5"),
+        };
+        let metadata_hash = match i {
+            0 => String::from_str(&env, "QmMetadata0"),
+            1 => String::from_str(&env, "QmMetadata1"),
+            2 => String::from_str(&env, "QmMetadata2"),
+            3 => String::from_str(&env, "QmMetadata3"),
+            4 => String::from_str(&env, "QmMetadata4"),
+            _ => String::from_str(&env, "QmMetadata5"),
+        };
         client.register_property(&landlord, &property_id, &metadata_hash);
         assert_eq!(client.get_property_count(), (i + 1) as u32);
     }
