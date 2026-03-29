@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Box, ExternalLink } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -14,8 +14,10 @@ function normalizeEmbedUrl(url: string): string {
   try {
     const parsed = new URL(url);
     if (parsed.hostname.includes('matterport')) {
-      if (!parsed.searchParams.get('play')) parsed.searchParams.set('play', '1');
-      if (!parsed.searchParams.get('brand')) parsed.searchParams.set('brand', '0');
+      if (!parsed.searchParams.get('play'))
+        parsed.searchParams.set('play', '1');
+      if (!parsed.searchParams.get('brand'))
+        parsed.searchParams.set('brand', '0');
       return parsed.toString();
     }
     return parsed.toString();
@@ -35,20 +37,20 @@ export default function VirtualTourViewer({
   tourUrl,
   title = '3D Virtual Tour',
 }: VirtualTourViewerProps) {
-  const sessionRef = useRef(`tour_${Math.random().toString(36).slice(2)}`);
-  const startedAtRef = useRef<number>(Date.now());
   const embedUrl = useMemo(() => normalizeEmbedUrl(tourUrl), [tourUrl]);
   const provider = useMemo(() => detectProvider(tourUrl), [tourUrl]);
 
   useEffect(() => {
+    const sessionId = `tour_${Math.random().toString(36).slice(2)}`;
+    const startedAt = Date.now();
     const payload = {
-      eventType: 'view_start',
+      eventType: 'view_start' as const,
       provider,
       source: 'property_details',
       deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
         ? 'mobile'
         : 'desktop',
-      sessionId: sessionRef.current,
+      sessionId,
     };
 
     void apiClient.post(`/properties/${propertyId}/tour-engagement`, payload);
@@ -56,7 +58,7 @@ export default function VirtualTourViewer({
     return () => {
       const durationSeconds = Math.max(
         0,
-        Math.round((Date.now() - startedAtRef.current) / 1000),
+        Math.round((Date.now() - startedAt) / 1000),
       );
       void apiClient.post(`/properties/${propertyId}/tour-engagement`, {
         ...payload,
