@@ -58,6 +58,9 @@ jobs:
             echo "Prettier not installed, skipping formatting check"
           fi
 
+      - name: Run typecheck
+        run: pnpm run typecheck
+
       - name: Run unit tests
         continue-on-error: true
         run: |
