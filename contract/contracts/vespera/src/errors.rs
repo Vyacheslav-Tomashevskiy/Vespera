@@ -24,12 +24,13 @@ pub enum RentalError {
     RateNotFound = 20,
     ConversionError = 21,
     InsufficientPayment = 22,
-    AlreadyPaused = 23,
-    NotPaused = 24,
-    InterestConfigNotFound = 25,
-    InterestAlreadyInitialized = 26,
-    NoPrincipal = 27,
-    RoyaltyNotFound = 28,
+    InvalidTokenBounds = 23,
+    AlreadyPaused = 24,
+    NotPaused = 25,
+    InterestConfigNotFound = 26,
+    InterestAlreadyInitialized = 27,
+    NoPrincipal = 28,
+    RoyaltyNotFound = 29,
 
     // Payment errors
     PaymentInsufficientFunds = 201,
@@ -74,92 +75,63 @@ pub enum RentalError {
 impl RentalError {
     pub fn message(&self, env: &Env) -> String {
         let msg = match self {
-            RentalError::AlreadyInitialized => "Contract already initialized.",
-            RentalError::InvalidConfig => "Invalid configuration parameter.",
-            RentalError::AgreementAlreadyExists => "Agreement already exists for the given ID.",
-            RentalError::InvalidAmount => "Invalid amount provided for the operation.",
-            RentalError::InvalidDate => "Invalid date or timestamp range.",
-            RentalError::InvalidCommissionRate => {
-                "Commission rate must be between 0 and 10000 bps."
-            }
-            RentalError::AgreementNotActive => "Agreement is not in an Active state.",
-            RentalError::AgreementNotFound => "Agreement not found. Please check the ID.",
-            RentalError::NotTenant => "The caller is not the tenant of this agreement.",
-            RentalError::Unauthorized => "You are not authorized to perform this action.",
-            RentalError::InvalidState => {
-                "Contract or agreement state is invalid for this operation."
-            }
-            RentalError::Expired => "The agreement or operation has expired.",
-            RentalError::ContractPaused => "Operations are currently paused by the administrator.",
-            RentalError::TokenNotSupported => "The specified payment token is not supported.",
-            RentalError::RateNotFound => "Exchange rate for the given token pair not found.",
-            RentalError::ConversionError => {
-                "Error occurred while converting amounts between tokens."
-            }
-            RentalError::InsufficientPayment => {
-                "Provided payment is insufficient for the required amount."
-            }
-            RentalError::AlreadyPaused => "The contract is already in a paused state.",
-            RentalError::NotPaused => "The contract is not currently paused.",
-            RentalError::InterestConfigNotFound => {
-                "Interest configuration for the agreement not found."
-            }
-            RentalError::InterestAlreadyInitialized => {
-                "Deposit interest is already initialized for this agreement."
-            }
-            RentalError::NoPrincipal => "No security deposit found to accrue interest on.",
-            RentalError::RoyaltyNotFound => "Royalty configuration for the token not found.",
+            RentalError::AlreadyInitialized => "Already initialized",
+            RentalError::InvalidConfig => "Invalid config",
+            RentalError::AgreementAlreadyExists => "Agreement exists",
+            RentalError::InvalidAmount => "Invalid amount",
+            RentalError::InvalidDate => "Invalid date",
+            RentalError::InvalidCommissionRate => "Invalid rate",
+            RentalError::AgreementNotActive => "Not active",
+            RentalError::AgreementNotFound => "Not found",
+            RentalError::NotTenant => "Not tenant",
+            RentalError::Unauthorized => "Unauthorized",
+            RentalError::InvalidState => "Invalid state",
+            RentalError::Expired => "Expired",
+            RentalError::ContractPaused => "Paused",
+            RentalError::TokenNotSupported => "Unsupported",
+            RentalError::RateNotFound => "No rate",
+            RentalError::ConversionError => "Error",
+            RentalError::InsufficientPayment => "Insufficient",
+            RentalError::InvalidTokenBounds => "Bounds",
+            RentalError::AlreadyPaused => "Already paused",
+            RentalError::NotPaused => "Not paused",
+            RentalError::InterestConfigNotFound => "No config",
+            RentalError::InterestAlreadyInitialized => "Initialized",
+            RentalError::NoPrincipal => "No deposit",
+            RentalError::RoyaltyNotFound => "No royalty",
 
-            RentalError::PaymentInsufficientFunds => {
-                "Insufficient funds. Please ensure you have enough balance."
-            }
-            RentalError::PaymentAlreadyProcessed => "This payment has already been processed.",
-            RentalError::PaymentFailed => "Payment transfer failed. Check permissions and balance.",
-            RentalError::PaymentInvalidAmount => "The payment amount is invalid or zero.",
+            RentalError::PaymentInsufficientFunds => "Insufficient funds",
+            RentalError::PaymentAlreadyProcessed => "Payment already processed",
+            RentalError::PaymentFailed => "Payment transfer failed",
+            RentalError::PaymentInvalidAmount => "Invalid payment amount",
 
-            RentalError::TimelockNotFound => "Timelock action not found.",
-            RentalError::TimelockAlreadyExecuted => {
-                "This timelock action has already been executed."
-            }
-            RentalError::TimelockAlreadyCancelled => {
-                "This timelock action has already been cancelled."
-            }
-            RentalError::TimelockEtaNotReached => "The timelock ETA has not been reached yet.",
+            RentalError::TimelockNotFound => "Timelock not found",
+            RentalError::TimelockAlreadyExecuted => "Timelock already executed",
+            RentalError::TimelockAlreadyCancelled => "Timelock already cancelled",
+            RentalError::TimelockEtaNotReached => "Timelock ETA not reached",
 
-            RentalError::EscrowNotFound => "Escrow account not found for this agreement.",
-            RentalError::EscrowAlreadyReleased => "Escrow funds have already been released.",
-            RentalError::EscrowInsufficientFunds => {
-                "Insufficient funds in escrow for this withdrawal."
-            }
-            RentalError::EscrowTimeoutNotReached => "Escrow period has not yet expired.",
+            RentalError::EscrowNotFound => "Escrow not found",
+            RentalError::EscrowAlreadyReleased => "Escrow already released",
+            RentalError::EscrowInsufficientFunds => "Escrow insufficient funds",
+            RentalError::EscrowTimeoutNotReached => "Escrow timeout not reached",
 
-            RentalError::InsufficientPermissions => {
-                "Insufficient permissions to perform this action."
-            }
-            RentalError::AdminOnly => "This operation is restricted to contract administrators.",
-            RentalError::InvalidTransition => "Invalid state transition for the current record.",
-            RentalError::InvalidInput => "Invalid input data provided to the function.",
-            RentalError::InvalidAddress => "A provided address is invalid or malformed.",
+            RentalError::InsufficientPermissions => "Insufficient permissions",
+            RentalError::AdminOnly => "Admin only operation",
+            RentalError::InvalidTransition => "Invalid state transition",
+            RentalError::InvalidInput => "Invalid input data",
+            RentalError::InvalidAddress => "Invalid address",
 
-            RentalError::RateLimitExceeded => "Rate limit exceeded. Please wait before retrying.",
-            RentalError::CooldownNotMet => "Operation cooldown period has not yet met.",
-            RentalError::InternalError => "An unexpected internal error occurred.",
-            RentalError::TimelockDelayTooShort => {
-                "The specified delay is below the minimum required for this action type."
-            }
+            RentalError::RateLimitExceeded => "Rate limit exceeded",
+            RentalError::CooldownNotMet => "Cooldown not met",
+            RentalError::InternalError => "Internal error",
+            RentalError::TimelockDelayTooShort => "Delay below minimum",
 
-            RentalError::MultiSigNotInitialized => {
-                "Multi-sig has not been initialized for this contract."
-            }
-            RentalError::ProposalNotFound => "The specified proposal does not exist.",
-            RentalError::ProposalAlreadyExecuted => "This proposal has already been executed.",
-            RentalError::ProposalExpired => {
-                "The proposal has expired and can no longer be executed."
-            }
-            RentalError::InsufficientApprovals => {
-                "Insufficient approvals to execute this proposal."
-            }
-            RentalError::AlreadyApproved => "You have already approved this proposal.",
+            RentalError::MultiSigNotInitialized => "Multi-sig not initialized",
+            RentalError::ProposalNotFound => "Proposal not found",
+            RentalError::ProposalAlreadyExecuted => "Proposal already executed",
+            RentalError::ProposalExpired => "Proposal expired",
+            RentalError::InsufficientApprovals => "Insufficient approvals",
+            RentalError::AlreadyApproved => "Already approved",
         };
         String::from_str(env, msg)
     }

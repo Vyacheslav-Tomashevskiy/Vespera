@@ -12,6 +12,17 @@ pub fn add_supported_token(
     min_amount: i128,
     max_amount: i128,
 ) -> Result<(), RentalError> {
+    // Validate token bounds
+    if min_amount < 0 {
+        return Err(RentalError::InvalidTokenBounds);
+    }
+    if max_amount < 0 {
+        return Err(RentalError::InvalidTokenBounds);
+    }
+    if min_amount > max_amount {
+        return Err(RentalError::InvalidTokenBounds);
+    }
+
     let key = DataKey::SupportedToken(token_address.clone());
     let token = SupportedToken {
         token_address: token_address.clone(),

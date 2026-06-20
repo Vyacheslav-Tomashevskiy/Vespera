@@ -418,6 +418,18 @@ pub fn make_payment_with_token(
 
     agreement.tenant.require_auth();
 
+    // Check payment amount against token bounds
+    let token_key = DataKey::SupportedToken(token.clone());
+    let supported_token: crate::types::SupportedToken = env
+        .storage()
+        .persistent()
+        .get(&token_key)
+        .ok_or(RentalError::TokenNotSupported)?;
+
+    if amount < supported_token.min_amount || amount > supported_token.max_amount {
+        return Err(RentalError::InvalidTokenBounds);
+    }
+
     // Convert amount to the agreement's base token if they differ
     let amount_in_base = if token != agreement.payment_token {
         crate::multi_token::convert_amount(

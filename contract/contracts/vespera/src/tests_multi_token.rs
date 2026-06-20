@@ -820,3 +820,224 @@ fn test_release_escrow_rejected_on_non_active_agreement() {
 
     client.release_escrow_with_token(&id, &token);
 }
+
+// ─── Token Bounds Validation Tests ────────────────────────────────────────
+
+#[test]
+fn test_add_supported_token_rejects_negative_min_amount() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let token_addr = Address::generate(&env);
+    let symbol = String::from_str(&env, "USDC");
+
+    // Negative min_amount should be rejected
+    let result = client.try_add_supported_token(&token_addr, &symbol, &6, &-1, &1000000);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_add_supported_token_rejects_negative_max_amount() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let token_addr = Address::generate(&env);
+    let symbol = String::from_str(&env, "USDC");
+
+    // Negative max_amount should be rejected
+    let result = client.try_add_supported_token(&token_addr, &symbol, &6, &1, &-100);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_add_supported_token_rejects_min_greater_than_max() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let token_addr = Address::generate(&env);
+    let symbol = String::from_str(&env, "USDC");
+
+    // min_amount > max_amount should be rejected
+    let result = client.try_add_supported_token(&token_addr, &symbol, &6, &1000, &100);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_add_supported_token_accepts_valid_bounds() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let token_addr = Address::generate(&env);
+    let symbol = String::from_str(&env, "USDC");
+
+    // Valid bounds should be accepted
+    client.add_supported_token(&token_addr, &symbol, &6, &100, &1000000);
+    assert!(client.is_token_supported(&token_addr));
+}
+
+#[test]
+fn test_make_payment_with_token_rejects_amount_below_min() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let token = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
+
+    // Add token with min_amount = 500, max_amount = 10000
+    client.add_supported_token(
+        &token,
+        &String::from_str(&env, "USDC"),
+        &6,
+        &500,
+        &10000,
+    );
+
+    let agreement_id = client.create_agreement_with_token(&AgreementInput {
+        agreement_id: String::from_str(&env, "PROP1").clone(),
+        tenant: tenant.clone(),
+        landlord: landlord.clone(),
+        agent: None,
+        terms: AgreementTerms {
+            monthly_rent: 1000,
+            security_deposit: 0,
+            start_date: 100,
+            end_date: 1000000,
+            agent_commission_rate: 0,
+        },
+        payment_token: token.clone(),
+        metadata_uri: String::from_str(&env, "").clone(),
+        attributes: Vec::new(&env).clone(),
+    });
+
+    client.submit_agreement(&landlord, &agreement_id);
+    client.sign_agreement(&tenant, &agreement_id);
+
+    let sac = soroban_sdk::token::StellarAssetClient::new(&env, &token);
+    sac.mint(&tenant, &1000);
+
+    // Payment below min_amount (500) should be rejected
+    let result = client.try_make_payment_with_token(&agreement_id, &100, &token);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_make_payment_with_token_rejects_amount_above_max() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let token = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
+
+    // Add token with min_amount = 100, max_amount = 5000
+    client.add_supported_token(
+        &token,
+        &String::from_str(&env, "USDC"),
+        &6,
+        &100,
+        &5000,
+    );
+
+    let agreement_id = client.create_agreement_with_token(&AgreementInput {
+        agreement_id: String::from_str(&env, "PROP1").clone(),
+        tenant: tenant.clone(),
+        landlord: landlord.clone(),
+        agent: None,
+        terms: AgreementTerms {
+            monthly_rent: 1000,
+            security_deposit: 0,
+            start_date: 100,
+            end_date: 1000000,
+            agent_commission_rate: 0,
+        },
+        payment_token: token.clone(),
+        metadata_uri: String::from_str(&env, "").clone(),
+        attributes: Vec::new(&env).clone(),
+    });
+
+    client.submit_agreement(&landlord, &agreement_id);
+    client.sign_agreement(&tenant, &agreement_id);
+
+    let sac = soroban_sdk::token::StellarAssetClient::new(&env, &token);
+    sac.mint(&tenant, &10000);
+
+    // Payment above max_amount (5000) should be rejected
+    let result = client.try_make_payment_with_token(&agreement_id, &10000, &token);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_make_payment_with_token_accepts_amount_within_bounds() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    initialize_contract(&env, &client, &admin);
+
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let token = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
+
+    // Add token with min_amount = 100, max_amount = 10000
+    client.add_supported_token(
+        &token,
+        &String::from_str(&env, "USDC"),
+        &6,
+        &100,
+        &10000,
+    );
+
+    let agreement_id = client.create_agreement_with_token(&AgreementInput {
+        agreement_id: String::from_str(&env, "PROP1").clone(),
+        tenant: tenant.clone(),
+        landlord: landlord.clone(),
+        agent: None,
+        terms: AgreementTerms {
+            monthly_rent: 1000,
+            security_deposit: 0,
+            start_date: 100,
+            end_date: 1000000,
+            agent_commission_rate: 0,
+        },
+        payment_token: token.clone(),
+        metadata_uri: String::from_str(&env, "").clone(),
+        attributes: Vec::new(&env).clone(),
+    });
+
+    client.submit_agreement(&landlord, &agreement_id);
+    client.sign_agreement(&tenant, &agreement_id);
+
+    let sac = soroban_sdk::token::StellarAssetClient::new(&env, &token);
+    sac.mint(&tenant, &1000);
+
+    // Payment within bounds (100 <= 1000 <= 10000) should succeed
+    client.make_payment_with_token(&agreement_id, &1000, &token);
+
+    let agreement = client.get_agreement(&agreement_id).unwrap();
+    assert_eq!(agreement.total_rent_paid, 1000);
+}
