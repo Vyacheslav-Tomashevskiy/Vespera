@@ -86,7 +86,16 @@ export class PaymentController {
   }
 
   @Post('stellar/rent')
-  @ApiOperation({ summary: 'Process Stellar rent payment' })
+  @ApiOperation({
+    summary: 'Process Stellar rent payment',
+    description:
+      'SECURITY WARNING: this endpoint accepts a Stellar SECRET seed ' +
+      '(tenantSecret) in the request body. The server signs on the ' +
+      "tenant's behalf, which means the seed is in transit and the " +
+      "server can spend the tenant's funds. The endpoint is disabled " +
+      'by default and only honoured when ALLOW_SERVER_SIDE_TENANT_SIGNING=true ' +
+      'is set on the server. Prefer a client-signed XDR flow.',
+  })
   async processStellarRent(
     @Body() dto: ProcessStellarRentGatewayDto,
     @Request() req: { user?: { id: string } },

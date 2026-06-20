@@ -18,9 +18,22 @@ export class ProcessStellarRentGatewayDto {
   })
   tenantAddress: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      '⚠️ SECURITY WARNING: Stellar SECRET seed (S-prefixed). ' +
+      "Submitting a seed lets the server spend the tenant's funds and " +
+      'puts the seed in transit through any layer that captures request ' +
+      'bodies (logs, audit trails, error trackers). Prefer the ' +
+      'client-signed XDR flow once it is available. This endpoint is ' +
+      'disabled unless ALLOW_SERVER_SIDE_TENANT_SIGNING=true is set in ' +
+      'the server environment.',
+    example: 'SXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+  })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^S[A-Z2-7]{55}$/, {
+    message: 'tenantSecret must be a Stellar S-prefixed secret seed',
+  })
   tenantSecret: string;
 
   @ApiProperty()

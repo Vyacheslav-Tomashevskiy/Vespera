@@ -2,9 +2,11 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository, LessThanOrEqual } from 'typeorm';
 import {
@@ -67,7 +69,22 @@ export class PaymentService {
     private readonly lockService: LockService,
     private readonly idempotencyService: IdempotencyService,
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
   ) {}
+
+  /**
+   * Pulls a Stellar secret out of a payload as a non-enumerable local
+   * binding so error sites cannot accidentally spread it into log
+   * lines, audit records, or Sentry breadcrumbs. The caller passes the
+   * dto and receives a scrubbed copy plus the seed in isolation.
+   */
+  private extractTenantSecret(dto: ProcessStellarRentGatewayDto): {
+    secret: string;
+    scrubbed: Omit<ProcessStellarRentGatewayDto, 'tenantSecret'>;
+  } {
+    const { tenantSecret, ...scrubbed } = dto;
+    return { secret: tenantSecret, scrubbed };
+  }
 
   @Locked({
     key: (dto: CreatePaymentRecordDto) =>
@@ -592,31 +609,50 @@ export class PaymentService {
   ): Promise<Payment> {
     ensureUserId(userId);
 
+    // Gate the server-side-custody flow behind explicit opt-in. The
+    // safe default is OFF — callers must move to the client-signed XDR
+    // flow once it exists, and operators have to consciously turn this
+    // on (with the risk understood) until then.
+    if (
+      this.configService.get<string>('ALLOW_SERVER_SIDE_TENANT_SIGNING') !==
+      'true'
+    ) {
+      throw new ForbiddenException(
+        'Server-side tenant signing is disabled. Submit a client-signed ' +
+          'transaction XDR instead. To re-enable this endpoint, set ' +
+          'ALLOW_SERVER_SIDE_TENANT_SIGNING=true on the server.',
+      );
+    }
+
+    const { secret, scrubbed } = this.extractTenantSecret(dto);
+
     try {
-      const callerKeypair = StellarSdk.Keypair.fromSecret(dto.tenantSecret);
+      const callerKeypair = StellarSdk.Keypair.fromSecret(secret);
       const transactionHash =
         await this.paymentProcessingService.processRentPayment(
-          dto.tenantAddress,
-          dto.agreementId,
-          dto.amount,
+          scrubbed.tenantAddress,
+          scrubbed.agreementId,
+          scrubbed.amount,
           callerKeypair,
         );
 
       const payment = this.paymentRepository.create({
         userId,
-        agreementId: dto.agreementId,
-        amount: Number(dto.amount),
+        agreementId: scrubbed.agreementId,
+        amount: Number(scrubbed.amount),
         transactionFee: 0,
-        netAmount: Number(dto.amount),
+        netAmount: Number(scrubbed.amount),
         currency: 'XLM',
         status: PaymentStatus.COMPLETED,
         referenceNumber: transactionHash,
         processedAt: new Date(),
+        // metadata explicitly lists every field — the dto is NEVER
+        // spread in, so the secret cannot ride along.
         metadata: {
           gateway: 'stellar',
           flow: 'rent',
           transactionHash,
-          tenantAddress: dto.tenantAddress,
+          tenantAddress: scrubbed.tenantAddress,
           reconciledAt: new Date().toISOString(),
         } as PaymentMetadata,
       });
@@ -625,30 +661,66 @@ export class PaymentService {
       await this.notificationsService.notify(
         userId,
         'Stellar rent payment processed',
-        `Your rent payment of ${dto.amount} XLM was submitted successfully.`,
+        `Your rent payment of ${scrubbed.amount} XLM was submitted successfully.`,
         'PAYMENT_RECEIVED',
       );
       return saved;
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? this.scrubSecret(error.message, secret)
+          : 'Payment failed';
+
       const failedPayment = this.paymentRepository.create({
         userId,
-        agreementId: dto.agreementId,
-        amount: Number(dto.amount),
+        agreementId: scrubbed.agreementId,
+        amount: Number(scrubbed.amount),
         transactionFee: 0,
-        netAmount: Number(dto.amount),
+        netAmount: Number(scrubbed.amount),
         currency: 'XLM',
         status: PaymentStatus.FAILED,
         processedAt: new Date(),
         metadata: {
           gateway: 'stellar',
           flow: 'rent',
-          tenantAddress: dto.tenantAddress,
-          error: error instanceof Error ? error.message : 'Payment failed',
+          tenantAddress: scrubbed.tenantAddress,
+          error: message,
         } as PaymentMetadata,
       });
       await this.paymentRepository.save(failedPayment);
+
+      // Scrub the message in place and rethrow the original error so
+      // its prototype is preserved. Wrapping in `new Error(message)`
+      // would downgrade a typed BadRequestException /
+      // UnauthorizedException from processRentPayment into a generic
+      // Error, which Nest's exception filter would turn into a 500.
+      if (error instanceof Error && error.message !== message) {
+        try {
+          error.message = message;
+        } catch {
+          // .message can be non-writable on some Error subclasses
+          // (rare). Fall through and rethrow the original error —
+          // worst case the seed-bearing original message survives
+          // for this one frame, but the stored failure metadata is
+          // still scrubbed.
+        }
+      }
       throw error;
     }
+  }
+
+  /**
+   * Defence-in-depth: strip the literal Stellar seed from a message
+   * before it reaches storage or logs. This is BEST-EFFORT — only the
+   * exact full seed is replaced. A downstream library that emits a
+   * transformed or partial seed (e.g. truncated, base64-encoded,
+   * lowercased) would not be caught here, so this is a backstop, not
+   * the primary defence; the primary defence is never spreading the
+   * dto into metadata and never logging the seed in the first place.
+   */
+  private scrubSecret(message: string, secret: string): string {
+    if (!secret || !message.includes(secret)) return message;
+    return message.split(secret).join('[REDACTED_STELLAR_SECRET]');
   }
 
   @Locked({

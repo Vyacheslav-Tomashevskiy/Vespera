@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { PaymentService } from './payment.service';
 import { Payment } from './entities/payment.entity';
@@ -88,6 +93,13 @@ const mockIdempotencyService = {
   ),
 };
 
+const configValues: Record<string, string | undefined> = {
+  ALLOW_SERVER_SIDE_TENANT_SIGNING: 'true',
+};
+const mockConfigService = {
+  get: jest.fn((key: string) => configValues[key]),
+};
+
 // DataSource mock — transaction() runs the callback with a mock entity manager.
 const mockEntityManager = {
   findOne: jest.fn(),
@@ -153,6 +165,10 @@ describe('PaymentService', () => {
         {
           provide: DataSource,
           useValue: mockDataSource,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -503,6 +519,10 @@ describe('PaymentService', () => {
   });
 
   describe('stellar gateway flows', () => {
+    beforeEach(() => {
+      configValues.ALLOW_SERVER_SIDE_TENANT_SIGNING = 'true';
+    });
+
     it('records stellar rent payment successfully', async () => {
       const tenantKeypair = StellarSdk.Keypair.random();
       mockPaymentProcessingService.processRentPayment.mockResolvedValue('tx_1');
@@ -528,6 +548,124 @@ describe('PaymentService', () => {
       expect(
         mockPaymentProcessingService.processRentPayment,
       ).toHaveBeenCalled();
+    });
+
+    it('rejects the request when ALLOW_SERVER_SIDE_TENANT_SIGNING is not set', async () => {
+      configValues.ALLOW_SERVER_SIDE_TENANT_SIGNING = undefined;
+      const tenantKeypair = StellarSdk.Keypair.random();
+
+      await expect(
+        service.processStellarRentPayment(
+          {
+            tenantAddress: tenantKeypair.publicKey(),
+            tenantSecret: tenantKeypair.secret(),
+            agreementId: 'agreement_1',
+            amount: '10',
+          },
+          'user_1',
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      expect(
+        mockPaymentProcessingService.processRentPayment,
+      ).not.toHaveBeenCalled();
+      expect(paymentRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('never serialises the tenant secret into stored payment metadata or logs', async () => {
+      const tenantKeypair = StellarSdk.Keypair.random();
+      const secret = tenantKeypair.secret();
+      mockPaymentProcessingService.processRentPayment.mockResolvedValue('tx_2');
+
+      const created: Partial<Payment>[] = [];
+      (paymentRepository.create as jest.Mock).mockImplementation(
+        (data: Partial<Payment>) => {
+          created.push(data);
+          return data as Payment;
+        },
+      );
+      (paymentRepository.save as jest.Mock).mockResolvedValue({
+        id: 'payment_xlm_no_leak',
+        status: PaymentStatus.COMPLETED,
+      });
+
+      // Capture every notification + log line so we can sweep them
+      // for the seed.
+      const logSpy = jest
+        // @ts-expect-error – reaching into the private logger is the
+        // whole point: this asserts the secret never lands there.
+        .spyOn(service.logger, 'log')
+        .mockImplementation(() => {});
+      const warnSpy = jest
+        // @ts-expect-error – same as above for warn.
+        .spyOn(service.logger, 'warn')
+        .mockImplementation(() => {});
+      const errorSpy = jest
+        // @ts-expect-error – same as above for error.
+        .spyOn(service.logger, 'error')
+        .mockImplementation(() => {});
+
+      await service.processStellarRentPayment(
+        {
+          tenantAddress: tenantKeypair.publicKey(),
+          tenantSecret: secret,
+          agreementId: 'agreement_no_leak',
+          amount: '7',
+        },
+        'user_1',
+      );
+
+      const blob = JSON.stringify({
+        created,
+        notifications: mockNotificationsService.notify.mock.calls,
+        logs: [
+          ...logSpy.mock.calls,
+          ...warnSpy.mock.calls,
+          ...errorSpy.mock.calls,
+        ],
+      });
+      expect(blob).not.toContain(secret);
+
+      logSpy.mockRestore();
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    });
+
+    it('redacts the tenant secret from failure metadata if a downstream error embeds it', async () => {
+      const tenantKeypair = StellarSdk.Keypair.random();
+      const secret = tenantKeypair.secret();
+      // Simulate the worst case: a Stellar SDK error message that
+      // accidentally interpolates the seed.
+      mockPaymentProcessingService.processRentPayment.mockRejectedValue(
+        new Error(`signature rejected for seed ${secret}`),
+      );
+
+      const created: Partial<Payment>[] = [];
+      (paymentRepository.create as jest.Mock).mockImplementation(
+        (data: Partial<Payment>) => {
+          created.push(data);
+          return data as Payment;
+        },
+      );
+      (paymentRepository.save as jest.Mock).mockResolvedValue({
+        id: 'failed_payment',
+      });
+
+      await expect(
+        service.processStellarRentPayment(
+          {
+            tenantAddress: tenantKeypair.publicKey(),
+            tenantSecret: secret,
+            agreementId: 'agreement_fail',
+            amount: '3',
+          },
+          'user_1',
+        ),
+      ).rejects.toThrow('[REDACTED_STELLAR_SECRET]');
+
+      const failedMetadata = created[0]?.metadata as { error?: string };
+      expect(failedMetadata?.error).toContain('[REDACTED_STELLAR_SECRET]');
+      expect(failedMetadata?.error).not.toContain(secret);
     });
 
     it('creates a stellar escrow deposit payment record', async () => {
