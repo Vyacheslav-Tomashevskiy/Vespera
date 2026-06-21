@@ -8,7 +8,6 @@ use soroban_sdk::{contracterror, Env, String, Vec};
 pub enum RentalError {
     // Already existed
     AlreadyInitialized = 1,
-    InvalidAdmin = 2,
     InvalidConfig = 3,
     AgreementAlreadyExists = 4,
     InvalidAmount = 5,
@@ -30,6 +29,7 @@ pub enum RentalError {
     InterestConfigNotFound = 25,
     InterestAlreadyInitialized = 26,
     NoPrincipal = 27,
+    RoyaltyNotFound = 28,
 
     // Payment errors
     PaymentInsufficientFunds = 201,
@@ -75,7 +75,6 @@ impl RentalError {
     pub fn message(&self, env: &Env) -> String {
         let msg = match self {
             RentalError::AlreadyInitialized => "Contract already initialized.",
-            RentalError::InvalidAdmin => "Invalid admin address provided.",
             RentalError::InvalidConfig => "Invalid configuration parameter.",
             RentalError::AgreementAlreadyExists => "Agreement already exists for the given ID.",
             RentalError::InvalidAmount => "Invalid amount provided for the operation.",
@@ -109,6 +108,7 @@ impl RentalError {
                 "Deposit interest is already initialized for this agreement."
             }
             RentalError::NoPrincipal => "No security deposit found to accrue interest on.",
+            RentalError::RoyaltyNotFound => "Royalty configuration for the token not found.",
 
             RentalError::PaymentInsufficientFunds => {
                 "Insufficient funds. Please ensure you have enough balance."

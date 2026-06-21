@@ -50,7 +50,7 @@ pub fn get_royalty(env: Env, token_id: String) -> Result<RoyaltyConfig, RentalEr
     env.storage()
         .persistent()
         .get(&DataKey::RoyaltyConfig(token_id))
-        .ok_or(RentalError::InternalError) // Or add specific RoyaltyNotFound
+        .ok_or(RentalError::RoyaltyNotFound)
 }
 
 /// Calculate the royalty amount for a given sale price.

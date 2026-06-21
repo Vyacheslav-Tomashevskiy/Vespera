@@ -28,8 +28,7 @@ impl EscrowContract {
     /// - Increments escrow counter
     ///
     /// INTERACTIONS:
-    /// - Token transfer from depositor (not yet implemented in this version)
-    ///   would happen after state update
+    /// - Token transfer from depositor to escrow contract happens in fund_escrow
     pub fn create(
         env: Env,
         depositor: Address,
@@ -92,7 +91,7 @@ impl EscrowContract {
     /// - Update escrow status to Funded
     ///
     /// INTERACTIONS:
-    /// - Token transfer would happen after state update (not yet in this version)
+    /// - Token transfer from depositor to escrow contract
     pub fn fund_escrow(
         env: Env,
         escrow_id: BytesN<32>,

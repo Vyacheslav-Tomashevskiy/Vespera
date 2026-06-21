@@ -191,3 +191,14 @@ fn test_invalid_royalty_percentage_fails() {
 
     client.set_royalty(&id, &2501, &Address::generate(&env)); // > 25%
 }
+
+#[test]
+#[should_panic(expected = "Error(Contract, #28)")]
+fn test_get_royalty_not_found() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin) = setup(&env);
+
+    let id = String::from_str(&env, "NON_EXISTENT");
+    client.get_royalty(&id);
+}
