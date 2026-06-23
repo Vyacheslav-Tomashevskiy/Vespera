@@ -238,17 +238,11 @@ pub fn execute_action(
     // Execute governance action when it actually modifies admin config
     match proposal.action_type {
         ActionType::AddAdmin => {
-            let new_admin = proposal
-                .target
-                .clone()
-                .ok_or(RentalError::InvalidInput)?;
+            let new_admin = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
             add_admin_internal(env, new_admin)?;
         }
         ActionType::RemoveAdmin => {
-            let admin_to_remove = proposal
-                .target
-                .clone()
-                .ok_or(RentalError::InvalidInput)?;
+            let admin_to_remove = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
             remove_admin_internal(env, admin_to_remove)?;
         }
         ActionType::UpdateRequiredSignatures => {
@@ -293,8 +287,8 @@ fn parse_required_signatures(data: &Bytes) -> Result<u32, RentalError> {
         return Err(RentalError::InvalidInput);
     }
     let mut buf = [0u8; 4];
-    for i in 0..4 {
-        buf[i] = data.get(i as u32).ok_or(RentalError::InvalidInput)?;
+    for (i, b) in buf.iter_mut().enumerate() {
+        *b = data.get(i as u32).ok_or(RentalError::InvalidInput)?;
     }
     Ok(u32::from_be_bytes(buf))
 }

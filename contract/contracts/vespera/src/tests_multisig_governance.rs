@@ -171,7 +171,12 @@ fn test_admin_governance_requires_multisig_approval() {
 
     let proposal_data = Bytes::new(&env);
     let remove_proposal = client
-        .try_propose_action(&admin1, &ActionType::RemoveAdmin, &Some(admin2.clone()), &proposal_data)
+        .try_propose_action(
+            &admin1,
+            &ActionType::RemoveAdmin,
+            &Some(admin2.clone()),
+            &proposal_data,
+        )
         .unwrap()
         .unwrap();
     let exec_remove = client.try_execute_action(&admin1, &remove_proposal);
