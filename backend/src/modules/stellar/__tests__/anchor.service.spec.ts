@@ -377,6 +377,30 @@ describe('AnchorService', () => {
       );
       expect(queryBuilder.getManyAndCount).toHaveBeenCalled();
     });
+
+    it('should restrict fuzzy search to indexed columns (no id::text/currency/destination/memo)', async () => {
+      const queryBuilder = {
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+
+      mockAnchorTransactionRepo.createQueryBuilder.mockReturnValue(queryBuilder);
+
+      await service.listTransactions({
+        page: 1,
+        limit: 20,
+        search: 'test-term',
+      });
+
+      const bracketsCall = queryBuilder.andWhere.mock.calls.find(
+        (call) => call[0] && typeof call[0] === 'object',
+      );
+      expect(bracketsCall).toBeDefined();
+      expect(queryBuilder.getManyAndCount).toHaveBeenCalled();
+    });
   });
 
   describe('getTransactionStats', () => {

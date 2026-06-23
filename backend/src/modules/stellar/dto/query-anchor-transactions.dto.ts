@@ -6,6 +6,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Length,
   Max,
   Min,
 } from 'class-validator';
@@ -33,10 +34,11 @@ export class QueryAnchorTransactionsDto {
 
   @ApiPropertyOptional({
     description:
-      'Free-text search across wallet, anchor transaction ID, Stellar transaction ID, currency, destination, and memo',
+      'Free-text search across wallet, anchor transaction ID, and Stellar transaction ID',
   })
   @IsOptional()
   @IsString()
+  @Length(1, 100)
   search?: string;
 
   @ApiPropertyOptional({

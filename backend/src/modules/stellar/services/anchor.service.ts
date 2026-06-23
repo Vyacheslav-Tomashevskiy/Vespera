@@ -287,8 +287,7 @@ export class AnchorService {
       const search = `%${query.search.trim()}%`;
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where('anchorTransaction.id::text ILIKE :search', { search })
-            .orWhere('anchorTransaction.anchorTransactionId ILIKE :search', {
+          qb.where('anchorTransaction.anchorTransactionId ILIKE :search', {
               search,
             })
             .orWhere('anchorTransaction.stellarTransactionId ILIKE :search', {
@@ -296,12 +295,7 @@ export class AnchorService {
             })
             .orWhere('anchorTransaction.walletAddress ILIKE :search', {
               search,
-            })
-            .orWhere('anchorTransaction.currency ILIKE :search', { search })
-            .orWhere('anchorTransaction.destination ILIKE :search', {
-              search,
-            })
-            .orWhere('anchorTransaction.memo ILIKE :search', { search });
+            });
         }),
       );
     }
