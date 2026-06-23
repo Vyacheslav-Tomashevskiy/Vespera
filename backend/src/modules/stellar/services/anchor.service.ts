@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Brackets,
@@ -19,6 +24,10 @@ import { DepositRequestDto } from '../dto/deposit-request.dto';
 import { WithdrawRequestDto } from '../dto/withdraw-request.dto';
 import { QueryAnchorTransactionsDto } from '../dto/query-anchor-transactions.dto';
 import { AnchorWebhookDto } from '../dto/anchor-webhook.dto';
+import {
+  isTransientStellarError,
+  extractStellarErrorMessage,
+} from './stellar-transaction-resilience';
 
 const TERMINAL_STATUSES: ReadonlySet<AnchorTransactionStatus> = new Set([
   AnchorTransactionStatus.COMPLETED,
@@ -82,6 +91,9 @@ export class AnchorService {
   private readonly anchorApiUrl: string;
   private readonly anchorApiKey: string;
   private readonly supportedCurrencies: string[];
+  private readonly anchorTimeoutMs: number;
+  private readonly anchorMaxAttempts: number;
+  private readonly anchorRetryBaseDelayMs: number;
 
   constructor(
     @InjectRepository(AnchorTransaction)
@@ -97,14 +109,73 @@ export class AnchorService {
         .get<string>('SUPPORTED_FIAT_CURRENCIES', 'USD,EUR,GBP,NGN')
         .split(',') || [];
 
+    // Resilience knobs are env-configurable so deployments can tune anchor
+    // timeouts/retries without a code change; defaults preserve the
+    // previous single-shot 30s behaviour at attempt count 1.
+    this.anchorTimeoutMs =
+      Number(this.configService.get<string>('ANCHOR_HTTP_TIMEOUT_MS')) || 30000;
+    this.anchorMaxAttempts = Math.max(
+      1,
+      Number(this.configService.get<string>('ANCHOR_HTTP_MAX_ATTEMPTS')) || 3,
+    );
+    this.anchorRetryBaseDelayMs =
+      Number(this.configService.get<string>('ANCHOR_HTTP_RETRY_DELAY_MS')) ||
+      500;
+
     this.axiosInstance = axios.create({
       baseURL: this.anchorApiUrl,
       headers: {
         Authorization: `Bearer ${this.anchorApiKey}`,
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
+      timeout: this.anchorTimeoutMs,
     });
+  }
+
+  /**
+   * Run an idempotent anchor HTTP call with bounded exponential backoff.
+   * Only transient failures (429 / 5xx / network / timeout, classified by
+   * the shared isTransientStellarError) are retried; a deterministic 4xx
+   * fails fast on the first attempt. Attempt count, base delay and request
+   * timeout are env-configurable (ANCHOR_HTTP_MAX_ATTEMPTS /
+   * ANCHOR_HTTP_RETRY_DELAY_MS / ANCHOR_HTTP_TIMEOUT_MS) and mirror the
+   * retry strategy stellar.service already applies to transaction
+   * submission so anchor resilience is consistent with the rest of the
+   * codebase rather than a new bespoke pattern.
+   */
+  private async requestWithRetry<T>(
+    label: string,
+    request: () => Promise<T>,
+  ): Promise<T> {
+    let delayMs = this.anchorRetryBaseDelayMs;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= this.anchorMaxAttempts; attempt++) {
+      try {
+        return await request();
+      } catch (error) {
+        lastError = error;
+
+        if (
+          isTransientStellarError(error) &&
+          attempt < this.anchorMaxAttempts
+        ) {
+          this.logger.warn(
+            `Transient anchor ${label} failure (attempt ${attempt}/${this.anchorMaxAttempts}): ` +
+              `${extractStellarErrorMessage(error)}; retrying in ${delayMs}ms`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          delayMs *= 2;
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    // The loop only leaves via return or throw; this satisfies the
+    // compiler's need for a terminal statement on the fall-through path.
+    throw lastError;
   }
 
   async initiateDeposit(dto: DepositRequestDto): Promise<AnchorTransaction> {
@@ -124,14 +195,16 @@ export class AnchorService {
     await this.anchorTransactionRepo.save(transaction);
 
     try {
-      const response = await this.axiosInstance.post<AnchorDepositResponse>(
-        '/sep24/transactions/deposit/interactive',
-        {
-          asset_code: dto.currency,
-          account: dto.walletAddress,
-          amount: dto.amount.toString(),
-          type: dto.type,
-        },
+      const response = await this.requestWithRetry('deposit', () =>
+        this.axiosInstance.post<AnchorDepositResponse>(
+          '/sep24/transactions/deposit/interactive',
+          {
+            asset_code: dto.currency,
+            account: dto.walletAddress,
+            amount: dto.amount.toString(),
+            type: dto.type,
+          },
+        ),
       );
 
       transaction.anchorTransactionId = response.data.id;
@@ -147,6 +220,18 @@ export class AnchorService {
 
       return transaction;
     } catch (error) {
+      // A transient infra failure (429/5xx/network) that survived the
+      // retries must not burn the deposit as FAILED — leave it PENDING so
+      // it can be reconciled or retried, and surface the outage as a 503.
+      if (isTransientStellarError(error)) {
+        this.logger.error(
+          `Deposit ${transaction.id} left PENDING after transient anchor failure: ` +
+            extractStellarErrorMessage(error),
+        );
+        throw new ServiceUnavailableException(
+          'Anchor temporarily unavailable; deposit kept pending for retry',
+        );
+      }
       transaction.status = AnchorTransactionStatus.FAILED;
       await this.anchorTransactionRepo.save(transaction);
       this.logger.error(`Deposit failed: ${error.message}`);
@@ -173,14 +258,16 @@ export class AnchorService {
     await this.anchorTransactionRepo.save(transaction);
 
     try {
-      const response = await this.axiosInstance.post<AnchorWithdrawResponse>(
-        '/sep24/transactions/withdraw/interactive',
-        {
-          asset_code: dto.currency,
-          account: dto.walletAddress,
-          amount: dto.amount.toString(),
-          dest: dto.destination,
-        },
+      const response = await this.requestWithRetry('withdrawal', () =>
+        this.axiosInstance.post<AnchorWithdrawResponse>(
+          '/sep24/transactions/withdraw/interactive',
+          {
+            asset_code: dto.currency,
+            account: dto.walletAddress,
+            amount: dto.amount.toString(),
+            dest: dto.destination,
+          },
+        ),
       );
 
       transaction.anchorTransactionId = response.data.id;
@@ -198,6 +285,17 @@ export class AnchorService {
 
       return transaction;
     } catch (error) {
+      // Same fail-open-as-PENDING policy as deposits: a transient anchor
+      // outage should not strand the withdrawal in a terminal FAILED state.
+      if (isTransientStellarError(error)) {
+        this.logger.error(
+          `Withdrawal ${transaction.id} left PENDING after transient anchor failure: ` +
+            extractStellarErrorMessage(error),
+        );
+        throw new ServiceUnavailableException(
+          'Anchor temporarily unavailable; withdrawal kept pending for retry',
+        );
+      }
       transaction.status = AnchorTransactionStatus.FAILED;
       await this.anchorTransactionRepo.save(transaction);
       this.logger.error(`Withdrawal failed: ${error.message}`);
@@ -219,8 +317,10 @@ export class AnchorService {
     }
 
     try {
-      const response = await this.axiosInstance.get<AnchorTransactionResponse>(
-        `/sep24/transaction?id=${transaction.anchorTransactionId}`,
+      const response = await this.requestWithRetry('status', () =>
+        this.axiosInstance.get<AnchorTransactionResponse>(
+          `/sep24/transaction?id=${transaction.anchorTransactionId}`,
+        ),
       );
       const anchorTx = response.data.transaction;
 
@@ -288,8 +388,8 @@ export class AnchorService {
       queryBuilder.andWhere(
         new Brackets((qb) => {
           qb.where('anchorTransaction.anchorTransactionId ILIKE :search', {
-              search,
-            })
+            search,
+          })
             .orWhere('anchorTransaction.stellarTransactionId ILIKE :search', {
               search,
             })

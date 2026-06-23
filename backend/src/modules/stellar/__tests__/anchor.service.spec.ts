@@ -1,8 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import axios from 'axios';
 import { AnchorService } from '../services/anchor.service';
+
+// The service builds its HTTP client via axios.create in the constructor;
+// mock the module so every test drives a controllable post/get stub.
+jest.mock('axios');
+
+const httpClient = {
+  post: jest.fn(),
+  get: jest.fn(),
+};
+(axios.create as jest.Mock).mockReturnValue(httpClient);
 import {
   AnchorTransaction,
   AnchorTransactionStatus,
@@ -55,6 +69,9 @@ describe('AnchorService', () => {
         ANCHOR_API_URL: 'https://test-anchor.com',
         ANCHOR_API_KEY: 'test-key',
         SUPPORTED_FIAT_CURRENCIES: 'USD,EUR,GBP,NGN',
+        ANCHOR_HTTP_MAX_ATTEMPTS: '3',
+        // 1ms keeps the backoff real but the suite fast.
+        ANCHOR_HTTP_RETRY_DELAY_MS: '1',
       };
       return config[key] || defaultValue;
     }),
@@ -84,6 +101,10 @@ describe('AnchorService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks leaves queued *Once implementations in place; reset the
+    // HTTP stubs fully so per-test transient sequences don't leak forward.
+    httpClient.post.mockReset();
+    httpClient.get.mockReset();
   });
 
   describe('initiateDeposit', () => {
@@ -387,7 +408,9 @@ describe('AnchorService', () => {
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
       };
 
-      mockAnchorTransactionRepo.createQueryBuilder.mockReturnValue(queryBuilder);
+      mockAnchorTransactionRepo.createQueryBuilder.mockReturnValue(
+        queryBuilder,
+      );
 
       await service.listTransactions({
         page: 1,
@@ -436,6 +459,121 @@ describe('AnchorService', () => {
         verified: 6,
         averageTimeToAnchorSeconds: 90,
       });
+    });
+  });
+
+  describe('anchor HTTP resilience (retry/backoff)', () => {
+    const depositDto = {
+      amount: 100,
+      currency: 'USD',
+      walletAddress: 'GTEST...',
+      type: PaymentMethodType.ACH,
+    };
+
+    // Make currency validation pass and hand back a mutable row so the
+    // service's status mutations are observable on the saved object.
+    const armDepositRepos = () => {
+      mockSupportedCurrencyRepo.findOne.mockResolvedValue({
+        code: 'USD',
+        isActive: true,
+      });
+      const row: any = {
+        id: 'dep-1',
+        status: AnchorTransactionStatus.PENDING,
+      };
+      mockAnchorTransactionRepo.create.mockReturnValue(row);
+      mockAnchorTransactionRepo.save.mockImplementation(async (v) => v);
+      return row;
+    };
+
+    const transient5xx = () =>
+      Object.assign(new Error('Service Unavailable'), {
+        response: { status: 503 },
+      });
+    const transient429 = () =>
+      Object.assign(new Error('Too Many Requests'), {
+        response: { status: 429 },
+      });
+    const timeoutErr = () => new Error('socket hang up: network timeout');
+    const deterministic4xx = () =>
+      Object.assign(new Error('Bad Request'), {
+        response: { status: 400 },
+      });
+
+    it('retries a transient 5xx on deposit and then succeeds', async () => {
+      const row = armDepositRepos();
+      httpClient.post
+        .mockRejectedValueOnce(transient5xx())
+        .mockResolvedValueOnce({ data: { id: 'anchor-dep-1', how: 'bank' } });
+
+      const result = await service.initiateDeposit(depositDto);
+
+      expect(httpClient.post).toHaveBeenCalledTimes(2);
+      expect(result.anchorTransactionId).toBe('anchor-dep-1');
+      expect(row.status).toBe(AnchorTransactionStatus.PENDING);
+    });
+
+    it('retries a transient 429 on deposit and then succeeds', async () => {
+      armDepositRepos();
+      httpClient.post
+        .mockRejectedValueOnce(transient429())
+        .mockResolvedValueOnce({ data: { id: 'anchor-dep-2', how: 'bank' } });
+
+      const result = await service.initiateDeposit(depositDto);
+
+      expect(httpClient.post).toHaveBeenCalledTimes(2);
+      expect(result.anchorTransactionId).toBe('anchor-dep-2');
+    });
+
+    it('keeps the deposit PENDING (not FAILED) and throws 503 when transient errors exhaust retries', async () => {
+      const row = armDepositRepos();
+      httpClient.post.mockRejectedValue(timeoutErr());
+
+      await expect(service.initiateDeposit(depositDto)).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+
+      // All attempts consumed (ANCHOR_HTTP_MAX_ATTEMPTS=3) and the row was
+      // never persisted as FAILED.
+      expect(httpClient.post).toHaveBeenCalledTimes(3);
+      expect(row.status).not.toBe(AnchorTransactionStatus.FAILED);
+    });
+
+    it('fails fast and marks FAILED on a deterministic 4xx without retrying', async () => {
+      const row = armDepositRepos();
+      httpClient.post.mockRejectedValue(deterministic4xx());
+
+      await expect(service.initiateDeposit(depositDto)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      expect(httpClient.post).toHaveBeenCalledTimes(1);
+      expect(row.status).toBe(AnchorTransactionStatus.FAILED);
+    });
+
+    it('retries a transient status fetch and then applies the anchor update', async () => {
+      const localRow = {
+        id: 'tx-9',
+        status: AnchorTransactionStatus.PENDING,
+        anchorTransactionId: 'anchor-tx-9',
+        metadata: {},
+        processedEventIds: [],
+      };
+      mockAnchorTransactionRepo.findOne.mockResolvedValue(localRow);
+      httpClient.get
+        .mockRejectedValueOnce(transient5xx())
+        .mockResolvedValueOnce({
+          data: { transaction: { id: 'anchor-tx-9', status: 'completed' } },
+        });
+
+      // applyAnchorUpdate runs through the queryRunner repo stub.
+      txRepo.findOne.mockResolvedValue({ ...localRow });
+      txRepo.save.mockImplementation((value) => value);
+
+      const result = await service.getTransactionStatus('tx-9');
+
+      expect(httpClient.get).toHaveBeenCalledTimes(2);
+      expect(result.status).toBe(AnchorTransactionStatus.COMPLETED);
     });
   });
 });
