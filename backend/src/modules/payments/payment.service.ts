@@ -38,7 +38,10 @@ import {
   ensureUserId,
   getIdempotencyKey,
 } from './payment.helpers';
-import { PaymentProcessingService } from '../stellar/services/payment-processing.service';
+import {
+  PaymentProcessingService,
+  TransactionPollTimeoutError,
+} from '../stellar/services/payment-processing.service';
 import { StellarService } from '../stellar/services/stellar.service';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { Locked, LockService } from '../../common/lock';
@@ -670,6 +673,33 @@ export class PaymentService {
         error instanceof Error
           ? this.scrubSecret(error.message, secret)
           : 'Payment failed';
+
+      // A polling timeout is NOT a definitive failure: the transaction was
+      // submitted and may still settle on-chain. Persist it as PENDING with
+      // the submitted hash so reconcileStellarPayments can later confirm it,
+      // instead of marking it FAILED and losing the hash.
+      if (error instanceof TransactionPollTimeoutError) {
+        const pendingPayment = this.paymentRepository.create({
+          userId,
+          agreementId: scrubbed.agreementId,
+          amount: Number(scrubbed.amount),
+          transactionFee: 0,
+          netAmount: Number(scrubbed.amount),
+          currency: 'XLM',
+          status: PaymentStatus.PENDING,
+          referenceNumber: error.hash,
+          metadata: {
+            gateway: 'stellar',
+            flow: 'rent',
+            transactionHash: error.hash,
+            tenantAddress: scrubbed.tenantAddress,
+            // Deliberately no reconciledAt — leaves it for the
+            // reconciliation sweep to resolve.
+          } as PaymentMetadata,
+        });
+        await this.paymentRepository.save(pendingPayment);
+        throw error;
+      }
 
       const failedPayment = this.paymentRepository.create({
         userId,
