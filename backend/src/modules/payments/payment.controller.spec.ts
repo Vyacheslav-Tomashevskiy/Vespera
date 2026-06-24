@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   PaymentController,
   PaymentMethodController,
@@ -30,6 +34,8 @@ import {
   WebhookSignatureService,
 } from '../webhooks/webhook-signature.service';
 import { WebhookSignatureGuard } from '../webhooks/guards/webhook-signature.guard';
+import { ROLES_KEY, RolesGuard } from '../auth/guards/roles.guard';
+import { UserRole } from '../users/entities/user.entity';
 
 const mockPaymentService = {
   recordPayment: jest.fn(),
@@ -208,6 +214,53 @@ describe('Payment Controllers', () => {
   it('processes due schedules', async () => {
     await paymentScheduleController.processDueSchedules();
     expect(mockPaymentService.processDueSchedules).toHaveBeenCalled();
+  });
+
+  describe('process-due admin restriction', () => {
+    function buildContext(user?: { role?: UserRole }) {
+      return {
+        getHandler: () => paymentScheduleController.processDueSchedules,
+        getClass: () => PaymentScheduleController,
+        switchToHttp: () => ({
+          getRequest: () => ({ user }),
+        }),
+      } as unknown as ExecutionContext;
+    }
+
+    it('restricts process-due to the ADMIN role', () => {
+      const reflector = new Reflector();
+
+      expect(
+        reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+          paymentScheduleController.processDueSchedules,
+          PaymentScheduleController,
+        ]),
+      ).toEqual([UserRole.ADMIN]);
+    });
+
+    it('allows an administrator to invoke process-due', () => {
+      const guard = new RolesGuard(new Reflector());
+
+      expect(guard.canActivate(buildContext({ role: UserRole.ADMIN }))).toBe(
+        true,
+      );
+    });
+
+    it('forbids a standard authenticated user from invoking process-due', () => {
+      const guard = new RolesGuard(new Reflector());
+
+      expect(() =>
+        guard.canActivate(buildContext({ role: UserRole.USER })),
+      ).toThrow(ForbiddenException);
+    });
+
+    it('forbids an unauthenticated caller from invoking process-due', () => {
+      const guard = new RolesGuard(new Reflector());
+
+      expect(() => guard.canActivate(buildContext(undefined))).toThrow(
+        ForbiddenException,
+      );
+    });
   });
 
   it('processes stellar rent payment with user id', async () => {

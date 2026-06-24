@@ -33,6 +33,9 @@ import { UpdatePaymentScheduleDto } from './dto/update-payment-schedule.dto';
 import { PaymentScheduleFiltersDto } from './dto/payment-schedule-filters.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 import { AuditLog } from '../audit/decorators/audit-log.decorator';
 import { AuditAction, AuditLevel } from '../audit/entities/audit-log.entity';
 import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
@@ -374,6 +377,15 @@ export class PaymentScheduleController {
   }
 
   @Post('process-due')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Process all due payment schedules across every user (admin only)',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller is not an administrator',
+  })
   @AuditLog({
     action: AuditAction.BULK_OPERATION,
     entityType: 'PaymentSchedule',
