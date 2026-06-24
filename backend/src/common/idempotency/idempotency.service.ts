@@ -1,19 +1,64 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { REDIS_CLIENT } from '../lock/redis-client.token';
-import { IdempotencyKeyMissingError } from './idempotency.errors';
+import {
+  IN_MEMORY_FALLBACK_ENV,
+  isInMemoryFallbackAllowed,
+} from '../lock/redis-fallback';
+import {
+  IdempotencyBackendUnavailableError,
+  IdempotencyKeyMissingError,
+} from './idempotency.errors';
 
+/**
+ * Idempotency store backed by Redis.
+ *
+ * When no Redis client is available the service follows the shared fallback
+ * policy (see {@link isInMemoryFallbackAllowed}):
+ * - fallback disabled (default outside tests) → fail closed: operations throw
+ *   {@link IdempotencyBackendUnavailableError} rather than running with
+ *   idempotency that holds only within a single process;
+ * - fallback enabled → degraded single-process in-memory store with NO
+ *   cross-instance single-execution guarantee.
+ */
 @Injectable()
 export class IdempotencyService {
+  private readonly logger = new Logger(IdempotencyService.name);
   private readonly localStore = new Map<
     string,
     { value: string; expiresAt: number }
   >();
+  private readonly inMemoryFallbackAllowed: boolean;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: any) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: any) {
+    this.inMemoryFallbackAllowed = isInMemoryFallbackAllowed();
+
+    if (!this.redis && process.env.NODE_ENV !== 'test') {
+      if (this.inMemoryFallbackAllowed) {
+        this.logger.warn(
+          'No Redis client configured — IdempotencyService is running in DEGRADED ' +
+            'in-memory mode. Single-execution holds only within one process; do not ' +
+            'rely on it for multi-instance/serverless financial flows. Configure REDIS_HOST/REDIS_PORT.',
+        );
+      } else {
+        this.logger.error(
+          `No Redis client configured and ${IN_MEMORY_FALLBACK_ENV} is not enabled — ` +
+            'IdempotencyService will FAIL CLOSED: idempotent operations will be rejected. ' +
+            `Configure Redis, or set ${IN_MEMORY_FALLBACK_ENV}=true to allow the ` +
+            'single-process in-memory fallback (unsafe for multi-instance deployments).',
+        );
+      }
+    }
+  }
 
   private validateKey(key: string): void {
     if (!key) {
       throw new IdempotencyKeyMissingError();
+    }
+  }
+
+  private assertInMemoryFallbackAllowed(): void {
+    if (!this.inMemoryFallbackAllowed) {
+      throw new IdempotencyBackendUnavailableError();
     }
   }
 
@@ -23,6 +68,7 @@ export class IdempotencyService {
     const serialized = JSON.stringify(result);
 
     if (!this.redis) {
+      this.assertInMemoryFallbackAllowed();
       this.localStore.set(namespacedKey, {
         value: serialized,
         expiresAt: Date.now() + ttlMs,
@@ -39,6 +85,7 @@ export class IdempotencyService {
     const namespacedKey = `idempotency:${key}`;
 
     if (!this.redis) {
+      this.assertInMemoryFallbackAllowed();
       const existing = this.localStore.get(namespacedKey);
       if (!existing) {
         return null;

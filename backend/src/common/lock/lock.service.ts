@@ -1,7 +1,14 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { REDIS_CLIENT } from './redis-client.token';
-import { LockNotAcquiredError } from './lock.errors';
+import {
+  LockBackendUnavailableError,
+  LockNotAcquiredError,
+} from './lock.errors';
+import {
+  IN_MEMORY_FALLBACK_ENV,
+  isInMemoryFallbackAllowed,
+} from './redis-fallback';
 
 export interface LockRetryOptions {
   retryCount: number;
@@ -23,6 +30,17 @@ else
 end
 `;
 
+/**
+ * Distributed lock backed by Redis.
+ *
+ * When no Redis client is available the service follows the shared fallback
+ * policy (see {@link isInMemoryFallbackAllowed}):
+ * - fallback disabled (default outside tests) → fail closed: lock operations
+ *   throw {@link LockBackendUnavailableError} so protected flows are rejected
+ *   rather than running with no cross-instance mutual exclusion;
+ * - fallback enabled → degraded single-process in-memory locking with NO
+ *   cross-instance guarantee.
+ */
 @Injectable()
 export class LockService {
   private readonly logger = new Logger(LockService.name);
@@ -30,8 +48,34 @@ export class LockService {
     string,
     { token: string; expiresAt: number }
   >();
+  private readonly inMemoryFallbackAllowed: boolean;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: any) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: any) {
+    this.inMemoryFallbackAllowed = isInMemoryFallbackAllowed();
+
+    if (!this.redis && process.env.NODE_ENV !== 'test') {
+      if (this.inMemoryFallbackAllowed) {
+        this.logger.warn(
+          'No Redis client configured — LockService is running in DEGRADED in-memory mode. ' +
+            'Locks provide NO cross-instance mutual exclusion; do not use this for ' +
+            'multi-instance/serverless financial flows. Configure REDIS_HOST/REDIS_PORT.',
+        );
+      } else {
+        this.logger.error(
+          `No Redis client configured and ${IN_MEMORY_FALLBACK_ENV} is not enabled — ` +
+            'LockService will FAIL CLOSED: lock-protected operations will be rejected. ' +
+            `Configure Redis, or set ${IN_MEMORY_FALLBACK_ENV}=true to allow the ` +
+            'single-process in-memory fallback (unsafe for multi-instance deployments).',
+        );
+      }
+    }
+  }
+
+  private assertInMemoryFallbackAllowed(): void {
+    if (!this.inMemoryFallbackAllowed) {
+      throw new LockBackendUnavailableError();
+    }
+  }
 
   async acquireLock(key: string, ttlMs: number): Promise<string | null> {
     if (ttlMs > MAX_TTL_MS) {
@@ -43,6 +87,7 @@ export class LockService {
     const token = randomUUID();
 
     if (!this.redis) {
+      this.assertInMemoryFallbackAllowed();
       const lockKey = `lock:${key}`;
       const now = Date.now();
       const existing = this.localLockMap.get(lockKey);
@@ -66,6 +111,7 @@ export class LockService {
 
   async releaseLock(key: string, token: string): Promise<boolean> {
     if (!this.redis) {
+      this.assertInMemoryFallbackAllowed();
       const lockKey = `lock:${key}`;
       const existing = this.localLockMap.get(lockKey);
       if (!existing) {
