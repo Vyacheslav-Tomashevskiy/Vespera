@@ -44,7 +44,11 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <WalletButton />
+        {/* Reserve a stable width so the label flipping between "Connect"
+            and the address pill does not shift the surrounding layout. */}
+        <div className="flex min-w-[9rem] justify-end">
+          <WalletButton />
+        </div>
       </div>
     </header>
   );

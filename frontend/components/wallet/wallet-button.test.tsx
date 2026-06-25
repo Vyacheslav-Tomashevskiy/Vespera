@@ -5,10 +5,15 @@ import userEvent from "@testing-library/user-event";
 vi.mock("@/lib/stellar", () => ({
   getFreighterAddress: vi.fn(),
   connectFreighter: vi.fn(),
+  disconnectFreighter: vi.fn(),
 }));
 
 import { WalletButton } from "./wallet-button";
-import { getFreighterAddress, connectFreighter } from "@/lib/stellar";
+import {
+  getFreighterAddress,
+  connectFreighter,
+  disconnectFreighter,
+} from "@/lib/stellar";
 
 const FAKE_ADDR =
   "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
@@ -67,5 +72,39 @@ describe("WalletButton", () => {
     expect(
       await screen.findByRole("button", { name: /connect/i }),
     ).toBeInTheDocument();
+  });
+
+  it("exposes the connected wallet as an accessible, interactive control", async () => {
+    vi.mocked(getFreighterAddress).mockResolvedValue(FAKE_ADDR);
+
+    render(<WalletButton />);
+
+    // The connected state is a real button (focusable/operable), not a
+    // bare <div>, and its accessible name carries the full address so
+    // assistive tech announces which wallet is connected.
+    const pill = await screen.findByRole("button", {
+      name: new RegExp(FAKE_ADDR),
+    });
+    expect(pill).toBeInTheDocument();
+    expect(pill).toHaveAttribute("title", FAKE_ADDR);
+  });
+
+  it("disconnects when the connected control is activated", async () => {
+    vi.mocked(getFreighterAddress).mockResolvedValue(FAKE_ADDR);
+    vi.mocked(disconnectFreighter).mockResolvedValue();
+
+    render(<WalletButton />);
+
+    const pill = await screen.findByRole("button", {
+      name: new RegExp(FAKE_ADDR),
+    });
+    await userEvent.click(pill);
+
+    expect(disconnectFreighter).toHaveBeenCalledOnce();
+    // Back to the disconnected Connect button.
+    expect(
+      await screen.findByRole("button", { name: /connect/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("GA5ZSE…KZVN")).not.toBeInTheDocument();
   });
 });

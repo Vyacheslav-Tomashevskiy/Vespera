@@ -32,6 +32,22 @@ export async function connectFreighter(): Promise<string> {
   return res.address;
 }
 
+/**
+ * Forget the locally-connected Freighter session.
+ *
+ * Freighter exposes no dapp-initiated revoke — an app can request access with
+ * `setAllowed` but cannot programmatically un-allow itself — so "disconnect"
+ * here means the app drops its own view of the connected address. Keeping it in
+ * this module means the wallet UI never has to know that distinction, and gives
+ * a single seam for a real revoke to slot into if the extension ever grows one.
+ *
+ * Persisting/clearing wallet sessions in storage is intentionally out of scope
+ * (see issue #10), so there is nothing else to tear down here.
+ */
+export async function disconnectFreighter(): Promise<void> {
+  // No persisted session to clear.
+}
+
 export async function signRentPayment(_input: {
   propertyId: string;
   amount: number;
