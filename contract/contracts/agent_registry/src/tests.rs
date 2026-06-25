@@ -268,7 +268,7 @@ fn test_register_and_complete_transaction() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    let result = client.try_register_transaction(&txn_id, &agent, &parties);
+    let result = client.try_register_transaction(&agent, &txn_id, &agent, &parties);
     assert!(result.is_ok());
 
     let result = client.try_complete_transaction(&txn_id, &agent);
@@ -299,7 +299,7 @@ fn test_rate_agent_success() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     let result = client.try_rate_agent(&tenant, &agent, &5, &txn_id);
@@ -332,7 +332,7 @@ fn test_multiple_ratings_average() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&tenant, &agent, &5, &txn_id);
@@ -366,7 +366,7 @@ fn test_rate_agent_fails_with_invalid_score_low() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&tenant, &agent, &0, &txn_id);
@@ -394,7 +394,7 @@ fn test_rate_agent_fails_with_invalid_score_high() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&tenant, &agent, &6, &txn_id);
@@ -421,7 +421,7 @@ fn test_rate_agent_fails_when_agent_not_verified() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&tenant, &agent, &5, &txn_id);
@@ -472,7 +472,7 @@ fn test_rate_agent_fails_when_transaction_not_completed() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
 
     client.rate_agent(&tenant, &agent, &5, &txn_id);
 }
@@ -500,7 +500,7 @@ fn test_rate_agent_fails_when_not_transaction_party() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&stranger, &agent, &5, &txn_id);
@@ -528,9 +528,198 @@ fn test_rate_agent_fails_when_already_rated() {
     let txn_id = String::from_str(&env, "TXN-001");
     let parties = vec![&env, tenant.clone(), landlord.clone()];
 
-    client.register_transaction(&txn_id, &agent, &parties);
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
     client.complete_transaction(&txn_id, &agent);
 
     client.rate_agent(&tenant, &agent, &5, &txn_id);
     client.rate_agent(&tenant, &agent, &4, &txn_id);
+}
+
+// ---------------------------------------------------------------------------
+// Security regression tests for issue #77: register_transaction /
+// complete_transaction were unauthenticated, letting reputation be fabricated.
+// ---------------------------------------------------------------------------
+
+#[test]
+#[should_panic]
+fn test_register_transaction_requires_caller_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), landlord.clone()];
+
+    // No mocked auths: a caller that does not authorize the call cannot register.
+    env.mock_auths(&[]);
+    client.register_transaction(&tenant, &txn_id, &agent, &parties);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #12)")]
+fn test_register_transaction_rejects_non_participant_caller() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let stranger = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), landlord.clone()];
+
+    // Stranger is neither the agent nor a listed party.
+    client.register_transaction(&stranger, &txn_id, &agent, &parties);
+}
+
+#[test]
+fn test_register_transaction_allows_party_caller() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), landlord.clone()];
+
+    // A genuine party (not the agent) may register the transaction.
+    let result = client.try_register_transaction(&tenant, &txn_id, &agent, &parties);
+    assert!(result.is_ok());
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #20)")]
+fn test_register_transaction_rejects_agent_in_parties() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    // Agent listed as its own party would enable self-rating; must be rejected.
+    let parties = vec![&env, tenant.clone(), agent.clone()];
+
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #20)")]
+fn test_register_transaction_rejects_duplicate_parties() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), tenant.clone()];
+
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #20)")]
+fn test_register_transaction_rejects_empty_parties() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env];
+
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
+}
+
+#[test]
+#[should_panic]
+fn test_complete_transaction_requires_agent_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), landlord.clone()];
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
+
+    // Without the agent's authorization, the transaction cannot be completed.
+    env.mock_auths(&[]);
+    client.complete_transaction(&txn_id, &agent);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #21)")]
+fn test_complete_transaction_rejects_double_completion() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let agent = Address::generate(&env);
+    let tenant = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+    let profile_hash = String::from_str(&env, "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco");
+    client.register_agent(&agent, &profile_hash);
+
+    let txn_id = String::from_str(&env, "TXN-001");
+    let parties = vec![&env, tenant.clone(), landlord.clone()];
+    client.register_transaction(&agent, &txn_id, &agent, &parties);
+
+    client.complete_transaction(&txn_id, &agent);
+    // Completing again would otherwise inflate completed_agreements a second time.
+    client.complete_transaction(&txn_id, &agent);
 }

@@ -22,4 +22,7 @@ pub enum AgentError {
     NotPaused = 16,
     NoPendingAdmin = 17,
     NotPendingAdmin = 18,
+    SelfRatingNotAllowed = 19,
+    InvalidParties = 20,
+    TransactionAlreadyCompleted = 21,
 }

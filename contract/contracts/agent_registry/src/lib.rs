@@ -113,6 +113,7 @@ impl AgentRegistryContract {
     /// * `TransactionNotFound` - If the transaction doesn't exist
     /// * `TransactionNotCompleted` - If the transaction is not marked as completed
     /// * `NotTransactionParty` - If the rater wasn't part of the transaction
+    /// * `SelfRatingNotAllowed` - If the rater is the agent being rated
     /// * `AlreadyRated` - If the rater has already rated this agent
     pub fn rate_agent(
         env: Env,
@@ -147,6 +148,8 @@ impl AgentRegistryContract {
     /// This is called when a rent agreement or property transaction is created.
     ///
     /// # Arguments
+    /// * `caller` - The participant registering the transaction; must be the
+    ///   agent or one of the parties and must authorize the call
     /// * `transaction_id` - Unique identifier for the transaction
     /// * `agent` - The agent involved in the transaction
     /// * `parties` - Vector of addresses involved (tenant, landlord, etc.)
@@ -154,13 +157,16 @@ impl AgentRegistryContract {
     /// # Errors
     /// * `NotInitialized` - If the contract hasn't been initialized
     /// * `AgentNotFound` - If the agent doesn't exist
+    /// * `InvalidParties` - If parties is empty, has duplicates, or includes the agent
+    /// * `NotTransactionParty` - If the caller is neither the agent nor a party
     pub fn register_transaction(
         env: Env,
+        caller: Address,
         transaction_id: String,
         agent: Address,
         parties: Vec<Address>,
     ) -> Result<(), AgentError> {
-        agent::register_transaction(&env, transaction_id, agent, parties)
+        agent::register_transaction(&env, caller, transaction_id, agent, parties)
     }
 
     /// Mark a transaction as completed.
@@ -174,6 +180,7 @@ impl AgentRegistryContract {
     /// * `NotInitialized` - If the contract hasn't been initialized
     /// * `TransactionNotFound` - If the transaction doesn't exist
     /// * `Unauthorized` - If the caller is not the agent for this transaction
+    /// * `TransactionAlreadyCompleted` - If the transaction was already completed
     pub fn complete_transaction(
         env: Env,
         transaction_id: String,

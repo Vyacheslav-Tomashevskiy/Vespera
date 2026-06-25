@@ -118,6 +118,11 @@ pub fn rate_agent(
 
     rater.require_auth();
 
+    // An agent can never rate itself, even if it somehow appears as a party.
+    if rater == agent {
+        return Err(AgentError::SelfRatingNotAllowed);
+    }
+
     if !(1..=5).contains(&score) {
         return Err(AgentError::InvalidRatingScore);
     }
@@ -197,6 +202,7 @@ pub fn get_agent_count(env: &Env) -> u32 {
 
 pub fn register_transaction(
     env: &Env,
+    caller: Address,
     transaction_id: String,
     agent: Address,
     parties: Vec<Address>,
@@ -207,9 +213,49 @@ pub fn register_transaction(
 
     check_paused(env)?;
 
+    // Authenticate the caller. Without this, anyone could fabricate transaction
+    // records naming an arbitrary agent and parties.
+    caller.require_auth();
+
     let agent_key = DataKey::Agent(agent.clone());
     if !env.storage().persistent().has(&agent_key) {
         return Err(AgentError::AgentNotFound);
+    }
+
+    // Validate the parties list: it must be non-empty, all entries distinct, and
+    // none of them may be the agent. Parties are the counterparties who can later
+    // rate the agent, so keeping the agent out of this list forecloses self-rating
+    // at the source.
+    let len = parties.len();
+    if len == 0 {
+        return Err(AgentError::InvalidParties);
+    }
+    for i in 0..len {
+        let party = parties.get(i).unwrap();
+        if party == agent {
+            return Err(AgentError::InvalidParties);
+        }
+        for j in (i + 1)..len {
+            if party == parties.get(j).unwrap() {
+                return Err(AgentError::InvalidParties);
+            }
+        }
+    }
+
+    // The caller must be a genuine participant of the transaction: either the
+    // agent itself or one of the listed parties. This stops a third party from
+    // manufacturing reputation-bearing records for others.
+    let mut caller_is_participant = caller == agent;
+    if !caller_is_participant {
+        for party in parties.iter() {
+            if party == caller {
+                caller_is_participant = true;
+                break;
+            }
+        }
+    }
+    if !caller_is_participant {
+        return Err(AgentError::NotTransactionParty);
     }
 
     let txn_key = DataKey::Transaction(transaction_id.clone());
@@ -251,6 +297,17 @@ pub fn complete_transaction(
 
     if transaction.agent != agent {
         return Err(AgentError::Unauthorized);
+    }
+
+    // Only the agent named on the transaction may mark it complete. Without this
+    // auth check anyone could complete on the agent's behalf and inflate the
+    // agent's completed_agreements counter.
+    agent.require_auth();
+
+    // Guard against double-completion, which would otherwise bump
+    // completed_agreements more than once for a single transaction.
+    if transaction.completed {
+        return Err(AgentError::TransactionAlreadyCompleted);
     }
 
     transaction.completed = true;
