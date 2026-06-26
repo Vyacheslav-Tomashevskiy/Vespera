@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 4,
+    "address": 5,
     "nonce": 0,
     "mux_id": 0
   },
@@ -76,7 +76,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "bytes": ""
+                  "bytes": "0000001100000001000000030000000f000000076665655f6270730000000003000001410000000f0000000d6665655f636f6c6c6563746f72000000000000120000000100000000000000000000000000000000000000000000000000000000000000050000000f0000000670617573656400000000000000000000"
                 },
                 {
                   "u64": "259200"
@@ -110,6 +110,7 @@
         }
       ]
     ],
+    [],
     []
   ],
   "ledger": {
@@ -223,7 +224,7 @@
                         "symbol": "data"
                       },
                       "val": {
-                        "bytes": ""
+                        "bytes": "0000001100000001000000030000000f000000076665655f6270730000000003000001410000000f0000000d6665655f636f6c6c6563746f72000000000000120000000100000000000000000000000000000000000000000000000000000000000000050000000f0000000670617573656400000000000000000000"
                       }
                     },
                     {
@@ -331,7 +332,7 @@
                                       "symbol": "fee_bps"
                                     },
                                     "val": {
-                                      "u32": 100
+                                      "u32": 321
                                     }
                                   },
                                   {
@@ -339,7 +340,7 @@
                                       "symbol": "fee_collector"
                                     },
                                     "val": {
-                                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                                     }
                                   },
                                   {

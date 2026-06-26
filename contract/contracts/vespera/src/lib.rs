@@ -8,6 +8,7 @@
 
 use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String, Vec};
 
+mod admin_actions;
 mod agreement;
 mod deposit_interest;
 mod errors;
@@ -46,6 +47,9 @@ mod tests_multisig;
 
 #[cfg(test)]
 mod tests_timelock;
+
+#[cfg(test)]
+mod tests_governance_dispatch;
 
 pub use agreement::{
     cancel_agreement, create_agreement, create_agreement_with_token, get_agreement,

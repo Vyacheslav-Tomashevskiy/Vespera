@@ -1,9 +1,11 @@
 use crate::{
     errors::RentalError,
-    types::{Config, TimelockActionType},
+    types::{Config, TimelockActionType, TokenExchangeRate},
     Contract, ContractClient,
 };
-use soroban_sdk::{testutils::Address as _, testutils::Ledger as _, Address, Bytes, Env, String};
+use soroban_sdk::{
+    testutils::Address as _, testutils::Ledger as _, xdr::ToXdr, Address, Bytes, Env, String,
+};
 
 // ─── Minimum delays (seconds) – must match timelock.rs constants ──────────────
 const MIN_DELAY_UPDATE_ADMIN: u64 = 7 * 24 * 60 * 60;
@@ -175,7 +177,13 @@ fn test_execute_after_eta_succeeds() {
     let (env, client, admin) = setup();
 
     let target = Address::generate(&env);
-    let data = Bytes::new(&env);
+    // The config update is carried as the XDR-encoded action payload.
+    let new_config = Config {
+        fee_bps: 321,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+    let data = new_config.clone().to_xdr(&env);
 
     let action_id = client.queue_timelock_action(
         &admin,
@@ -197,6 +205,9 @@ fn test_execute_after_eta_succeeds() {
     let action = client.get_timelock_action(&action_id);
     assert!(action.executed);
     assert!(!action.cancelled);
+
+    // ...and the queued config change was actually applied.
+    assert_eq!(client.get_state().unwrap().config.fee_bps, 321);
 }
 
 #[test]
@@ -204,7 +215,12 @@ fn test_execute_already_executed_fails() {
     let (env, client, admin) = setup();
 
     let target = Address::generate(&env);
-    let data = Bytes::new(&env);
+    let new_config = Config {
+        fee_bps: 150,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+    let data = new_config.clone().to_xdr(&env);
 
     let action_id = client.queue_timelock_action(
         &admin,
@@ -321,6 +337,9 @@ fn test_cancel_already_cancelled_fails() {
 fn test_cancel_executed_action_fails() {
     let (env, client, admin) = setup();
 
+    // UnpauseContract only succeeds when the contract is currently paused.
+    client.pause(&String::from_str(&env, "for test"));
+
     let target = Address::generate(&env);
     let data = Bytes::new(&env);
 
@@ -362,11 +381,18 @@ fn test_active_actions_tracking() {
     );
     assert_eq!(client.get_active_timelock_actions().len(), 1);
 
+    // id2 is executed below, so it carries a valid exchange-rate payload.
+    let rate = TokenExchangeRate {
+        from_token: Address::generate(&env),
+        to_token: Address::generate(&env),
+        rate: 1_000_000_000_000_000_000,
+        updated_at: 0,
+    };
     let id2 = client.queue_timelock_action(
         &admin,
         &TimelockActionType::UpdateRates,
         &target,
-        &data,
+        &rate.clone().to_xdr(&env),
         &MIN_DELAY_UPDATE_RATES,
     );
     assert_eq!(client.get_active_timelock_actions().len(), 2);
@@ -406,6 +432,9 @@ fn test_exact_minimum_delay_accepted() {
 #[test]
 fn test_execute_at_exact_eta() {
     let (env, client, admin) = setup();
+
+    // UnpauseContract only succeeds when the contract is currently paused.
+    client.pause(&String::from_str(&env, "for test"));
 
     let target = Address::generate(&env);
     let data = Bytes::new(&env);

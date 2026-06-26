@@ -189,6 +189,11 @@ pub fn execute_action(env: &Env, caller: Address, action_id: String) -> Result<(
         return Err(RentalError::TimelockEtaNotReached);
     }
 
+    // Apply the queued change now that the ETA has passed. A malformed payload
+    // or unhandled action returns Err and reverts the transaction, so the
+    // action is not marked executed without taking effect.
+    dispatch_action_effect(env, &action)?;
+
     action.executed = true;
     env.storage()
         .persistent()
@@ -199,6 +204,39 @@ pub fn execute_action(env: &Env, caller: Address, action_id: String) -> Result<(
     events::timelock_action_executed(env, action_id);
 
     Ok(())
+}
+
+/// Apply the concrete state change described by a queued timelock action.
+///
+/// Where a payload is required it is the XDR encoding of the typed argument,
+/// decoded with `FromXdr` (`InvalidInput` on failure). `UpdateAdmin` uses
+/// `action.target` as the new admin address.
+fn dispatch_action_effect(env: &Env, action: &TimelockAction) -> Result<(), RentalError> {
+    use crate::admin_actions;
+    use crate::types::{Config, TokenExchangeRate};
+    use soroban_sdk::xdr::FromXdr;
+
+    match action.action_type {
+        TimelockActionType::PauseContract => admin_actions::apply_pause(env),
+        TimelockActionType::UnpauseContract => admin_actions::apply_unpause(env),
+        TimelockActionType::UpdateConfig => {
+            let cfg = Config::from_xdr(env, &action.data).map_err(|_| RentalError::InvalidInput)?;
+            admin_actions::apply_update_config(env, cfg)
+        }
+        TimelockActionType::UpdateAdmin => {
+            admin_actions::apply_set_admin(env, action.target.clone())
+        }
+        TimelockActionType::UpdateRates => {
+            let rate = TokenExchangeRate::from_xdr(env, &action.data)
+                .map_err(|_| RentalError::InvalidInput)?;
+            crate::multi_token::set_exchange_rate(
+                env.clone(),
+                rate.from_token,
+                rate.to_token,
+                rate.rate,
+            )
+        }
+    }
 }
 
 /// Cancel a queued action before it has been executed.

@@ -264,24 +264,13 @@ pub fn execute_action(
         return Err(RentalError::InsufficientApprovals);
     }
 
-    // Execute governance action when it actually modifies admin config
-    match proposal.action_type {
-        ActionType::AddAdmin => {
-            let new_admin = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
-            add_admin_internal(env, new_admin)?;
-        }
-        ActionType::RemoveAdmin => {
-            let admin_to_remove = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
-            remove_admin_internal(env, admin_to_remove)?;
-        }
-        ActionType::UpdateRequiredSignatures => {
-            let new_required = parse_required_signatures(&proposal.data)?;
-            update_required_signatures_internal(env, new_required)?;
-        }
-        _ => {
-            // Other actions are managed elsewhere or are no-op in this module.
-        }
-    }
+    // Perform the actual state change for the approved action. Authorization
+    // is the multi-sig approval threshold verified above, so the dispatched
+    // helpers intentionally do not require a single-admin signature. If the
+    // action cannot be applied (malformed payload / unsupported action) this
+    // returns Err and the whole transaction reverts, so the proposal is NOT
+    // marked executed — governance never silently no-ops.
+    dispatch_action(env, &proposal)?;
 
     // Mark as executed
     proposal.executed = true;
@@ -320,6 +309,75 @@ fn parse_required_signatures(data: &Bytes) -> Result<u32, RentalError> {
         *b = data.get(i as u32).ok_or(RentalError::InvalidInput)?;
     }
     Ok(u32::from_be_bytes(buf))
+}
+
+/// Apply the concrete state change described by an approved proposal.
+///
+/// The `data` payload (where one is needed) is the XDR encoding of the typed
+/// argument for the action, decoded with `FromXdr`; a malformed payload yields
+/// `InvalidInput`. Address-only actions read `proposal.target`.
+fn dispatch_action(env: &Env, proposal: &AdminProposal) -> Result<(), RentalError> {
+    use crate::admin_actions;
+    use crate::types::{
+        Config as ContractConfig, RateLimitConfig, SupportedToken, TokenExchangeRate,
+    };
+    use soroban_sdk::xdr::FromXdr;
+
+    match proposal.action_type {
+        ActionType::Pause => admin_actions::apply_pause(env),
+        ActionType::Unpause => admin_actions::apply_unpause(env),
+        ActionType::UpdateConfig => {
+            let cfg = ContractConfig::from_xdr(env, &proposal.data)
+                .map_err(|_| RentalError::InvalidInput)?;
+            admin_actions::apply_update_config(env, cfg)
+        }
+        ActionType::UpdateRate => {
+            let rate = TokenExchangeRate::from_xdr(env, &proposal.data)
+                .map_err(|_| RentalError::InvalidInput)?;
+            crate::multi_token::set_exchange_rate(
+                env.clone(),
+                rate.from_token,
+                rate.to_token,
+                rate.rate,
+            )
+        }
+        ActionType::AddAdmin => {
+            let new_admin = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
+            add_admin_internal(env, new_admin)
+        }
+        ActionType::RemoveAdmin => {
+            let admin = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
+            remove_admin_internal(env, admin)
+        }
+        ActionType::UpdateRequiredSignatures => {
+            let new_required = parse_required_signatures(&proposal.data)?;
+            update_required_signatures_internal(env, new_required)
+        }
+        ActionType::SetRateLimit => {
+            let cfg = RateLimitConfig::from_xdr(env, &proposal.data)
+                .map_err(|_| RentalError::InvalidInput)?;
+            crate::rate_limit::set_rate_limit_config(env, cfg)
+        }
+        ActionType::AddToken => {
+            let token = SupportedToken::from_xdr(env, &proposal.data)
+                .map_err(|_| RentalError::InvalidInput)?;
+            crate::multi_token::add_supported_token(
+                env.clone(),
+                token.token_address,
+                token.symbol,
+                token.decimals,
+                token.min_amount,
+                token.max_amount,
+            )
+        }
+        ActionType::RemoveToken => {
+            let token = proposal.target.clone().ok_or(RentalError::InvalidInput)?;
+            crate::multi_token::remove_supported_token(env.clone(), token)
+        }
+        // No on-chain handler is defined for a free-form emergency action;
+        // fail loudly instead of marking the proposal executed with no effect.
+        ActionType::EmergencyAction => Err(RentalError::InvalidTransition),
+    }
 }
 
 /// Reject/cancel a proposal (only proposer can do this before execution)

@@ -3,7 +3,7 @@ use crate::{
     types::{ActionType, Config},
     Contract, ContractClient,
 };
-use soroban_sdk::{testutils::Address as _, Address, Bytes, Env, Vec};
+use soroban_sdk::{testutils::Address as _, xdr::ToXdr, Address, Bytes, Env, Vec};
 
 fn create_contract() -> (Env, ContractClient<'static>, Address) {
     let env = Env::default();
@@ -476,8 +476,14 @@ fn test_proposal_workflow_end_to_end() {
     // Initialize with 2 out of 3 signatures required
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    // Step 1: Admin1 proposes an action
-    let data = Bytes::new(&env);
+    // Step 1: Admin1 proposes a config update. The new config is carried as the
+    // XDR-encoded action payload so execution can apply it.
+    let new_config = Config {
+        fee_bps: 250,
+        fee_collector: Address::generate(&env),
+        paused: false,
+    };
+    let data = new_config.clone().to_xdr(&env);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data)
         .unwrap()
@@ -499,7 +505,9 @@ fn test_proposal_workflow_end_to_end() {
     let result = client.try_execute_action(&admin1, &proposal_id);
     assert!(result.is_ok());
 
-    // Verify execution
+    // Verify execution marked the proposal executed AND applied the config.
     let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
     assert!(proposal.executed);
+    let state = client.get_state().unwrap();
+    assert_eq!(state.config.fee_bps, 250);
 }
