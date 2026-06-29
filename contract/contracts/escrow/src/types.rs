@@ -118,6 +118,12 @@ pub enum DataKey {
     ApprovalCount(BytesN<32>, Address),
     /// Per-signer-per-target flag: DataKey::SignerApproved(escrow_id, signer, release_to) => bool
     SignerApproved(BytesN<32>, Address, Address),
+    /// Amount-bound approval count for partial/deduction releases:
+    /// DataKey::AmountApprovalCount(escrow_id, release_to, amount) => u32
+    AmountApprovalCount(BytesN<32>, Address, i128),
+    /// Amount-bound per-signer flag:
+    /// DataKey::AmountSignerApproved(escrow_id, signer, release_to, amount) => bool
+    AmountSignerApproved(BytesN<32>, Address, Address, i128),
     /// Contract-level timeout configuration
     TimeoutConfig,
     /// Store release history for an escrow: DataKey::ReleaseHistory(escrow_id)

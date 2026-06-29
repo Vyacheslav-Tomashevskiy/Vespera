@@ -98,6 +98,90 @@ impl EscrowStorage {
         env.storage().persistent().set(&key, &true);
     }
 
+    /// Get the amount-bound approval count for a (release_to, amount) pair (O(1) lookup).
+    /// Used by partial-release and deduction paths where the approval must bind the
+    /// exact recipient and value being moved, not just the recipient.
+    pub fn get_amount_approval_count(
+        env: &Env,
+        escrow_id: &BytesN<32>,
+        release_to: &Address,
+        amount: i128,
+    ) -> u32 {
+        let key = DataKey::AmountApprovalCount(escrow_id.clone(), release_to.clone(), amount);
+        env.storage().persistent().get::<_, u32>(&key).unwrap_or(0)
+    }
+
+    /// Increment the amount-bound approval count for a (release_to, amount) pair.
+    pub fn increment_amount_approval_count(
+        env: &Env,
+        escrow_id: &BytesN<32>,
+        release_to: &Address,
+        amount: i128,
+    ) {
+        let count = Self::get_amount_approval_count(env, escrow_id, release_to, amount);
+        let key = DataKey::AmountApprovalCount(escrow_id.clone(), release_to.clone(), amount);
+        env.storage().persistent().set(&key, &(count + 1));
+    }
+
+    /// Check if a signer has already approved a specific (release_to, amount) pair.
+    pub fn has_signer_approved_amount(
+        env: &Env,
+        escrow_id: &BytesN<32>,
+        signer: &Address,
+        release_to: &Address,
+        amount: i128,
+    ) -> bool {
+        let key = DataKey::AmountSignerApproved(
+            escrow_id.clone(),
+            signer.clone(),
+            release_to.clone(),
+            amount,
+        );
+        env.storage()
+            .persistent()
+            .get::<_, bool>(&key)
+            .unwrap_or(false)
+    }
+
+    /// Mark a signer as having approved a specific (release_to, amount) pair.
+    pub fn set_signer_approved_amount(
+        env: &Env,
+        escrow_id: &BytesN<32>,
+        signer: &Address,
+        release_to: &Address,
+        amount: i128,
+    ) {
+        let key = DataKey::AmountSignerApproved(
+            escrow_id.clone(),
+            signer.clone(),
+            release_to.clone(),
+            amount,
+        );
+        env.storage().persistent().set(&key, &true);
+    }
+
+    /// Clear the amount-bound approval count and per-signer flags for a (release_to, amount)
+    /// pair once it has been executed, so the same approvals cannot be replayed.
+    pub fn clear_amount_approval(
+        env: &Env,
+        escrow_id: &BytesN<32>,
+        release_to: &Address,
+        amount: i128,
+        signers: &[Address],
+    ) {
+        let count_key = DataKey::AmountApprovalCount(escrow_id.clone(), release_to.clone(), amount);
+        env.storage().persistent().remove(&count_key);
+        for signer in signers {
+            let flag_key = DataKey::AmountSignerApproved(
+                escrow_id.clone(),
+                signer.clone(),
+                release_to.clone(),
+                amount,
+            );
+            env.storage().persistent().remove(&flag_key);
+        }
+    }
+
     /// Clear approval counts and signer flags for given targets.
     pub fn clear_approval_counts(
         env: &Env,

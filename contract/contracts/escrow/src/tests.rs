@@ -464,14 +464,20 @@ fn test_partial_release_success() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals for partial release to beneficiary (2-of-3)
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
-    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary);
+    // Get approvals for partial release of exactly partial_amount to beneficiary (2-of-3)
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &partial_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &partial_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Partial payment for services");
 
-    // Execute partial release
-    client.release_escrow_partial(&escrow_id, &partial_amount, &beneficiary, &reason);
+    // Execute partial release (caller must be a party)
+    client.release_escrow_partial(
+        &escrow_id,
+        &depositor,
+        &partial_amount,
+        &beneficiary,
+        &reason,
+    );
 
     // Verify escrow amount updated
     let escrow = client.get_escrow(&escrow_id);
@@ -509,13 +515,18 @@ fn test_partial_release_insufficient_approvals() {
     client.fund_escrow(&escrow_id, &depositor);
 
     // Only one approval
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &partial_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Partial payment");
 
     // Should fail with NotAuthorized
-    let result =
-        client.try_release_escrow_partial(&escrow_id, &partial_amount, &beneficiary, &reason);
+    let result = client.try_release_escrow_partial(
+        &escrow_id,
+        &depositor,
+        &partial_amount,
+        &beneficiary,
+        &reason,
+    );
     assert!(result.is_err());
 }
 
@@ -534,15 +545,20 @@ fn test_partial_release_exceeds_balance() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
-    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary);
+    // Get approvals bound to the (excessive) amount; the release will still reject it.
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &excessive_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &excessive_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Excessive payment");
 
     // Should fail with InsufficientFunds
-    let result =
-        client.try_release_escrow_partial(&escrow_id, &excessive_amount, &beneficiary, &reason);
+    let result = client.try_release_escrow_partial(
+        &escrow_id,
+        &depositor,
+        &excessive_amount,
+        &beneficiary,
+        &reason,
+    );
     assert!(result.is_err());
 }
 
@@ -561,20 +577,22 @@ fn test_multiple_partial_releases() {
     client.fund_escrow(&escrow_id, &depositor);
 
     // First partial release
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
-    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary);
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &300i128);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &300i128);
     client.release_escrow_partial(
         &escrow_id,
+        &depositor,
         &300i128,
         &beneficiary,
         &soroban_sdk::String::from_str(&env, "First payment"),
     );
 
     // Second partial release
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
-    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary);
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &200i128);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &200i128);
     client.release_escrow_partial(
         &escrow_id,
+        &depositor,
         &200i128,
         &beneficiary,
         &soroban_sdk::String::from_str(&env, "Second payment"),
@@ -609,14 +627,15 @@ fn test_damage_deduction_success() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals for release to depositor (2-of-3)
-    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
-    client.approve_partial_release(&escrow_id, &arbiter, &depositor);
+    // Approve paying exactly damage_amount to the beneficiary (2-of-3); the remainder
+    // refunds the depositor automatically.
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &damage_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Damaged furniture");
 
-    // Execute damage deduction
-    client.release_with_deduction(&escrow_id, &damage_amount, &reason);
+    // Execute damage deduction (caller must be a party)
+    client.release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
 
     // Verify escrow is fully released
     let escrow = client.get_escrow(&escrow_id);
@@ -648,14 +667,14 @@ fn test_damage_deduction_full_amount() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals
-    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
-    client.approve_partial_release(&escrow_id, &arbiter, &depositor);
+    // Get approvals bound to paying damage_amount to the beneficiary
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &damage_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Total property damage");
 
     // Execute full damage deduction
-    client.release_with_deduction(&escrow_id, &damage_amount, &reason);
+    client.release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
 
     // Verify balances
     let token_client = TokenClient::new(&env, &token_address);
@@ -683,14 +702,14 @@ fn test_damage_deduction_no_damage() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals
-    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
-    client.approve_partial_release(&escrow_id, &arbiter, &depositor);
+    // Approve paying zero damage to the beneficiary (full refund to depositor)
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &damage_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "No damage found");
 
     // Execute with no damage
-    client.release_with_deduction(&escrow_id, &damage_amount, &reason);
+    client.release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
 
     // Verify full refund to depositor
     let token_client = TokenClient::new(&env, &token_address);
@@ -714,14 +733,14 @@ fn test_damage_deduction_exceeds_balance() {
     token_admin.mint(&depositor, &amount);
     client.fund_escrow(&escrow_id, &depositor);
 
-    // Get approvals
-    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
-    client.approve_partial_release(&escrow_id, &arbiter, &depositor);
+    // Approvals bound to the (excessive) damage amount; the release will still reject it.
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &damage_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Excessive damage");
 
     // Should fail with InsufficientFunds
-    let result = client.try_release_with_deduction(&escrow_id, &damage_amount, &reason);
+    let result = client.try_release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
     assert!(result.is_err());
 }
 
@@ -741,12 +760,12 @@ fn test_damage_deduction_insufficient_approvals() {
     client.fund_escrow(&escrow_id, &depositor);
 
     // Only one approval
-    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
 
     let reason = soroban_sdk::String::from_str(&env, "Damage");
 
     // Should fail with NotAuthorized
-    let result = client.try_release_with_deduction(&escrow_id, &damage_amount, &reason);
+    let result = client.try_release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
     assert!(result.is_err());
 }
 
@@ -768,7 +787,7 @@ fn test_partial_release_invalid_recipient() {
     // Get approvals (though it will fail)
     // This should fail at approve_partial_release due to invalid target
     let approve_result1 =
-        client.try_approve_partial_release(&escrow_id, &depositor, &invalid_recipient);
+        client.try_approve_partial_release(&escrow_id, &depositor, &invalid_recipient, &300i128);
     assert!(approve_result1.is_err()); // Should fail with InvalidApprovalTarget
 }
 
@@ -787,15 +806,211 @@ fn test_partial_release_empty_reason() {
     client.fund_escrow(&escrow_id, &depositor);
 
     // Get approvals
-    client.approve_partial_release(&escrow_id, &depositor, &beneficiary);
-    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary);
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &300i128);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &300i128);
 
     let empty_reason = soroban_sdk::String::from_str(&env, "");
 
     // Should fail with EmptyReleaseReason
-    let result =
-        client.try_release_escrow_partial(&escrow_id, &300i128, &beneficiary, &empty_reason);
+    let result = client.try_release_escrow_partial(
+        &escrow_id,
+        &depositor,
+        &300i128,
+        &beneficiary,
+        &empty_reason,
+    );
     assert!(result.is_err());
+}
+
+// ─── Issue #69: Release auth & approval-binding adversarial tests ───────────
+
+/// A non-party (random address) must not be able to trigger a partial release even
+/// when a valid 2-of-3 quorum has already approved the recipient and amount.
+#[test]
+fn test_partial_release_rejects_non_party_caller() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, token_address) = setup_test(&env);
+    let amount = 1000i128;
+    let partial_amount = 300i128;
+
+    let escrow_id = client.create(&depositor, &beneficiary, &arbiter, &amount, &token_address);
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &partial_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &partial_amount);
+
+    let stranger = Address::generate(&env);
+    let reason = soroban_sdk::String::from_str(&env, "Stranger tries to release");
+    let result = client.try_release_escrow_partial(
+        &escrow_id,
+        &stranger,
+        &partial_amount,
+        &beneficiary,
+        &reason,
+    );
+    assert!(result.is_err());
+
+    // No funds moved.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+/// A non-party must not be able to trigger release_with_deduction either.
+#[test]
+fn test_deduction_rejects_non_party_caller() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, token_address) = setup_test(&env);
+    let amount = 1000i128;
+    let damage_amount = 200i128;
+
+    let escrow_id = client.create(&depositor, &beneficiary, &arbiter, &amount, &token_address);
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    client.approve_partial_release(&escrow_id, &beneficiary, &beneficiary, &damage_amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &damage_amount);
+
+    let stranger = Address::generate(&env);
+    let reason = soroban_sdk::String::from_str(&env, "Stranger tries deduction");
+    let result = client.try_release_with_deduction(&escrow_id, &stranger, &damage_amount, &reason);
+    assert!(result.is_err());
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&depositor), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+/// Core redirect bug from issue #69: a 2-of-3 quorum approving a refund TO THE
+/// DEPOSITOR must not be silently convertible into a damage payout to the beneficiary.
+#[test]
+fn test_deduction_cannot_redirect_depositor_approvals_to_beneficiary() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, token_address) = setup_test(&env);
+    let amount = 1000i128;
+    let damage_amount = 200i128;
+
+    let escrow_id = client.create(&depositor, &beneficiary, &arbiter, &amount, &token_address);
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Two parties approve a full refund TO THE DEPOSITOR; no damage payout intended.
+    client.approve_partial_release(&escrow_id, &depositor, &depositor, &amount);
+    client.approve_partial_release(&escrow_id, &arbiter, &depositor, &amount);
+
+    // A damage deduction paying the beneficiary must be rejected: no quorum approved
+    // paying the beneficiary that amount.
+    let reason = soroban_sdk::String::from_str(&env, "Redirect attempt");
+    let result = client.try_release_with_deduction(&escrow_id, &depositor, &damage_amount, &reason);
+    assert!(result.is_err());
+
+    // Beneficiary received nothing; funds remain in escrow.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+/// An approval bound to one amount cannot authorize releasing a different amount.
+#[test]
+fn test_partial_release_amount_binding_enforced() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, token_address) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(&depositor, &beneficiary, &arbiter, &amount, &token_address);
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Quorum approves moving exactly 300 to the beneficiary.
+    client.approve_partial_release(&escrow_id, &depositor, &beneficiary, &300i128);
+    client.approve_partial_release(&escrow_id, &arbiter, &beneficiary, &300i128);
+
+    // Releasing a larger amount is unauthorized despite the existing quorum.
+    let reason = soroban_sdk::String::from_str(&env, "Over-release attempt");
+    let bad =
+        client.try_release_escrow_partial(&escrow_id, &depositor, &500i128, &beneficiary, &reason);
+    assert!(bad.is_err());
+
+    // Releasing the exact approved amount succeeds.
+    client.release_escrow_partial(&escrow_id, &depositor, &300i128, &beneficiary, &reason);
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 300i128);
+}
+
+/// Releasing from one escrow must not draw down funds held for a sibling escrow:
+/// each escrow's releasable amount is bounded by its own recorded balance.
+#[test]
+fn test_cross_escrow_isolation() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, token_address) = setup_test(&env);
+    let beneficiary2 = Address::generate(&env);
+    let amount_a = 1000i128;
+    let amount_b = 500i128;
+
+    let escrow_a = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &amount_a,
+        &token_address,
+    );
+    let escrow_b = client.create(
+        &depositor,
+        &beneficiary2,
+        &arbiter,
+        &amount_b,
+        &token_address,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &(amount_a + amount_b));
+    client.fund_escrow(&escrow_a, &depositor);
+    client.fund_escrow(&escrow_b, &depositor);
+
+    // The contract now pools 1500 tokens across both escrows.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&client.address), amount_a + amount_b);
+
+    // Try to over-release from escrow_b beyond its own balance (would have to steal
+    // from escrow_a's pooled funds). It must be rejected.
+    let over = amount_b + 1;
+    client.approve_partial_release(&escrow_b, &depositor, &beneficiary2, &over);
+    client.approve_partial_release(&escrow_b, &arbiter, &beneficiary2, &over);
+    let reason = soroban_sdk::String::from_str(&env, "Cross-escrow drain attempt");
+    let result =
+        client.try_release_escrow_partial(&escrow_b, &depositor, &over, &beneficiary2, &reason);
+    assert!(result.is_err());
+
+    // Escrow_a remains fully intact and independently releasable.
+    client.approve_partial_release(&escrow_a, &depositor, &beneficiary, &amount_a);
+    client.approve_partial_release(&escrow_a, &arbiter, &beneficiary, &amount_a);
+    client.release_escrow_partial(
+        &escrow_a,
+        &depositor,
+        &amount_a,
+        &beneficiary,
+        &soroban_sdk::String::from_str(&env, "Full release of escrow A"),
+    );
+    assert_eq!(token_client.balance(&beneficiary), amount_a);
+    // Escrow_b's funds are untouched and still held by the contract.
+    assert_eq!(token_client.balance(&client.address), amount_b);
+    assert_eq!(client.get_escrow(&escrow_b).amount, amount_b);
 }
 
 // ─── Issue #650: Access Control Tests ──────────────────────────────────────
