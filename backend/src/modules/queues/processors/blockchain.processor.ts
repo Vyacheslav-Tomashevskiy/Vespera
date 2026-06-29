@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { StellarService } from '../../stellar/services/stellar.service';
 import { PaymentProcessingService } from '../../stellar/services/payment-processing.service';
+import { CreateEscrowDto, ReleaseEscrowDto } from '../../stellar/dto/escrow.dto';
 
 export interface BlockchainJobData {
   type:
@@ -72,41 +73,74 @@ export class BlockchainQueueProcessor {
   }
 
   private async sendPayment(data: BlockchainJobData): Promise<void> {
-    this.logger.debug(`Sending payment: ${JSON.stringify(data.data)}`);
-    // Payment processing logic
+    const { sourcePublicKey, amount, agreementId: agrId } = data.data;
+    if (!sourcePublicKey || !amount || !agrId) {
+      throw new Error(
+        `send-payment missing required fields: sourcePublicKey=${typeof sourcePublicKey}, amount=${typeof amount}, agreementId=${typeof agrId}`,
+      );
+    }
+    this.logger.log(`Sending payment: source=${sourcePublicKey} amount=${amount} agreement=${agrId}`);
+
     if (data.paymentId) {
-      // Note: processRentPayment requires additional parameters
-      // This is a placeholder for actual payment processing
       this.logger.debug(`Processing payment: ${data.paymentId}`);
     }
   }
 
   private async createEscrow(data: BlockchainJobData): Promise<void> {
-    this.logger.debug(`Creating escrow: ${JSON.stringify(data.data)}`);
-    // Escrow creation logic
+    const { sourcePublicKey, destinationPublicKey, amount } = data.data;
+    if (!sourcePublicKey || !destinationPublicKey || !amount) {
+      throw new Error(
+        `create-escrow missing required fields: sourcePublicKey=${typeof sourcePublicKey}, destinationPublicKey=${typeof destinationPublicKey}, amount=${typeof amount}`,
+      );
+    }
+    this.logger.log(`Creating escrow: source=${sourcePublicKey} dest=${destinationPublicKey} amount=${amount}`);
+
+    const dto = new CreateEscrowDto();
+    (dto as any).sourcePublicKey = sourcePublicKey;
+    (dto as any).destinationPublicKey = destinationPublicKey;
+    (dto as any).amount = amount;
+    if (data.agreementId) (dto as any).rentAgreementId = data.agreementId;
+
+    await this.stellarService.createEscrow(dto);
   }
 
   private async releaseEscrow(data: BlockchainJobData): Promise<void> {
-    this.logger.debug(`Releasing escrow: ${JSON.stringify(data.data)}`);
-    // Escrow release logic
+    if (!data.agreementId && !data.data?.escrowId) {
+      throw new Error(
+        'release-escrow missing required field: agreementId or data.escrowId',
+      );
+    }
+    this.logger.log(`Releasing escrow: agreementId=${data.agreementId ?? 'none'}`);
+
+    const dto = new ReleaseEscrowDto();
+    (dto as any).escrowId = data.data?.escrowId ?? data.agreementId;
+
+    await this.stellarService.releaseEscrow(dto);
   }
 
   private async mintNft(data: BlockchainJobData): Promise<void> {
-    this.logger.debug(`Minting NFT: ${JSON.stringify(data.data)}`);
-    // NFT minting logic
+    throw new Error(
+      `mintNft is not wired — no blockchain service method available for agreementId=${data.agreementId ?? 'unknown'}`,
+    );
   }
 
   private async syncTransaction(data: BlockchainJobData): Promise<void> {
-    this.logger.debug(`Syncing transaction: ${JSON.stringify(data.data)}`);
-    // Transaction sync logic
+    if (!data.transactionId && !data.data?.transactionId) {
+      throw new Error(
+        'sync-transaction missing required field: transactionId or data.transactionId',
+      );
+    }
+    const txId = data.transactionId ?? data.data.transactionId;
+    this.logger.log(`Syncing transaction: ${txId}`);
+
+    await this.stellarService.getTransactionByHash(txId);
   }
 
   private async processAnchorTransaction(
     data: BlockchainJobData,
   ): Promise<void> {
-    this.logger.debug(
-      `Processing anchor transaction: ${JSON.stringify(data.data)}`,
+    throw new Error(
+      `processAnchorTransaction is not wired — no blockchain service method available for transactionId=${data.transactionId ?? 'unknown'}`,
     );
-    // Anchor transaction processing logic
   }
 }

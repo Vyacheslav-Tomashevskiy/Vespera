@@ -1,7 +1,11 @@
 {
   "private": true,
   "scripts": {
-    "prepare": "husky install"
+    "lint": "pnpm --recursive --stream lint",
+    "test": "pnpm --recursive --stream test",
+    "build": "pnpm --recursive --stream build",
+    "prepare": "husky install",
+    "typecheck": "cd backend && npx tsc --noEmit ; cd \"$OLDPWD\"/frontend && npx tsc --noEmit"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

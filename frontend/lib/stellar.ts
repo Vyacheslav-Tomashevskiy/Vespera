@@ -5,12 +5,31 @@ import {
   getAddress,
   signTransaction,
 } from "@stellar/freighter-api";
-import { Networks, TransactionBuilder, Account, BASE_FEE } from "@stellar/stellar-sdk";
+import {
+  Networks,
+  TransactionBuilder,
+  Account,
+  BASE_FEE,
+  Contract,
+  Address,
+  xdr,
+  nativeToScVal,
+  rpc,
+} from "@stellar/stellar-sdk";
 
 const NETWORK =
   (process.env.NEXT_PUBLIC_STELLAR_NETWORK as "TESTNET" | "PUBLIC") ?? "TESTNET";
 const PASSPHRASE =
   NETWORK === "PUBLIC" ? Networks.PUBLIC : Networks.TESTNET;
+
+/** Returns true when both env vars required for real rent-payment signing are present. */
+function rentPaymentEnvConfigured(): boolean {
+  return !!(process.env.NEXT_PUBLIC_HORIZON_URL && process.env.NEXT_PUBLIC_RENTAL_CONTRACT_ID);
+}
+
+export function isRentPaymentConfigured(): boolean {
+  return rentPaymentEnvConfigured();
+}
 
 export async function getFreighterAddress(): Promise<string | null> {
   const conn = await isConnected();
@@ -32,23 +51,61 @@ export async function connectFreighter(): Promise<string> {
   return res.address;
 }
 
-export async function signRentPayment(_input: {
+/**
+ * Builds and signs a real Soroban rent-payment transaction.
+ *
+ * Requires NEXT_PUBLIC_HORIZON_URL and NEXT_PUBLIC_RENTAL_CONTRACT_ID to be
+ * set in the environment. If either is missing the function throws immediately
+ * so the caller never sees a fake success for a no-op transaction.
+ *
+ * @throws when env vars are missing, Freighter is unavailable, or the
+ *         Horizon/Soroban network request fails.
+ */
+export async function signRentPayment(input: {
   propertyId: string;
   amount: number;
 }): Promise<string> {
-  const address = await connectFreighter();
+  const horizonUrl = process.env.NEXT_PUBLIC_HORIZON_URL ?? "";
+  const contractId = process.env.NEXT_PUBLIC_RENTAL_CONTRACT_ID ?? "";
 
-  const placeholderAccount = new Account(address, "0");
-  const tx = new TransactionBuilder(placeholderAccount, {
+  if (!(horizonUrl && contractId)) {
+    throw new Error(
+      [
+        "Rent payment signing is not configured.",
+        "Set NEXT_PUBLIC_HORIZON_URL and NEXT_PUBLIC_RENTAL_CONTRACT_ID",
+        "in your .env.local file.",
+      ].join(" "),
+    );
+  }
+
+  const userAddress = await connectFreighter();
+
+  // Load the real account from the network so the transaction has a valid
+  // sequence number and can actually be submitted.
+  const server = new rpc.Server(horizonUrl);
+  const networkAccount = await server.getAccount(userAddress);
+
+  // Build the Soroban contract invocation for pay_rent.
+  const contract = new Contract(contractId);
+  const operation = contract.call(
+    "pay_rent",
+    new Address(userAddress).toScVal(),
+    xdr.ScVal.scvString(input.propertyId),
+    nativeToScVal(BigInt(Math.round(input.amount)), { type: "i128" }),
+  );
+
+  const tx = new TransactionBuilder(networkAccount, {
     fee: BASE_FEE,
     networkPassphrase: PASSPHRASE,
   })
+    .addOperation(operation)
     .setTimeout(60)
     .build();
 
   const signed = await signTransaction(tx.toXDR(), {
     networkPassphrase: PASSPHRASE,
-    address,
+    address: userAddress,
   });
+
   return signed?.signedTxXdr ?? "";
 }

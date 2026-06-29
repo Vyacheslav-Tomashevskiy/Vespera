@@ -1,4 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Account } from "@stellar/stellar-sdk";
+
+// Mock Soroban RPC Server so we don't make real network calls
+const mockGetAccount = vi.fn();
+vi.mock("@stellar/stellar-sdk", async (importOriginal) => {
+  const original: any = await importOriginal();
+  return {
+    ...original,
+    rpc: {
+      ...original.rpc,
+      Server: vi.fn().mockImplementation(() => ({
+        getAccount: mockGetAccount,
+      })),
+    },
+  };
+});
 
 vi.mock("@stellar/freighter-api", () => ({
   isConnected: vi.fn(),
@@ -19,10 +35,13 @@ import {
   connectFreighter,
   getFreighterAddress,
   signRentPayment,
+  isRentPaymentConfigured,
 } from "./stellar";
 
 const FAKE_ADDR =
   "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+const FAKE_HORIZON = "https://horizon-testnet.stellar.org";
+const FAKE_CONTRACT = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -79,10 +98,55 @@ describe("connectFreighter", () => {
   });
 });
 
+describe("isRentPaymentConfigured", () => {
+  it("returns false when env vars are not set", () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", "");
+    expect(isRentPaymentConfigured()).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
+  it("returns true when both env vars are set", () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", FAKE_HORIZON);
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", FAKE_CONTRACT);
+    expect(isRentPaymentConfigured()).toBe(true);
+    vi.unstubAllEnvs();
+  });
+});
+
 describe("signRentPayment", () => {
-  it("connects, builds a placeholder tx, and returns the signed XDR", async () => {
+  it("throws when env vars are not configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", "");
+
+    await expect(
+      signRentPayment({ propertyId: "prop-1", amount: 100 }),
+    ).rejects.toThrow("not configured");
+  });
+
+  it("throws when Freighter is not connected", async () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", FAKE_HORIZON);
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", FAKE_CONTRACT);
+    vi.mocked(isAllowed).mockResolvedValue({ isAllowed: false });
+    vi.mocked(setAllowed).mockResolvedValue({ isAllowed: false });
+
+    await expect(
+      signRentPayment({ propertyId: "prop-1", amount: 100 }),
+    ).rejects.toThrow("freighter not allowed");
+  });
+
+  it("connects, loads account, builds contract call, signs and returns XDR", async () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", FAKE_HORIZON);
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", FAKE_CONTRACT);
+
     vi.mocked(isAllowed).mockResolvedValue({ isAllowed: true });
     vi.mocked(getAddress).mockResolvedValue({ address: FAKE_ADDR });
+
+    // Use a real Account instance that TransactionBuilder expects
+    mockGetAccount.mockResolvedValue(
+      new Account(FAKE_ADDR, "12345"),
+    );
+
     vi.mocked(signTransaction).mockResolvedValue({
       signedTxXdr: "AAAA...signed",
       signerAddress: FAKE_ADDR,
@@ -105,12 +169,15 @@ describe("signRentPayment", () => {
     expect(opts?.networkPassphrase).toMatch(/Test SDF Network/);
   });
 
-  it("returns an empty string when Freighter signs but yields no XDR", async () => {
+  it("returns empty string when Freighter signs but yields no XDR", async () => {
+    vi.stubEnv("NEXT_PUBLIC_HORIZON_URL", FAKE_HORIZON);
+    vi.stubEnv("NEXT_PUBLIC_RENTAL_CONTRACT_ID", FAKE_CONTRACT);
+
     vi.mocked(isAllowed).mockResolvedValue({ isAllowed: true });
     vi.mocked(getAddress).mockResolvedValue({ address: FAKE_ADDR });
-    // Empty signedTxXdr collapses to "" via the `?? ""` fallback in
-    // signRentPayment. The full shape keeps the freighter return type
-    // happy under `tsc --noEmit`.
+    mockGetAccount.mockResolvedValue(
+      new Account(FAKE_ADDR, "12345"),
+    );
     vi.mocked(signTransaction).mockResolvedValue({
       signedTxXdr: "",
       signerAddress: FAKE_ADDR,

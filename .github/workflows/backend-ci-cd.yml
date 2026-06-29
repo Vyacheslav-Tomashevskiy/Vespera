@@ -503,3 +503,24 @@ jobs:
       - name: Notify deployment
         if: success()
         run: echo "Production deployment successful!"
+
+  # ============================================================================
+  # AGGREGATE STATUS: single required check for branch protection
+  # ============================================================================
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [test, e2e-tests, migration-rollback-verify, build]
+    if: always()
+    steps:
+      - name: Check aggregate status
+        shell: bash
+        run: >
+          for job in test e2e-tests migration-rollback-verify build; do
+            result="${{ needs[format(''{0}'', job)].result }}"
+            if [ "$result" = "failure" ]; then
+              echo "$job failed"
+              exit 1
+            fi
+          done
+          echo "All jobs passed"
