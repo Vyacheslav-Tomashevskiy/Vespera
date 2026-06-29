@@ -358,7 +358,7 @@ fn test_resolve_dispute_favor_landlord() {
     client.vote_on_dispute(&arbiter2, &agreement_id, &true);
     client.vote_on_dispute(&arbiter3, &agreement_id, &false);
 
-    let outcome = client.resolve_dispute(&agreement_id);
+    let outcome = client.resolve_dispute(&admin, &agreement_id);
     assert_eq!(outcome, DisputeOutcome::FavorLandlord);
 
     let dispute = client.get_dispute(&agreement_id).unwrap();
@@ -401,7 +401,7 @@ fn test_resolve_dispute_favor_tenant() {
     client.vote_on_dispute(&arbiter2, &agreement_id, &false);
     client.vote_on_dispute(&arbiter3, &agreement_id, &true);
 
-    let outcome = client.resolve_dispute(&agreement_id);
+    let outcome = client.resolve_dispute(&admin, &agreement_id);
     assert_eq!(outcome, DisputeOutcome::FavorTenant);
 
     let dispute = client.get_dispute(&agreement_id).unwrap();
@@ -434,7 +434,7 @@ fn test_resolve_dispute_fails_with_insufficient_votes() {
     client.raise_dispute(&tenant, &agreement_id, &details_hash);
     client.vote_on_dispute(&arbiter1, &agreement_id, &true);
 
-    client.resolve_dispute(&agreement_id);
+    client.resolve_dispute(&admin, &agreement_id);
 }
 */
 
@@ -467,8 +467,8 @@ fn test_resolve_dispute_fails_when_already_resolved() {
     client.vote_on_dispute(&arbiter2, &agreement_id, &true);
     client.vote_on_dispute(&arbiter3, &agreement_id, &false);
 
-    client.resolve_dispute(&agreement_id);
-    client.resolve_dispute(&agreement_id);
+    client.resolve_dispute(&admin, &agreement_id);
+    client.resolve_dispute(&admin, &agreement_id);
 }
 */
 
@@ -503,7 +503,7 @@ fn test_vote_fails_after_dispute_resolved() {
     client.vote_on_dispute(&arbiter2, &agreement_id, &true);
     client.vote_on_dispute(&arbiter3, &agreement_id, &false);
 
-    client.resolve_dispute(&agreement_id);
+    client.resolve_dispute(&admin, &agreement_id);
 
     client.vote_on_dispute(&arbiter4, &agreement_id, &false);
 }
@@ -543,10 +543,10 @@ fn test_multiple_disputes() {
     client.vote_on_dispute(&arbiter2, &agreement_id2, &false);
     client.vote_on_dispute(&arbiter3, &agreement_id2, &true);
 
-    let outcome1 = client.resolve_dispute(&agreement_id1);
+    let outcome1 = client.resolve_dispute(&admin, &agreement_id1);
     assert_eq!(outcome1, DisputeOutcome::FavorLandlord);
 
-    let outcome2 = client.resolve_dispute(&agreement_id2);
+    let outcome2 = client.resolve_dispute(&admin, &agreement_id2);
     assert_eq!(outcome2, DisputeOutcome::FavorTenant);
 }
 */
@@ -702,7 +702,7 @@ fn test_appeal_voting_and_resolution_approved_refunds_fee() {
         .try_vote_on_appeal(&arbiter_3, &appeal_id, &DisputeOutcome::FavorLandlord)
         .is_ok());
 
-    assert!(client.try_resolve_appeal(&appeal_id).is_ok());
+    assert!(client.try_resolve_appeal(&arbiter_1, &appeal_id).is_ok());
 
     let appeal = client.get_appeal(&appeal_id).unwrap();
     assert_eq!(appeal.status, AppealStatus::Approved);
@@ -995,7 +995,7 @@ fn test_weighted_vote_accumulator_does_not_panic_at_extreme_weights() {
 
     // Resolution must produce a sane outcome (an exact tie at 8 votes
     // per side defers to the first vote — FavorLandlord).
-    let outcome = client.resolve_dispute_weighted(&dispute_id);
+    let outcome = client.resolve_dispute_weighted(&admin, &dispute_id);
     assert_eq!(outcome, DisputeOutcome::FavorLandlord);
 }
 
@@ -1072,7 +1072,7 @@ fn test_resolve_dispute_weighted_favor_landlord() {
     client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorTenant);
 
     // FavorLandlord: 800  vs  FavorTenant: 100
-    let outcome = client.resolve_dispute_weighted(&dispute_id);
+    let outcome = client.resolve_dispute_weighted(&admin, &dispute_id);
     assert_eq!(outcome, DisputeOutcome::FavorLandlord);
 
     let dispute = client.get_dispute(&dispute_id).unwrap();
@@ -1106,7 +1106,7 @@ fn test_resolve_dispute_weighted_favor_tenant() {
     client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorTenant);
     client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorLandlord);
 
-    let outcome = client.resolve_dispute_weighted(&dispute_id);
+    let outcome = client.resolve_dispute_weighted(&admin, &dispute_id);
     assert_eq!(outcome, DisputeOutcome::FavorTenant);
 }
 
@@ -1138,7 +1138,7 @@ fn test_resolve_dispute_weighted_tie_breaking() {
     client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorTenant);
 
     // 400 vs 400 → tie broken by first vote → FavorLandlord
-    let outcome = client.resolve_dispute_weighted(&dispute_id);
+    let outcome = client.resolve_dispute_weighted(&admin, &dispute_id);
     assert_eq!(outcome, DisputeOutcome::FavorLandlord);
 }
 
@@ -1158,7 +1158,7 @@ fn test_resolve_dispute_weighted_insufficient_votes() {
     client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorLandlord);
 
     // only 1 voter, need 3
-    let result = client.try_resolve_dispute_weighted(&dispute_id);
+    let result = client.try_resolve_dispute_weighted(&admin, &dispute_id);
     assert_eq!(result, Err(Ok(DisputeError::InsufficientVotes)));
 }
 
@@ -1221,4 +1221,183 @@ fn test_dispute_timeout_not_reached() {
     env.ledger().with_mut(|l| l.timestamp = 10_000 + 5 * 86_400);
     let result = client.try_resolve_dispute_on_timeout(&agreement_id);
     assert_eq!(result, Err(Ok(DisputeError::TimeoutNotReached)));
+}
+
+// ── Resolver authorization (issue #79) ──────────────────────────────────────
+
+/// Inject a dispute that already meets the vote threshold and is ready to be
+/// resolved, so authorization can be exercised in isolation.
+fn inject_votable_dispute(
+    env: &Env,
+    client: &DisputeResolutionContractClient,
+    dispute_id: &String,
+    voters_in: &soroban_sdk::Vec<Address>,
+) {
+    env.as_contract(&client.address, || {
+        let dispute = Dispute {
+            agreement_id: dispute_id.clone(),
+            details_hash: String::from_str(env, "QmAuthTest"),
+            raised_at: env.ledger().timestamp(),
+            resolved: false,
+            resolved_at: None,
+            votes_favor_landlord: 2,
+            votes_favor_tenant: 1,
+            voters: voters_in.clone(),
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::Dispute(dispute_id.clone()), &dispute);
+        env.storage().persistent().set(&DataKey::Initialized, &true);
+    });
+}
+
+#[test]
+fn test_resolve_dispute_rejects_unauthorized_caller() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let arbiter1 = Address::generate(&env);
+    let arbiter2 = Address::generate(&env);
+    let arbiter3 = Address::generate(&env);
+    let outsider = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "auth-dispute-1");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &3, &Address::generate(&env));
+
+    let mut voters = soroban_sdk::Vec::new(&env);
+    voters.push_back(arbiter1.clone());
+    voters.push_back(arbiter2.clone());
+    voters.push_back(arbiter3);
+    inject_votable_dispute(&env, &client, &dispute_id, &voters);
+
+    // A non-admin, non-arbiter cannot force resolution even though the vote
+    // threshold is met.
+    let result = client.try_resolve_dispute(&outsider, &dispute_id);
+    assert_eq!(result, Err(Ok(DisputeError::Unauthorized)));
+    assert!(!client.get_dispute(&dispute_id).unwrap().resolved);
+
+    // An arbiter who voted on the dispute is an authorized resolver.
+    let outcome = client.resolve_dispute(&arbiter1, &dispute_id);
+    assert_eq!(outcome, DisputeOutcome::FavorLandlord);
+    assert!(client.get_dispute(&dispute_id).unwrap().resolved);
+}
+
+#[test]
+fn test_resolve_dispute_allows_admin() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let arbiter1 = Address::generate(&env);
+    let arbiter2 = Address::generate(&env);
+    let arbiter3 = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "auth-dispute-2");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &3, &Address::generate(&env));
+
+    let mut voters = soroban_sdk::Vec::new(&env);
+    voters.push_back(arbiter1);
+    voters.push_back(arbiter2);
+    voters.push_back(arbiter3);
+    inject_votable_dispute(&env, &client, &dispute_id, &voters);
+
+    let outcome = client.resolve_dispute(&admin, &dispute_id);
+    assert_eq!(outcome, DisputeOutcome::FavorLandlord);
+    assert!(client.get_dispute(&dispute_id).unwrap().resolved);
+}
+
+#[test]
+fn test_resolve_dispute_weighted_rejects_unauthorized_caller() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let arbiter1 = Address::generate(&env);
+    let arbiter2 = Address::generate(&env);
+    let arbiter3 = Address::generate(&env);
+    let outsider = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "auth-weighted-1");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &3, &Address::generate(&env));
+    client.add_arbiter(&admin, &arbiter1);
+    client.add_arbiter(&admin, &arbiter2);
+    client.add_arbiter(&admin, &arbiter3);
+    client.set_arbiter_stats(&admin, &arbiter1, &100, &100);
+    client.set_arbiter_stats(&admin, &arbiter2, &100, &100);
+    client.set_arbiter_stats(&admin, &arbiter3, &50, &50);
+
+    inject_open_dispute(&env, &client, &dispute_id);
+    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorLandlord);
+    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorLandlord);
+    client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorTenant);
+
+    // Outsider blocked; a weighted voter is allowed.
+    let result = client.try_resolve_dispute_weighted(&outsider, &dispute_id);
+    assert_eq!(result, Err(Ok(DisputeError::Unauthorized)));
+    assert!(!client.get_dispute(&dispute_id).unwrap().resolved);
+
+    let outcome = client.resolve_dispute_weighted(&arbiter1, &dispute_id);
+    assert_eq!(outcome, DisputeOutcome::FavorLandlord);
+    assert!(client.get_dispute(&dispute_id).unwrap().resolved);
+}
+
+#[test]
+fn test_resolve_appeal_rejects_unauthorized_caller() {
+    let env = Env::default();
+    let (client, appellant, dispute_id, arbiter_1, arbiter_2, arbiter_3) =
+        setup_appeal_ready_dispute(&env);
+    let outsider = Address::generate(&env);
+
+    let appeal_id = client
+        .try_create_appeal(
+            &appellant,
+            &dispute_id,
+            &String::from_str(&env, "wrong original outcome"),
+        )
+        .unwrap()
+        .unwrap();
+
+    client.vote_on_appeal(&arbiter_1, &appeal_id, &DisputeOutcome::FavorTenant);
+    client.vote_on_appeal(&arbiter_2, &appeal_id, &DisputeOutcome::FavorTenant);
+    client.vote_on_appeal(&arbiter_3, &appeal_id, &DisputeOutcome::FavorLandlord);
+
+    // Neither admin nor an assigned appeal arbiter: rejected.
+    let result = client.try_resolve_appeal(&outsider, &appeal_id);
+    assert_eq!(result, Err(Ok(DisputeError::Unauthorized)));
+    assert_eq!(
+        client.get_appeal(&appeal_id).unwrap().status,
+        AppealStatus::InProgress
+    );
+
+    // An assigned appeal arbiter can resolve.
+    assert!(client.try_resolve_appeal(&arbiter_1, &appeal_id).is_ok());
+    assert_eq!(
+        client.get_appeal(&appeal_id).unwrap().status,
+        AppealStatus::Approved
+    );
+}
+
+#[test]
+fn test_vote_on_appeal_rejects_after_voting_window() {
+    let env = Env::default();
+    let (client, appellant, dispute_id, arbiter_1, _arbiter_2, _arbiter_3) =
+        setup_appeal_ready_dispute(&env);
+
+    let appeal_id = client
+        .try_create_appeal(
+            &appellant,
+            &dispute_id,
+            &String::from_str(&env, "late appeal vote"),
+        )
+        .unwrap()
+        .unwrap();
+
+    // Push the ledger past the 7-day appeal voting window (appeal created at
+    // ts 1_000_000 in the shared setup).
+    env.ledger()
+        .with_mut(|l| l.timestamp = 1_000_000 + 7 * 24 * 60 * 60 + 1);
+
+    let result = client.try_vote_on_appeal(&arbiter_1, &appeal_id, &DisputeOutcome::FavorTenant);
+    assert_eq!(result, Err(Ok(DisputeError::AppealWindowExpired)));
 }

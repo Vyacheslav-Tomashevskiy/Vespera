@@ -150,8 +150,12 @@ impl DisputeResolutionContract {
     /// * `DisputeNotFound` - If the dispute doesn't exist
     /// * `DisputeAlreadyResolved` - If the dispute has already been resolved
     /// * `InsufficientVotes` - If minimum required votes haven't been cast
-    pub fn resolve_dispute(env: Env, agreement_id: String) -> Result<DisputeOutcome, DisputeError> {
-        dispute::resolve_dispute(&env, agreement_id)
+    pub fn resolve_dispute(
+        env: Env,
+        resolver: Address,
+        agreement_id: String,
+    ) -> Result<DisputeOutcome, DisputeError> {
+        dispute::resolve_dispute(&env, resolver, agreement_id)
     }
 
     pub fn resolve_dispute_on_timeout(
@@ -233,8 +237,12 @@ impl DisputeResolutionContract {
         dispute::vote_on_appeal(&env, arbiter, appeal_id, vote)
     }
 
-    pub fn resolve_appeal(env: Env, appeal_id: String) -> Result<(), DisputeError> {
-        dispute::resolve_appeal(&env, appeal_id)
+    pub fn resolve_appeal(
+        env: Env,
+        resolver: Address,
+        appeal_id: String,
+    ) -> Result<(), DisputeError> {
+        dispute::resolve_appeal(&env, resolver, appeal_id)
     }
 
     pub fn cancel_appeal(
@@ -280,9 +288,10 @@ impl DisputeResolutionContract {
     /// Resolve a dispute by weighted vote totals (ties broken by first vote).
     pub fn resolve_dispute_weighted(
         env: Env,
+        resolver: Address,
         dispute_id: String,
     ) -> Result<DisputeOutcome, DisputeError> {
-        dispute::resolve_dispute_weighted(&env, dispute_id)
+        dispute::resolve_dispute_weighted(&env, resolver, dispute_id)
     }
 
     /// Return all weighted votes for a dispute.
