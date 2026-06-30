@@ -565,3 +565,289 @@ fn test_property_count_accuracy() {
         assert_eq!(client.get_property_count(), (i + 1) as u32);
     }
 }
+
+// ---------------------------------------------------------------------------
+// Admin recovery: remove / reassign / revoke verification (issue #86)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_remove_property_frees_namespace() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let squatter = Address::generate(&env);
+    let real_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-SQUAT");
+    let metadata_hash = String::from_str(&env, "QmSquatter");
+
+    client.register_property(&squatter, &property_id, &metadata_hash);
+    assert!(client.has_property(&property_id));
+    assert_eq!(client.get_property_count(), 1);
+
+    let result = client.try_remove_property(&admin, &property_id);
+    assert!(result.is_ok());
+    assert!(!client.has_property(&property_id));
+    assert_eq!(client.get_property_count(), 0);
+
+    // The rightful owner can now re-register the freed id.
+    let new_metadata = String::from_str(&env, "QmRealOwner");
+    client.register_property(&real_owner, &property_id, &new_metadata);
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.landlord, real_owner);
+    assert_eq!(client.get_property_count(), 1);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_remove_property_fails_if_not_admin() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let non_admin = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    client.remove_property(&non_admin, &property_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_remove_property_fails_if_not_found() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-NONEXISTENT");
+    client.remove_property(&admin, &property_id);
+}
+
+#[test]
+#[should_panic]
+fn test_remove_property_fails_without_admin_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    env.mock_auths(&[]);
+    client.remove_property(&admin, &property_id);
+}
+
+#[test]
+fn test_reassign_property_moves_ownership_and_resets_verification() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let squatter = Address::generate(&env);
+    let real_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-SQUAT");
+    let metadata_hash = String::from_str(&env, "QmSquatter");
+    client.register_property(&squatter, &property_id, &metadata_hash);
+    client.verify_property(&admin, &property_id);
+    assert!(client.get_property(&property_id).unwrap().verified);
+
+    let new_metadata = String::from_str(&env, "QmRealOwner");
+    let result = client.try_reassign_property(&admin, &property_id, &real_owner, &new_metadata);
+    assert!(result.is_ok());
+
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.landlord, real_owner);
+    assert_eq!(property.metadata_hash, new_metadata);
+    assert!(!property.verified);
+    assert!(property.verified_at.is_none());
+    // Reassign keeps the same record, count is unchanged.
+    assert_eq!(client.get_property_count(), 1);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_reassign_property_fails_if_not_admin() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let non_admin = Address::generate(&env);
+    let new_landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    let new_metadata = String::from_str(&env, "QmNew");
+    client.reassign_property(&non_admin, &property_id, &new_landlord, &new_metadata);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_reassign_property_fails_if_not_found() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let new_landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-NONEXISTENT");
+    let new_metadata = String::from_str(&env, "QmNew");
+    client.reassign_property(&admin, &property_id, &new_landlord, &new_metadata);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #8)")]
+fn test_reassign_property_fails_with_empty_metadata() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let new_landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    let empty = String::from_str(&env, "");
+    client.reassign_property(&admin, &property_id, &new_landlord, &empty);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #15)")]
+fn test_reassign_property_fails_if_same_landlord() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    let new_metadata = String::from_str(&env, "QmNew");
+    client.reassign_property(&admin, &property_id, &landlord, &new_metadata);
+}
+
+#[test]
+fn test_revoke_verification_success() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+    client.verify_property(&admin, &property_id);
+    assert!(client.get_property(&property_id).unwrap().verified);
+
+    let result = client.try_revoke_verification(&admin, &property_id);
+    assert!(result.is_ok());
+
+    let property = client.get_property(&property_id).unwrap();
+    assert!(!property.verified);
+    assert!(property.verified_at.is_none());
+
+    // After revocation the property can be verified again.
+    client.verify_property(&admin, &property_id);
+    assert!(client.get_property(&property_id).unwrap().verified);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_revoke_verification_fails_if_not_verified() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+
+    client.revoke_verification(&admin, &property_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_revoke_verification_fails_if_not_admin() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let landlord = Address::generate(&env);
+    let non_admin = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-001");
+    let metadata_hash = String::from_str(&env, "QmMeta");
+    client.register_property(&landlord, &property_id, &metadata_hash);
+    client.verify_property(&admin, &property_id);
+
+    client.revoke_verification(&non_admin, &property_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_revoke_verification_fails_if_not_found() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+
+    env.mock_all_auths();
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-NONEXISTENT");
+    client.revoke_verification(&admin, &property_id);
+}

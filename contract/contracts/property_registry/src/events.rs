@@ -29,6 +29,38 @@ pub struct PropertyVerified {
     pub property_id: String,
 }
 
+/// Event emitted when a property is removed by the admin (squat/fraud recovery)
+/// Topics: ["prop_rm", admin: Address, property_id: String]
+#[contractevent(topics = ["prop_rm"])]
+pub struct PropertyRemoved {
+    #[topic]
+    pub admin: Address,
+    #[topic]
+    pub property_id: String,
+}
+
+/// Event emitted when a property is reassigned to a new landlord by the admin
+/// Topics: ["prop_rea", admin: Address, property_id: String]
+#[contractevent(topics = ["prop_rea"])]
+pub struct PropertyReassigned {
+    #[topic]
+    pub admin: Address,
+    #[topic]
+    pub property_id: String,
+    pub old_landlord: Address,
+    pub new_landlord: Address,
+}
+
+/// Event emitted when a property's verification is revoked by the admin
+/// Topics: ["prop_rev", admin: Address, property_id: String]
+#[contractevent(topics = ["prop_rev"])]
+pub struct PropertyVerificationRevoked {
+    #[topic]
+    pub admin: Address,
+    #[topic]
+    pub property_id: String,
+}
+
 /// Event emitted when contract is paused
 #[contractevent(topics = ["paused"])]
 pub struct Paused {
@@ -79,6 +111,33 @@ pub(crate) fn property_registered(
 /// Helper function to emit property verified event
 pub(crate) fn property_verified(env: &Env, property_id: String, admin: Address) {
     PropertyVerified { admin, property_id }.publish(env);
+}
+
+/// Helper function to emit property removed event
+pub(crate) fn property_removed(env: &Env, property_id: String, admin: Address) {
+    PropertyRemoved { admin, property_id }.publish(env);
+}
+
+/// Helper function to emit property reassigned event
+pub(crate) fn property_reassigned(
+    env: &Env,
+    property_id: String,
+    admin: Address,
+    old_landlord: Address,
+    new_landlord: Address,
+) {
+    PropertyReassigned {
+        admin,
+        property_id,
+        old_landlord,
+        new_landlord,
+    }
+    .publish(env);
+}
+
+/// Helper function to emit property verification revoked event
+pub(crate) fn property_verification_revoked(env: &Env, property_id: String, admin: Address) {
+    PropertyVerificationRevoked { admin, property_id }.publish(env);
 }
 
 /// Helper function to emit paused event

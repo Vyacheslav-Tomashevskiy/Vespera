@@ -18,6 +18,26 @@ fn check_paused(env: &Env) -> Result<(), PropertyError> {
     Ok(())
 }
 
+/// Load the contract state and assert the caller is the current admin.
+///
+/// Returns the loaded `ContractState` so callers can reuse it without a second
+/// storage read.
+fn require_admin(env: &Env, admin: &Address) -> Result<ContractState, PropertyError> {
+    let state: ContractState = env
+        .storage()
+        .instance()
+        .get(&DataKey::State)
+        .ok_or(PropertyError::NotInitialized)?;
+
+    admin.require_auth();
+
+    if *admin != state.admin {
+        return Err(PropertyError::Unauthorized);
+    }
+
+    Ok(state)
+}
+
 pub fn register_property(
     env: &Env,
     landlord: Address,
@@ -106,6 +126,120 @@ pub fn verify_property(
     env.storage().persistent().extend_ttl(&key, 500000, 500000);
 
     events::property_verified(env, property_id, admin);
+
+    Ok(())
+}
+
+/// Remove a registered property (admin only).
+///
+/// Frees the `property_id` namespace slot so a squatted or fraudulent record can
+/// be cleared and the id re-registered by the rightful owner. Decrements the
+/// property count.
+///
+/// Admin recovery is intentionally **not** gated by the pause switch: the admin
+/// must be able to clean up fraudulent records even while the contract is paused
+/// for an incident.
+pub fn remove_property(
+    env: &Env,
+    admin: Address,
+    property_id: String,
+) -> Result<(), PropertyError> {
+    let _state = require_admin(env, &admin)?;
+
+    let key = DataKey::Property(property_id.clone());
+    if !env.storage().persistent().has(&key) {
+        return Err(PropertyError::PropertyNotFound);
+    }
+
+    env.storage().persistent().remove(&key);
+
+    let count_key = DataKey::PropertyCount;
+    let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
+    env.storage()
+        .persistent()
+        .set(&count_key, &count.saturating_sub(1));
+    env.storage()
+        .persistent()
+        .extend_ttl(&count_key, 500000, 500000);
+
+    events::property_removed(env, property_id, admin);
+
+    Ok(())
+}
+
+/// Reassign a property to a different landlord (admin only).
+///
+/// Resolves a squatting dispute in place: the record keeps its `property_id` and
+/// original registration timestamp, but ownership moves to `new_landlord`, the
+/// metadata is refreshed, and verification is reset (the new owner must be
+/// re-verified). Not gated by the pause switch (see [`remove_property`]).
+pub fn reassign_property(
+    env: &Env,
+    admin: Address,
+    property_id: String,
+    new_landlord: Address,
+    metadata_hash: String,
+) -> Result<(), PropertyError> {
+    let _state = require_admin(env, &admin)?;
+
+    if metadata_hash.is_empty() {
+        return Err(PropertyError::InvalidMetadata);
+    }
+
+    let key = DataKey::Property(property_id.clone());
+    let mut property: PropertyDetails = env
+        .storage()
+        .persistent()
+        .get(&key)
+        .ok_or(PropertyError::PropertyNotFound)?;
+
+    if new_landlord == property.landlord {
+        return Err(PropertyError::InvalidLandlord);
+    }
+
+    let old_landlord = property.landlord.clone();
+    property.landlord = new_landlord.clone();
+    property.metadata_hash = metadata_hash;
+    property.verified = false;
+    property.verified_at = None;
+
+    env.storage().persistent().set(&key, &property);
+    env.storage().persistent().extend_ttl(&key, 500000, 500000);
+
+    events::property_reassigned(env, property_id, admin, old_landlord, new_landlord);
+
+    Ok(())
+}
+
+/// Revoke a property's verification (admin only).
+///
+/// Used when a property that was previously verified is later found to be
+/// invalid or fraudulent. Not gated by the pause switch (see [`remove_property`]).
+pub fn revoke_verification(
+    env: &Env,
+    admin: Address,
+    property_id: String,
+) -> Result<(), PropertyError> {
+    let _state = require_admin(env, &admin)?;
+
+    let key = DataKey::Property(property_id.clone());
+    let mut property: PropertyDetails = env
+        .storage()
+        .persistent()
+        .get(&key)
+        .ok_or(PropertyError::PropertyNotFound)?;
+
+    if !property.verified {
+        return Err(PropertyError::NotVerified);
+    }
+
+    property.verified = false;
+    property.verified_at = None;
+
+    env.storage().persistent().set(&key, &property);
+    env.storage().persistent().extend_ttl(&key, 500000, 500000);
+
+    events::property_verification_revoked(env, property_id, admin);
 
     Ok(())
 }

@@ -13,7 +13,8 @@ mod tests;
 
 pub use errors::PropertyError;
 pub use property::{
-    get_property, get_property_count, has_property, register_property, verify_property,
+    get_property, get_property_count, has_property, reassign_property, register_property,
+    remove_property, revoke_verification, verify_property,
 };
 pub use storage::DataKey;
 pub use types::{ContractState, PauseState, PropertyDetails};
@@ -101,6 +102,73 @@ impl PropertyRegistryContract {
         property_id: String,
     ) -> Result<(), PropertyError> {
         property::verify_property(&env, admin, property_id)
+    }
+
+    /// Remove a registered property (admin only).
+    ///
+    /// Clears a squatted or fraudulent record and frees the `property_id` so it
+    /// can be re-registered by the rightful owner.
+    ///
+    /// # Arguments
+    /// * `admin` - The admin address performing the removal
+    /// * `property_id` - The ID of the property to remove
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `PropertyNotFound` - If the property doesn't exist
+    pub fn remove_property(
+        env: Env,
+        admin: Address,
+        property_id: String,
+    ) -> Result<(), PropertyError> {
+        property::remove_property(&env, admin, property_id)
+    }
+
+    /// Reassign a property to a new landlord (admin only).
+    ///
+    /// Resolves a squatting dispute in place: ownership moves to `new_landlord`,
+    /// the metadata is refreshed and verification is reset.
+    ///
+    /// # Arguments
+    /// * `admin` - The admin address performing the reassignment
+    /// * `property_id` - The ID of the property to reassign
+    /// * `new_landlord` - The address of the new property owner
+    /// * `metadata_hash` - Updated metadata reference for the property
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `InvalidMetadata` - If the metadata hash is empty
+    /// * `PropertyNotFound` - If the property doesn't exist
+    /// * `InvalidLandlord` - If `new_landlord` is already the current landlord
+    pub fn reassign_property(
+        env: Env,
+        admin: Address,
+        property_id: String,
+        new_landlord: Address,
+        metadata_hash: String,
+    ) -> Result<(), PropertyError> {
+        property::reassign_property(&env, admin, property_id, new_landlord, metadata_hash)
+    }
+
+    /// Revoke a property's verification (admin only).
+    ///
+    /// # Arguments
+    /// * `admin` - The admin address performing the revocation
+    /// * `property_id` - The ID of the property whose verification to revoke
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `PropertyNotFound` - If the property doesn't exist
+    /// * `NotVerified` - If the property is not currently verified
+    pub fn revoke_verification(
+        env: Env,
+        admin: Address,
+        property_id: String,
+    ) -> Result<(), PropertyError> {
+        property::revoke_verification(&env, admin, property_id)
     }
 
     /// Get details of a registered property.

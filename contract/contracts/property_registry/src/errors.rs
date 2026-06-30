@@ -17,4 +17,6 @@ pub enum PropertyError {
     NotPaused = 11,
     NoPendingAdmin = 12,
     NotPendingAdmin = 13,
+    NotVerified = 14,
+    InvalidLandlord = 15,
 }
